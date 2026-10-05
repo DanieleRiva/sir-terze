@@ -1,0 +1,141 @@
+---
+title: Le espressioni regolari
+description: Un modo compatto per descrivere i linguaggi riconosciuti dagli automi - sintassi, precedenze, esempi e confronto con le regex dei linguaggi di programmazione.
+sidebar:
+  order: 1
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Descrivere un linguaggio con una formula
+
+Finora abbiamo descritto i linguaggi **a parole** ("le stringhe che finiscono con `01`") oppure **con un automa**. C'è un terzo modo, compatto e precisissimo: le **espressioni regolari**.
+
+Un'espressione regolare (in inglese *regular expression*, abbreviato *regex*) è una formula costruita con i simboli dell'alfabeto e con **tre operazioni**. Per esempio:
+
+> **(0 + 1)\* 01**
+
+si legge "una qualsiasi sequenza di `0` e `1`, seguita da `01`", cioè proprio le stringhe che finiscono con `01`.
+
+---
+
+## I mattoni e le tre operazioni
+
+### I mattoni (espressioni di base)
+
+| Espressione | Linguaggio che descrive |
+| :-- | :-- |
+| **∅** | il linguaggio vuoto (nessuna stringa) |
+| **ε** | il linguaggio che contiene solo la stringa vuota |
+| **a** (un simbolo dell'alfabeto) | il linguaggio che contiene solo la stringa `a` |
+
+### Le tre operazioni
+
+Se R e S sono espressioni regolari, lo sono anche:
+
+| Operazione | Si scrive | Significato | Esempio |
+| :-- | :-- | :-- | :-- |
+| **Unione** (alternativa) | R **+** S (oppure R \| S) | una stringa di R **oppure** una di S | `a + b` → &#123;a, b&#125; |
+| **Concatenazione** | R S | una stringa di R **seguita da** una di S | `ab` → &#123;ab&#125; |
+| **Stella di Kleene** | R **\*** | **zero o più** stringhe di R, una dopo l'altra | `a*` → &#123;ε, a, aa, aaa, …&#125; |
+
+Per raggruppare si usano le **parentesi**.
+
+<Aside type="note" title="Il simbolo dell'unione">
+Nei libri di teoria e in **JFLAP** l'unione si scrive con il **+**. Nei linguaggi di programmazione (Python, JavaScript, Java, `grep`…) si scrive con la barra verticale **\|**, e il **+** ha un altro significato (vedi più sotto). Conviene dirlo subito agli alunni per evitare confusione.
+</Aside>
+
+### Le precedenze
+
+Come in aritmetica (dove la moltiplicazione "lega" più dell'addizione), anche qui c'è un ordine:
+
+1. **stella** \* (lega di più)
+2. **concatenazione**
+3. **unione** + (lega di meno)
+
+Quindi:
+
+- `ab*` significa `a(b*)`: una `a` seguita da zero o più `b` → `a`, `ab`, `abb`, …
+- `(ab)*` significa zero o più ripetizioni di `ab` → ε, `ab`, `abab`, …
+- `a + bc` significa `a + (bc)` → &#123;`a`, `bc`&#125;
+- `(a + b)c` → &#123;`ac`, `bc`&#125;
+
+---
+
+## Esempi da saper leggere e scrivere
+
+Alfabeto &#123;a, b&#125; (o &#123;0, 1&#125; per i binari):
+
+| Espressione regolare | Linguaggio |
+| :-- | :-- |
+| `(a + b)*` | tutte le stringhe (Σ\*) |
+| `a(a + b)*` | le stringhe che **iniziano** con `a` |
+| `(a + b)*b` | le stringhe che **finiscono** con `b` |
+| `(a + b)*aba(a + b)*` | le stringhe che **contengono** `aba` |
+| `(0 + 1)*01` | le stringhe binarie che finiscono con `01` |
+| `a*b*` | un po' di `a` seguite da un po' di `b` (anche zero): ε, `a`, `b`, `aab`, `abbb`… ma non `ba` |
+| `(a + b)(a + b)(a + b)` | le stringhe di lunghezza esattamente 3 |
+| `((a + b)(a + b))*` | le stringhe di lunghezza **pari** |
+| `b*(ab*ab*)*` | le stringhe con un numero **pari** di `a` |
+| `(a + b)*a(a + b)(a + b)` | il **terzultimo** simbolo è `a` |
+| `1(0 + 1)*0 + 0` | i numeri binari pari scritti senza zeri iniziali |
+
+<Aside type="tip" title="Come si legge un'espressione complicata">
+Si parte dall'**esterno** e si individuano i pezzi principali: `(a + b)*aba(a + b)*` sono tre pezzi in fila: "qualsiasi cosa", poi `aba`, poi "qualsiasi cosa". Poi si provano alcune stringhe concrete: è il modo migliore per controllare di aver capito.
+</Aside>
+
+### Uguaglianze utili
+
+Due espressioni diverse possono descrivere lo stesso linguaggio. Alcune regole:
+
+| Uguaglianza | Perché |
+| :-- | :-- |
+| R + S = S + R | l'unione è commutativa |
+| R + R = R | unire un linguaggio con sé stesso non cambia nulla |
+| εR = Rε = R | ε è neutro per la concatenazione |
+| ∅R = R∅ = ∅ | concatenare con "nessuna stringa" dà nessuna stringa |
+| R + ∅ = R | ∅ è neutro per l'unione |
+| (R\*)\* = R\* | ripetere la stella non aggiunge nulla |
+| ∅\* = ε | zero ripetizioni di niente = la stringa vuota |
+| (a + b)\* = (a\*b\*)\* | entrambe descrivono tutte le stringhe su &#123;a, b&#125; |
+
+Attenzione: la concatenazione **non è commutativa** (`ab` ≠ `ba`) e (R + S)\* **non è** uguale a R\* + S\* (la prima contiene `ab`, la seconda no).
+
+---
+
+## Le regex nella programmazione
+
+Le espressioni regolari dei linguaggi di programmazione sono le "nipoti" di quelle teoriche, con molte scorciatoie in più. Tutte le scorciatoie si possono riscrivere con le tre operazioni di base.
+
+| Scorciatoia | Significato | Equivalente teorico |
+| :-- | :-- | :-- |
+| `a\|b` | a oppure b | `a + b` |
+| `a+` | **una** o più `a` | `aa*` |
+| `a?` | `a` facoltativa | `a + ε` |
+| `[abc]` | uno qualsiasi tra a, b, c | `a + b + c` |
+| `[0-9]` | una cifra | `0 + 1 + … + 9` |
+| `.` | un carattere qualsiasi | la somma di tutti i simboli |
+| `a{3}` | esattamente tre `a` | `aaa` |
+| `^` e `$` | inizio e fine della riga | (si ottiene "ancorando" l'espressione) |
+
+Esempi reali:
+
+- un **CAP** italiano: `[0-9]{5}`
+- un **numero intero** con segno facoltativo: `[+-]?[0-9]+`
+- un **identificatore** (nome di variabile) in C: `[A-Za-z_][A-Za-z0-9_]*`
+- un **indirizzo IPv4** (in modo approssimativo): `[0-9]{1,3}(\.[0-9]{1,3}){3}`
+
+Dietro le quinte, molti motori di regex trasformano l'espressione in un **automa** e lo usano per cercare il testo: è esattamente ciò che vediamo nella prossima lezione.
+
+<Aside type="caution" title="Non tutte le regex moderne sono &quot;regolari&quot;">
+Alcune funzioni avanzate delle regex di programmazione, come i **riferimenti all'indietro** (`(a+)b\1`), permettono di descrivere linguaggi che **non** sono regolari e che un automa a stati finiti non può riconoscere. Nella teoria (e in JFLAP) ci limitiamo alle tre operazioni di base.
+</Aside>
+
+---
+
+## Riepilogo
+
+- Un'espressione regolare si costruisce da ∅, ε e dai simboli con **unione** (+), **concatenazione** e **stella** (\*).
+- Precedenza: stella, poi concatenazione, poi unione.
+- `+` in teoria e in JFLAP è l'**unione**; nelle regex di programmazione è "una o più volte".
+- I linguaggi descritti dalle espressioni regolari si chiamano **linguaggi regolari**.

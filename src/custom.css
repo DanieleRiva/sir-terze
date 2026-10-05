@@ -1,0 +1,52 @@
+/* =========================================
+   TEMA SCURO (Default)
+   ========================================= */
+:root,
+:root[data-theme='dark'] {
+    /* Accenti scambiati per massimo contrasto sul buio */
+    --sl-color-accent: #b185f5 !important; /* Lilla neon per risaltare perfettamente sul nero */
+    --sl-color-accent-high: #ffffff !important;
+    --sl-color-accent-low: #341561 !important; /* Viola scuro e profondo per i badge, non invadente */
+
+    /* Sfondi vicini al nero, intinti in un blu-viola freddo */
+    --sl-color-bg: #0b0910 !important;
+    --sl-color-bg-nav: #100d17 !important;
+    --sl-color-bg-sidebar: #100d17 !important;
+}
+
+/* =========================================
+   TEMA CHIARO
+   ========================================= */
+:root[data-theme='light'] {
+    /* Accenti scambiati per massima leggibilità sul chiaro */
+    --sl-color-accent: #8338ec !important; /* Cyber Violet puro: vibrante ed energico */
+    --sl-color-accent-high: #4a149c !important; /* Indaco scurissimo per gli stati hover (effetto premium) */
+    --sl-color-accent-low: #f0e6fc !important; /* Lilla ghiacciato e pulito per gli sfondi secondari */
+
+    /* Sfondi vicini al bianco, intinti in un tono lilla quasi impercettibile */
+    --sl-color-bg: #faf8fc !important;
+    --sl-color-bg-nav: #f3eefa !important;
+    --sl-color-bg-sidebar: #f3eefa !important;
+}
+
+/* =========================================
+   FORZATURA STRUTTURALE (Fix per Tema Nova)
+   ========================================= */
+#starlight__sidebar,
+#starlight__sidebar .sidebar-content,
+#starlight__sidebar .nova-scroll-container {
+    background-color: var(--sl-color-bg-sidebar) !important;
+}
+
+header.header,
+.header.nova-header {
+    background-color: var(--sl-color-bg-nav) !important;
+}
+
+/* =========================================
+   FIX PROGRESS BAR
+   ========================================= */
+#scroll-progress {
+    background-color: var(--sl-color-accent) !important;
+    box-shadow: 0 0 12px var(--sl-color-accent) !important; /* Glow leggermente aumentato */
+}

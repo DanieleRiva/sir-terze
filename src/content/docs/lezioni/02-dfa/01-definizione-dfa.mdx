@@ -1,0 +1,215 @@
+---
+title: L'automa deterministico (DFA)
+description: Definizione di automa a stati finiti deterministico, stati finali, come legge una stringa, quando la accetta e come si descrive in modo formale.
+sidebar:
+  order: 1
+---
+
+import Automa from '~/components/Automa.astro';
+import Nastro from '~/components/Nastro.astro';
+import { Aside } from '@astrojs/starlight/components';
+
+## Dall'esempio al riconoscitore
+
+Nel capitolo precedente abbiamo visto automi che reagiscono a eventi. Adesso usiamo un automa per **rispondere a una domanda su una stringa**: "questa stringa va bene oppure no?".
+
+Per farlo aggiungiamo un ultimo ingrediente: alcuni stati vengono marcati come **stati finali** (detti anche **di accettazione**). Si disegnano con un **doppio cerchio**.
+
+L'automa funziona così:
+
+1. parte dallo **stato iniziale**;
+2. legge la stringa **un simbolo alla volta, da sinistra a destra**, e per ogni simbolo segue la transizione corrispondente;
+3. quando la stringa è **finita**, guarda in che stato si trova:
+   - se è uno stato **finale**, la stringa è **accettata**;
+   - altrimenti la stringa è **rifiutata**.
+
+Un automa così si chiama **DFA**, dall'inglese *Deterministic Finite Automaton*: **automa a stati finiti deterministico**.
+
+---
+
+## Un primo esempio
+
+Prendiamo l'alfabeto Σ = &#123;a, b&#125; e il linguaggio delle stringhe che **contengono almeno una `a`**.
+
+L'automa deve ricordare una sola cosa: "ho già visto una `a` oppure no?". Bastano quindi due stati:
+
+- **q₀**: non ho ancora visto nessuna `a` (stato iniziale);
+- **q₁**: ho visto almeno una `a` (stato finale: da qui in poi la risposta è sempre "sì").
+
+<Automa
+	states={[
+		{ id: 'q0', x: 80, y: 90, initial: true },
+		{ id: 'q1', x: 260, y: 90, final: true },
+	]}
+	transitions={[
+		{ from: 'q0', to: 'q1', label: 'a' },
+		{ from: 'q0', to: 'q0', label: 'b' },
+		{ from: 'q1', to: 'q1', label: 'a, b' },
+	]}
+	caption="DFA che accetta le stringhe con almeno una <code>a</code>. L'etichetta «a, b» è un modo breve per disegnare due transizioni: una per <code>a</code> e una per <code>b</code>."
+/>
+
+### L'automa al lavoro
+
+Seguiamo l'automa mentre legge la stringa `bab`. La **testina** (il triangolino) indica il prossimo simbolo da leggere.
+
+<Nastro input="bab" pos={0} stato="q₀" nota="Si parte dallo stato iniziale, prima di aver letto qualcosa." />
+<Nastro input="bab" pos={1} stato="q₀" nota="Letto <code>b</code>: da q₀ con <code>b</code> si resta in q₀." />
+<Nastro input="bab" pos={2} stato="q₁" nota="Letto <code>a</code>: da q₀ con <code>a</code> si va in q₁." />
+<Nastro input="bab" pos={3} stato="q₁" nota="Letto <code>b</code>: da q₁ con <code>b</code> si resta in q₁. La stringa è finita e q₁ è finale: <strong>bab è accettata</strong>." />
+
+La sequenza di stati attraversati si scrive in modo compatto così:
+
+> q₀ —b→ q₀ —a→ q₁ —b→ q₁ ✓
+
+Con la stringa `bbb`, invece: q₀ —b→ q₀ —b→ q₀ —b→ q₀ ✗. La stringa è finita in q₀, che non è finale: **rifiutata**.
+
+E con la **stringa vuota** ε? Non c'è niente da leggere, quindi l'automa resta nello stato iniziale q₀, che non è finale: ε è **rifiutata** (giustamente: non contiene nessuna `a`).
+
+<Aside type="tip" title="Provalo!">
+Sotto ogni diagramma con il riquadro colorato c'è un piccolo **simulatore**: scrivi una stringa e premi **Passo ▶** per seguire l'automa simbolo per simbolo. Lo stato attivo e la transizione appena usata si colorano.
+</Aside>
+
+<Automa
+	states={[
+		{ id: 'q0', x: 80, y: 90, initial: true },
+		{ id: 'q1', x: 260, y: 90, final: true },
+	]}
+	transitions={[
+		{ from: 'q0', to: 'q1', label: 'a' },
+		{ from: 'q0', to: 'q0', label: 'b' },
+		{ from: 'q1', to: 'q1', label: 'a, b' },
+	]}
+	simula="bab"
+/>
+
+---
+
+## Perché "deterministico"
+
+Un automa è **deterministico** quando, **in ogni stato e per ogni simbolo, c'è una e una sola transizione** da seguire. Non ci sono mai dubbi su cosa fare: dato lo stato attuale e il simbolo letto, il prossimo stato è determinato.
+
+Conseguenza importante: per ogni stringa c'è **un solo percorso possibile** nel diagramma. Per sapere se la stringa è accettata basta seguirlo.
+
+Nel capitolo 3 vedremo gli automi **non deterministici**, dove da uno stato possono partire più frecce con lo stesso simbolo (o nessuna).
+
+---
+
+## La definizione formale
+
+Nei libri un DFA viene definito come una **quintupla**, cioè un elenco di cinque elementi:
+
+> **A = ( Q, Σ, δ, q₀, F )**
+
+| Elemento | Nome | Che cos'è | Nel nostro esempio |
+| :-- | :-- | :-- | :-- |
+| **Q** | insieme degli stati | un insieme finito di stati | &#123; q₀, q₁ &#125; |
+| **Σ** | alfabeto di input | i simboli che l'automa può leggere | &#123; a, b &#125; |
+| **δ** | funzione di transizione | δ(stato, simbolo) = stato successivo | δ(q₀, a) = q₁, … |
+| **q₀** | stato iniziale | uno degli stati di Q | q₀ |
+| **F** | insieme degli stati finali | un sottoinsieme di Q (anche vuoto) | &#123; q₁ &#125; |
+
+### La funzione di transizione δ
+
+δ (delta minuscola) è il "cuore" dell'automa. È una funzione che prende **uno stato e un simbolo** e restituisce **lo stato successivo**:
+
+> δ : Q × Σ → Q
+
+Il fatto che restituisca **esattamente uno** stato è proprio ciò che rende l'automa deterministico. La funzione δ si scrive comodamente come **tabella di transizione**:
+
+| δ | a | b |
+| :-- | :-: | :-: |
+| → q₀ | q₁ | q₀ |
+| \* q₁ | q₁ | q₁ |
+
+Convenzioni della tabella: la **freccia →** indica lo stato iniziale, l'**asterisco \*** indica gli stati finali.
+
+<Aside type="note" title="Tre rappresentazioni, un solo automa">
+**Diagramma**, **tabella** e **quintupla** sono tre modi di scrivere la stessa cosa. In un esercizio bisogna saper passare da uno all'altro senza perdere informazioni: in particolare, nella tabella non bisogna mai dimenticare di indicare lo stato iniziale e gli stati finali.
+</Aside>
+
+### Da un simbolo a una stringa: δ\*
+
+δ dice cosa succede con **un** simbolo. Per una stringa intera si applica δ più volte, un simbolo dopo l'altro. Questa applicazione ripetuta si chiama **funzione di transizione estesa** e si indica con **δ\*** (o δ̂):
+
+> δ\*(q₀, `bab`) = δ( δ( δ(q₀, b), a ), b ) = δ( δ(q₀, a), b ) = δ(q₁, b) = q₁
+
+Per convenzione δ\*(q, ε) = q: leggendo la stringa vuota non ci si muove.
+
+### Accettazione e linguaggio riconosciuto
+
+Ora possiamo dire con precisione:
+
+- una stringa *w* è **accettata** dall'automa *A* se δ\*(q₀, *w*) ∈ F, cioè se leggendo *w* a partire da q₀ si arriva in uno stato finale;
+- il **linguaggio riconosciuto** da *A* è l'insieme di tutte le stringhe accettate:
+
+> L(A) = &#123; w ∈ Σ\* : δ\*(q₀, w) ∈ F &#125;
+
+Due automi si dicono **equivalenti** se riconoscono lo stesso linguaggio, anche se sono disegnati in modo diverso o hanno un numero diverso di stati.
+
+---
+
+## Un secondo esempio: numero pari di `a`
+
+Σ = &#123;a, b&#125;, L = stringhe che contengono un **numero pari di `a`** (zero compreso).
+
+Cosa deve ricordare l'automa? Non serve sapere *quante* `a` ha letto, ma solo se sono **pari** o **dispari**. Due stati:
+
+- **P** (pari): iniziale, perché all'inizio ho letto zero `a`, e zero è pari. È anche **finale**.
+- **D** (dispari).
+
+Ogni `a` fa passare da pari a dispari e viceversa; le `b` non cambiano niente.
+
+<Automa
+	r={24}
+	states={[
+		{ id: 'P', x: 80, y: 90, initial: true, final: true },
+		{ id: 'D', x: 270, y: 90 },
+	]}
+	transitions={[
+		{ from: 'P', to: 'D', label: 'a' },
+		{ from: 'D', to: 'P', label: 'a' },
+		{ from: 'P', to: 'P', label: 'b' },
+		{ from: 'D', to: 'D', label: 'b' },
+	]}
+	simula="abbab"
+	caption="Numero pari di <code>a</code>. Lo stato iniziale è anche finale: la stringa vuota è accettata."
+/>
+
+| δ | a | b |
+| :-- | :-: | :-: |
+| → \* P | D | P |
+| D | P | D |
+
+Prova nel simulatore: `abbab` (due `a`: accettata), `ababa` (tre `a`: rifiutata), `bbb` (zero `a`: accettata), la stringa vuota (accettata).
+
+---
+
+## Convenzioni grafiche
+
+| Elemento del disegno | Significato |
+| :-- | :-- |
+| cerchio | uno stato |
+| doppio cerchio | uno stato finale (di accettazione) |
+| freccia entrante "dal nulla" | lo stato iniziale (ce n'è **uno solo**) |
+| freccia da uno stato a un altro con etichetta `a` | la transizione δ(p, a) = q |
+| anello con etichetta `a` | la transizione δ(q, a) = q (si resta nello stesso stato) |
+| etichetta `a, b` | due transizioni con la stessa partenza e lo stesso arrivo |
+
+<Aside type="caution" title="Errori frequenti">
+- **Dimenticare lo stato iniziale**: senza freccia d'ingresso l'automa non sa da dove partire.
+- **Due stati iniziali**: in un DFA lo stato iniziale è sempre uno solo.
+- **Due frecce con lo stesso simbolo che escono dallo stesso stato**: l'automa non sarebbe più deterministico.
+- **Pensare che l'automa accetti appena passa per uno stato finale**: conta solo lo stato in cui ci si trova **alla fine** della stringa.
+- **Confondere stato iniziale e stato finale**: uno stato può essere entrambe le cose (come P nell'esempio), e allora la stringa vuota è accettata.
+</Aside>
+
+---
+
+## Riepilogo
+
+- Un **DFA** è una quintupla (Q, Σ, δ, q₀, F).
+- Legge la stringa un simbolo alla volta seguendo δ; alla fine **accetta** se si trova in uno stato **finale**.
+- È **deterministico**: per ogni stato e ogni simbolo c'è esattamente una transizione.
+- Il **linguaggio riconosciuto** L(A) è l'insieme delle stringhe accettate.
+- Uno stato iniziale che è anche finale significa che **ε è accettata**.

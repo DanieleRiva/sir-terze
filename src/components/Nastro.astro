@@ -1,0 +1,96 @@
+---
+/**
+ * Il "nastro" di input di un automa con la testina di lettura.
+ * `pos` è l'indice del prossimo simbolo da leggere (pos = lunghezza → input finito).
+ */
+interface Props {
+	input: string;
+	pos: number;
+	stato: string;
+	nota?: string;
+}
+const { input, pos, stato, nota } = Astro.props;
+const simboli = [...input];
+const fine = pos >= simboli.length;
+---
+
+<div class="nastro not-content">
+	<div class="nastro-celle">
+		{
+			simboli.map((c, i) => (
+				<span class:list={['nastro-cella', { letto: i < pos, corrente: i === pos }]}>{c}</span>
+			))
+		}
+		<span class:list={['nastro-cella nastro-fine', { corrente: fine }]}>⊣</span>
+	</div>
+	<div class="nastro-info">
+		<span class="nastro-stato">stato: <strong>{stato}</strong></span>
+		<span>{fine ? 'input terminato' : `prossimo simbolo: «${simboli[pos]}»`}</span>
+		{nota && <span class="nastro-nota" set:html={nota} />}
+	</div>
+</div>
+
+<style>
+	.nastro {
+		margin: 1rem 0;
+		padding: 0.75rem 0.9rem;
+		border: 1px solid var(--sl-color-hairline);
+		border-radius: 0.75rem;
+	}
+	.nastro-celle {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0;
+		font-family: var(--sl-font-mono, monospace);
+		font-size: 1.15rem;
+	}
+	.nastro-cella {
+		width: 2.3rem;
+		height: 2.3rem;
+		display: grid;
+		place-items: center;
+		border: 1.5px solid var(--sl-color-gray-3);
+		margin-left: -1.5px;
+		background: var(--sl-color-bg);
+		position: relative;
+	}
+	.nastro-cella:first-child {
+		margin-left: 0;
+	}
+	.nastro-cella.letto {
+		color: var(--sl-color-gray-4);
+		background: var(--sl-color-gray-6);
+	}
+	.nastro-cella.corrente {
+		border-color: var(--sl-color-accent);
+		border-width: 3px;
+		z-index: 1;
+		font-weight: 700;
+	}
+	.nastro-cella.corrente::after {
+		content: '▲';
+		position: absolute;
+		bottom: -1.35rem;
+		font-size: 0.85rem;
+		color: var(--sl-color-accent);
+	}
+	.nastro-fine {
+		color: var(--sl-color-gray-3);
+		font-size: 0.95rem;
+	}
+	.nastro-info {
+		margin-top: 1.4rem;
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.4rem 1.2rem;
+		font-size: var(--sl-text-sm);
+		color: var(--sl-color-gray-2);
+	}
+	.nastro-stato strong {
+		color: var(--sl-color-text-accent);
+	}
+	.nastro-nota {
+		flex-basis: 100%;
+		color: var(--sl-color-white);
+	}
+</style>

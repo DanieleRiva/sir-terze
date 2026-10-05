@@ -1,0 +1,149 @@
+---
+title: L'interfaccia dell'editor
+description: La finestra di lavoro di JFLAP - barra dei menu, i quattro strumenti dell'editor, il menu contestuale degli stati e le voci dei menu principali.
+sidebar:
+  order: 2
+---
+
+import JflapFinestra from '~/components/JflapFinestra.astro';
+import Automa from '~/components/Automa.astro';
+import { Aside } from '@astrojs/starlight/components';
+
+Cliccando **Finite Automaton** nella finestra principale si apre l'**editor**, la finestra in cui si disegna l'automa.
+
+<JflapFinestra strumento="attributi" altezza={220} caption="L'editor di JFLAP con un automa già disegnato (riproduzione schematica). In alto: barra dei menu, scheda <em>Editor</em>, barra degli strumenti.">
+	<Automa
+		jflap
+		r={20}
+		states={[
+			{ id: 'q0', x: 80, y: 90, initial: true },
+			{ id: 'q1', x: 230, y: 90 },
+			{ id: 'q2', x: 380, y: 90, final: true },
+		]}
+		transitions={[
+			{ from: 'q0', to: 'q0', label: '1' },
+			{ from: 'q0', to: 'q1', label: '0' },
+			{ from: 'q1', to: 'q1', label: '0' },
+			{ from: 'q1', to: 'q2', label: '1' },
+			{ from: 'q2', to: 'q1', label: '0' },
+			{ from: 'q2', to: 'q0', label: '1', bend: 45 },
+		]}
+	/>
+</JflapFinestra>
+
+Rispetto ai disegni dei libri ci sono due piccole differenze grafiche:
+
+- gli stati sono **cerchi gialli**; quando si seleziona uno stato diventa di un altro colore;
+- lo **stato iniziale** non ha una freccia, ma un **triangolo bianco** appoggiato a sinistra.
+
+Gli stati finali hanno il **doppio cerchio**, come sui libri.
+
+---
+
+## I quattro strumenti
+
+Sotto la barra dei menu c'è la **barra degli strumenti**. Si sceglie uno strumento cliccandoci sopra: lo strumento attivo appare "premuto". Tutto il lavoro di disegno si fa con questi quattro strumenti.
+
+| Icona | Nome | A cosa serve |
+| :-: | :-- | :-- |
+| freccia del mouse | **Attribute Editor** | **selezionare e spostare** stati e transizioni (trascinandoli); con il **tasto destro** su uno stato si apre il menu per renderlo iniziale o finale; con un doppio clic su una transizione se ne modifica l'etichetta |
+| cerchio con la *q* | **State Creator** | **creare stati**: ogni clic su un punto vuoto crea un nuovo stato, numerato automaticamente q0, q1, q2… |
+| freccia curva | **Transition Creator** | **creare transizioni**: si preme il mouse su uno stato, si trascina fino a un altro stato e si rilascia; poi si scrive il simbolo e si preme **Invio** |
+| teschio | **Deleter** | **cancellare**: un clic su uno stato lo elimina insieme a tutte le sue transizioni; un clic su un'etichetta elimina quella transizione |
+
+Accanto ai quattro strumenti ci sono i pulsanti **Undo** (annulla) e **Redo** (ripeti).
+
+<Aside type="tip" title="Il trucco dell'Attribute Editor">
+Lo strumento con la freccia è quello "di riposo": dopo aver creato stati e transizioni conviene tornare lì, per **spostare** gli stati e rendere il disegno ordinato. Uno schema leggibile (stato iniziale a sinistra, stati finali a destra, poche frecce incrociate) evita molti errori.
+</Aside>
+
+---
+
+## Il menu di uno stato
+
+Con lo strumento **Attribute Editor**, facendo **clic destro su uno stato** compare un menu contestuale con queste voci:
+
+| Voce | Effetto |
+| :-- | :-- |
+| **Initial** | rende lo stato iniziale (compare il triangolo). Può esserci un solo stato iniziale: sceglierne un altro toglie il segno dal precedente |
+| **Final** | rende lo stato finale (doppio cerchio). Si possono avere più stati finali |
+| **Change Label** | aggiunge un'**etichetta descrittiva** sotto lo stato (ad esempio "pari" o "ho letto 0"): utile per documentare il significato dello stato |
+| **Clear Label** / **Clear All Labels** | toglie l'etichetta da questo stato / da tutti gli stati |
+| **Set Name** | cambia il **nome** dello stato (quello scritto dentro il cerchio) |
+
+<Aside type="note" title="Nome ed etichetta">
+Il **nome** (q0, q1…) identifica lo stato; l'**etichetta** (label) è un commento che compare sotto il cerchio. Abituare gli alunni a mettere un'etichetta che dice **cosa ricorda lo stato** è un ottimo esercizio di progettazione, ed è molto utile al docente in fase di correzione.
+</Aside>
+
+---
+
+## I menu dell'editor
+
+Per un automa a stati finiti i menu della finestra sono: **File**, **Input**, **Test**, **View**, **Convert**, **Help**.
+
+### File
+
+Le operazioni sui file: **New** (nuovo oggetto: riapre la finestra di scelta), **Open** (apri un file `.jff`), **Save** e **Save As** (salva), **Close** (chiudi la finestra), oltre alle voci per **stampare** e per **salvare il disegno come immagine**, comode per preparare verifiche e dispense.
+
+### Input: eseguire l'automa
+
+<JflapFinestra
+	strumento="attributi"
+	altezza={180}
+	menuAperto={{ nome: 'Input', voci: ['Step with Closure...', 'Step by State...', 'Fast Run...', 'Multiple Run'] }}
+	caption="Il menu <strong>Input</strong>."
+/>
+
+| Voce | A cosa serve |
+| :-- | :-- |
+| **Step with Closure…** | simulazione **passo passo**; a ogni passo applica automaticamente la λ-chiusura. È la scelta migliore per gli NFA |
+| **Step by State…** | simulazione passo passo in cui anche ogni λ-transizione conta come un passo separato |
+| **Fast Run…** | esecuzione immediata: dice subito se la stringa è accettata e mostra il percorso seguito |
+| **Multiple Run** | tabella per provare **molte stringhe insieme** e vedere per ciascuna *Accept* o *Reject* |
+
+Sono spiegate in dettaglio in [Eseguire e collaudare un automa](/appunti-sir-terza/jflap/04-eseguire-e-collaudare/).
+
+### Test: analizzare l'automa
+
+<JflapFinestra
+	strumento="attributi"
+	altezza={140}
+	menuAperto={{ nome: 'Test', voci: ['Compare Equivalence', 'Highlight Nondeterminism', 'Highlight λ-Transitions'] }}
+	caption="Il menu <strong>Test</strong>."
+/>
+
+| Voce | A cosa serve |
+| :-- | :-- |
+| **Compare Equivalence** | confronta l'automa con un altro automa aperto e dice se **riconoscono lo stesso linguaggio** |
+| **Highlight Nondeterminism** | colora gli stati **non deterministici** (da cui escono più transizioni con lo stesso simbolo, o λ-transizioni) |
+| **Highlight λ-Transitions** | evidenzia le transizioni vuote |
+
+### View: sistemare il disegno
+
+Contiene i comandi di **layout**: salvare e ripristinare la disposizione degli stati (**Save Current Graph Layout**, **Restore Saved Graph Layout**), riflettere o ruotare il grafo (**Move Vertices**) e applicare un algoritmo di disposizione automatica (**Apply a Specific Layout Algorithm**: circolare, ad albero, a spirale…). Sono utili soprattutto dopo una conversione, quando JFLAP produce automi disordinati.
+
+### Convert: trasformare l'automa
+
+<JflapFinestra
+	strumento="attributi"
+	altezza={210}
+	menuAperto={{ nome: 'Convert', voci: ['Convert to DFA', 'Minimize DFA', 'Convert to Grammar', 'Convert FA to RE', 'Combine Automata', 'Add Trap State to DFA'] }}
+	caption="Il menu <strong>Convert</strong>."
+/>
+
+| Voce | A cosa serve | Teoria |
+| :-- | :-- | :-- |
+| **Convert to DFA** | costruzione per sottoinsiemi: da NFA a DFA | [capitolo 3](/appunti-sir-terza/lezioni/03-nfa/03-da-nfa-a-dfa/) |
+| **Minimize DFA** | minimizzazione del DFA | [capitolo 4](/appunti-sir-terza/lezioni/04-minimizzazione/01-minimizzare-un-dfa/) |
+| **Convert to Grammar** | ricava una grammatica regolare equivalente | — |
+| **Convert FA to RE** | ricava un'espressione regolare equivalente | [capitolo 6](/appunti-sir-terza/lezioni/06-espressioni-regolari/02-automi-ed-espressioni-regolari/) |
+| **Combine Automata** | copia un altro automa aperto nella stessa finestra, per collegarli (unione, concatenazione…) | [capitolo 3](/appunti-sir-terza/lezioni/03-nfa/02-epsilon-transizioni/) |
+| **Add Trap State to DFA** | aggiunge lo stato pozzo e le transizioni mancanti | [capitolo 2](/appunti-sir-terza/lezioni/02-dfa/02-stato-pozzo-e-completezza/) |
+
+### Le schede
+
+Quando si avvia una simulazione o una conversione, JFLAP non apre sempre una nuova finestra: spesso aggiunge una **scheda** accanto a quella dell'*Editor*. Per tornare a modificare l'automa basta cliccare sulla scheda **Editor**; per chiudere la scheda della simulazione si usa **File → Dismiss Tab**.
+
+<Aside type="caution" title="Se un menu è grigio">
+Alcune voci sono disponibili solo in certe condizioni. Per esempio **Minimize DFA** e **Add Trap State to DFA** funzionano solo se l'automa è **deterministico**; **Convert FA to RE** e le simulazioni richiedono che ci sia uno **stato iniziale**. Se qualcosa "non parte", JFLAP di solito mostra un messaggio che spiega cosa manca: va letto con attenzione insieme agli alunni.
+</Aside>

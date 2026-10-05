@@ -1,0 +1,299 @@
+---
+/**
+ * Riproduzione schematica di una finestra di JFLAP 7.1
+ * (barra dei menu, barra degli strumenti, schede, area di disegno).
+ * Il contenuto dell'area di disegno va nello slot di default;
+ * lo slot "sotto" serve per il pannello di simulazione.
+ */
+interface MenuAperto {
+	nome: string;
+	voci: string[];
+	evidenzia?: string;
+}
+interface Props {
+	titolo?: string;
+	menu?: string[];
+	menuAperto?: MenuAperto;
+	strumento?: 'attributi' | 'stato' | 'transizione' | 'cancella' | null;
+	toolbar?: boolean;
+	schede?: string[];
+	schedaAttiva?: number;
+	altezza?: number;
+	caption?: string;
+}
+const {
+	titolo = 'JFLAP : (untitled1)',
+	menu = ['File', 'Input', 'Test', 'View', 'Convert', 'Help'],
+	menuAperto,
+	strumento = null,
+	toolbar = true,
+	schede = ['Editor'],
+	schedaAttiva = 0,
+	altezza,
+	caption,
+} = Astro.props;
+
+const strumenti = [
+	{ id: 'attributi', nome: 'Attribute Editor' },
+	{ id: 'stato', nome: 'State Creator' },
+	{ id: 'transizione', nome: 'Transition Creator' },
+	{ id: 'cancella', nome: 'Deleter' },
+];
+---
+
+<figure class="jf not-content">
+	<div class="jf-win">
+		<div class="jf-title">
+			<span class="jf-title-icon">J</span>
+			<span>{titolo}</span>
+			<span class="jf-title-btns"><i>–</i><i>□</i><i>×</i></span>
+		</div>
+		<div class="jf-menubar">
+			{
+				menu.map((m) => (
+					<span class:list={['jf-menu', { aperto: menuAperto?.nome === m }]}>
+						{m}
+						{menuAperto?.nome === m && (
+							<ul class="jf-dropdown">
+								{menuAperto.voci.map((v) =>
+									v === '---' ? (
+										<li class="sep" />
+									) : (
+										<li class:list={{ hl: v === menuAperto.evidenzia }}>{v}</li>
+									),
+								)}
+							</ul>
+						)}
+					</span>
+				))
+			}
+		</div>
+		{
+			schede.length > 0 && (
+				<div class="jf-tabs">
+					{schede.map((s, i) => (
+						<span class:list={['jf-tab', { attiva: i === schedaAttiva }]}>{s}</span>
+					))}
+				</div>
+			)
+		}
+		{
+			toolbar && (
+				<div class="jf-toolbar">
+					{strumenti.map((s) => (
+						<span class:list={['jf-tool', { attivo: strumento === s.id }]} title={s.nome}>
+							<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+								{s.id === 'attributi' && <path d="M6 3 L6 19 L10 15 L13 21 L15.5 20 L12.5 14 L18 14 Z" fill="#fff" stroke="#000" stroke-width="1.3" stroke-linejoin="round" />}
+								{s.id === 'stato' && (
+									<>
+										<circle cx="12" cy="12" r="8.5" fill="#ffff9a" stroke="#000" stroke-width="1.3" />
+										<text x="12" y="15.5" font-size="10" text-anchor="middle" font-family="Arial">q</text>
+									</>
+								)}
+								{s.id === 'transizione' && (
+									<>
+										<path d="M3 17 Q12 3 20 13" fill="none" stroke="#000" stroke-width="1.5" />
+										<path d="M20 13 L15.5 12 L19 8.5 Z" fill="#000" />
+									</>
+								)}
+								{s.id === 'cancella' && (
+									<>
+										<circle cx="12" cy="9.5" r="6.5" fill="#fff" stroke="#000" stroke-width="1.3" />
+										<rect x="8.5" y="14" width="7" height="4" fill="#fff" stroke="#000" stroke-width="1.3" />
+										<circle cx="9.6" cy="9" r="1.6" fill="#000" />
+										<circle cx="14.4" cy="9" r="1.6" fill="#000" />
+										<path d="M4 21 L20 17 M4 17 L20 21" stroke="#000" stroke-width="1.3" />
+									</>
+								)}
+							</svg>
+						</span>
+					))}
+					<span class="jf-tool-sep" />
+					<span class="jf-tool" title="Undo">
+						<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+							<path d="M9 7 H15 A5 5 0 0 1 15 17 H8" fill="none" stroke="#000" stroke-width="1.6" />
+							<path d="M10 3 L5 7 L10 11 Z" fill="#000" />
+						</svg>
+					</span>
+					<span class="jf-tool" title="Redo">
+						<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+							<path d="M15 7 H9 A5 5 0 0 0 9 17 H16" fill="none" stroke="#000" stroke-width="1.6" />
+							<path d="M14 3 L19 7 L14 11 Z" fill="#000" />
+						</svg>
+					</span>
+				</div>
+			)
+		}
+		<div class="jf-canvas" style={altezza ? `min-height:${altezza}px` : undefined}>
+			<slot />
+		</div>
+		{Astro.slots.has('sotto') && <div class="jf-sotto"><slot name="sotto" /></div>}
+	</div>
+	{caption && <figcaption set:html={caption} />}
+</figure>
+
+<style>
+	.jf {
+		margin: 1.75rem 0;
+	}
+	.jf-win {
+		/* finestra "fotografata": colori fissi, uguali nei due temi */
+		--sl-color-white: #111;
+		--sl-color-bg: #fff;
+		--sl-color-hairline: transparent;
+		--sl-color-accent: #2563eb;
+		--sl-color-accent-low: #dbe7ff;
+		--sl-color-text-accent: #1d4ed8;
+		--sl-color-gray-2: #444;
+		color: #111;
+		background: #fff;
+		border: 1px solid #8d8d8d;
+		border-radius: 8px;
+		overflow: hidden;
+		box-shadow: 0 10px 30px -12px rgb(0 0 0 / 0.45);
+		font-family: Arial, Helvetica, sans-serif;
+		font-size: 13px;
+		max-width: 46rem;
+		margin-inline: auto;
+	}
+	.jf-title {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		padding: 0.35rem 0.6rem;
+		background: linear-gradient(#f4f4f4, #dcdcdc);
+		border-bottom: 1px solid #b5b5b5;
+		font-size: 12.5px;
+	}
+	.jf-title-icon {
+		width: 16px;
+		height: 16px;
+		display: grid;
+		place-items: center;
+		background: #c62828;
+		color: #fff;
+		font-weight: 700;
+		font-size: 11px;
+		border-radius: 3px;
+	}
+	.jf-title-btns {
+		margin-left: auto;
+		display: flex;
+		gap: 0.9rem;
+		font-style: normal;
+		color: #444;
+	}
+	.jf-title-btns i {
+		font-style: normal;
+	}
+	.jf-menubar {
+		display: flex;
+		gap: 0.15rem;
+		padding: 0.15rem 0.3rem;
+		background: #eeeeee;
+		border-bottom: 1px solid #cfcfcf;
+		position: relative;
+		z-index: 2;
+		flex-wrap: wrap;
+	}
+	.jf-menu {
+		position: relative;
+		padding: 0.2rem 0.55rem;
+	}
+	.jf-menu.aperto {
+		background: #b8cfe5;
+		outline: 1px solid #7a9cc0;
+	}
+	.jf-dropdown {
+		position: absolute;
+		top: 100%;
+		left: -1px;
+		margin: 0;
+		padding: 0.2rem 0;
+		list-style: none;
+		background: #f7f7f7;
+		border: 1px solid #8d8d8d;
+		box-shadow: 3px 4px 10px -3px rgb(0 0 0 / 0.35);
+		white-space: nowrap;
+		min-width: 12rem;
+	}
+	.jf-dropdown li {
+		padding: 0.28rem 1.4rem 0.28rem 1rem;
+		margin: 0;
+	}
+	.jf-dropdown li.hl {
+		background: #b8cfe5;
+		font-weight: 700;
+	}
+	.jf-dropdown li.sep {
+		padding: 0;
+		margin: 0.2rem 0;
+		border-top: 1px solid #cfcfcf;
+	}
+	.jf-tabs {
+		display: flex;
+		gap: 2px;
+		padding: 0.3rem 0.4rem 0;
+		background: #eeeeee;
+		border-bottom: 1px solid #aaa;
+	}
+	.jf-tab {
+		padding: 0.22rem 0.8rem;
+		border: 1px solid #aaa;
+		border-bottom: none;
+		border-radius: 5px 5px 0 0;
+		background: #dedede;
+		font-size: 12px;
+	}
+	.jf-tab.attiva {
+		background: #fff;
+		position: relative;
+		top: 1px;
+	}
+	.jf-toolbar {
+		display: flex;
+		align-items: center;
+		gap: 0.25rem;
+		padding: 0.3rem 0.4rem;
+		background: #eeeeee;
+		border-bottom: 1px solid #cfcfcf;
+	}
+	.jf-tool {
+		display: grid;
+		place-items: center;
+		width: 32px;
+		height: 30px;
+		border: 1px solid transparent;
+		border-radius: 3px;
+	}
+	.jf-tool.attivo {
+		background: #c7d6e8;
+		border-color: #6d8db3;
+		box-shadow: inset 1px 1px 3px rgb(0 0 0 / 0.25);
+	}
+	.jf-tool-sep {
+		width: 1px;
+		height: 24px;
+		background: #bbb;
+		margin: 0 0.3rem;
+	}
+	.jf-canvas {
+		background: #fff;
+		position: relative;
+		z-index: 1;
+	}
+	.jf-canvas :global(.automa) {
+		margin: 0 !important;
+	}
+	.jf-sotto {
+		border-top: 3px double #aaa;
+		background: #f2f2f2;
+		padding: 0.6rem;
+	}
+	figcaption {
+		margin-top: 0.75rem;
+		text-align: center;
+		font-size: var(--sl-text-sm);
+		color: var(--sl-color-gray-2);
+	}
+</style>

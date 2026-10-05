@@ -1,0 +1,118 @@
+---
+title: Cos'è JFLAP e come si installa
+description: Il programma JFLAP, cosa permette di fare, come scaricarlo, avviarlo su Windows, macOS e Linux e come prepararlo per il laboratorio.
+sidebar:
+  order: 1
+---
+
+import JflapMenuPrincipale from '~/components/JflapMenuPrincipale.astro';
+import { Aside, Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+
+## Che cos'è JFLAP
+
+**JFLAP** (*Java Formal Languages and Automata Package*) è un programma gratuito, sviluppato alla **Duke University** dal gruppo della professoressa **Susan H. Rodger**, pensato apposta per **insegnare e imparare** la teoria degli automi e dei linguaggi formali. È usato in moltissime scuole e università di tutto il mondo.
+
+Con JFLAP si può:
+
+- **disegnare** automi con il mouse (stati, transizioni, stato iniziale e finali);
+- **simulare** l'automa su una stringa, passo per passo, vedendo gli stati attivi;
+- **collaudare** decine di stringhe in un colpo solo;
+- **trasformare** gli automi: da NFA a DFA, minimizzazione, da automa a espressione regolare e viceversa, da automa a grammatica;
+- **confrontare** due automi per scoprire se riconoscono lo stesso linguaggio;
+- lavorare con **macchine di Mealy e di Moore**, **automi a pila**, **macchine di Turing**, **grammatiche** e altro ancora.
+
+La versione di riferimento è la **7.1**. È scritta in **Java**, quindi funziona su Windows, macOS e Linux, a patto di avere Java installato.
+
+<Aside type="tip" title="Perché usarlo a scuola">
+JFLAP risolve il problema principale di questi argomenti: **verificare se un automa è giusto**. Disegnare a mano è indispensabile per capire, ma il collaudo a mano è lento e pieno di sviste. Con JFLAP gli alunni ricevono subito un riscontro (la stringa è accettata o no?) e possono correggersi da soli. Inoltre le conversioni guidate "passo per passo" controllano ogni mossa dello studente.
+</Aside>
+
+---
+
+## Installazione
+
+### 1 · Installare Java
+
+JFLAP ha bisogno di **Java** (versione 8 o successiva). Per controllare se è già installato, aprire un terminale (su Windows: tasto Windows, scrivere `cmd`, Invio) e digitare:
+
+```bash
+java -version
+```
+
+Se compare un messaggio con il numero di versione, Java c'è. Se invece compare un errore del tipo *"java non è riconosciuto come comando"*, bisogna installarlo. Una distribuzione gratuita e affidabile è **Eclipse Temurin** (sito *adoptium.net*): si sceglie la versione **LTS** per il proprio sistema operativo e si installa con le opzioni predefinite. Durante l'installazione su Windows conviene attivare l'opzione che **associa i file `.jar`** a Java.
+
+### 2 · Scaricare JFLAP
+
+<Steps>
+
+1. Andare sul sito ufficiale **www.jflap.org** e cliccare su **Get JFLAP**.
+2. Compilare il breve modulo richiesto (nome, email, istituzione): è gratuito, serve agli autori per sapere chi usa il programma.
+3. Scaricare il file **`JFLAP7.1.jar`**. Non c'è niente da installare: il file `.jar` **è** il programma.
+4. Salvarlo in una cartella comoda (per esempio `Documenti\JFLAP`).
+
+</Steps>
+
+### 3 · Avviare JFLAP
+
+<Tabs>
+<TabItem label="Windows">
+
+- Nella maggior parte dei casi basta un **doppio clic** su `JFLAP7.1.jar`.
+- Se il file si apre con un programma di compressione (WinRAR, 7-Zip…) invece che con Java: tasto destro → **Apri con** → **Java(TM) Platform SE binary** (oppure *OpenJDK Platform binary*).
+- In alternativa, dal terminale, nella cartella del file:
+
+```bash
+java -jar JFLAP7.1.jar
+```
+
+- Per comodità si può creare nella stessa cartella un file `JFLAP.bat` con dentro la riga `start javaw -jar JFLAP7.1.jar` e avviare il programma con un doppio clic su quello.
+
+</TabItem>
+<TabItem label="macOS">
+
+- Doppio clic su `JFLAP7.1.jar`.
+- Se macOS blocca l'apertura perché il programma proviene da uno "sviluppatore non identificato": **tasto destro** (o Ctrl+clic) sul file → **Apri** → confermare **Apri**. Va fatto solo la prima volta.
+- In alternativa, dal Terminale: `java -jar JFLAP7.1.jar`.
+
+</TabItem>
+<TabItem label="Linux">
+
+Dal terminale, nella cartella del file:
+
+```bash
+java -jar JFLAP7.1.jar
+```
+
+Se Java manca, si installa dal gestore pacchetti (per esempio `sudo apt install default-jre` su Debian/Ubuntu).
+
+</TabItem>
+</Tabs>
+
+All'avvio compare la **finestra principale**, con un pulsante per ogni tipo di oggetto che si può creare:
+
+<JflapMenuPrincipale caption="La finestra principale di JFLAP 7.1 (riproduzione schematica). Per gli automi a stati finiti si usa il primo pulsante, <strong>Finite Automaton</strong>." />
+
+| Pulsante | Cosa crea | Dove ne parliamo |
+| :-- | :-- | :-- |
+| **Finite Automaton** | un automa a stati finiti (DFA o NFA, anche con λ-transizioni) | quasi tutti i capitoli di questa sezione |
+| **Mealy Machine** | una macchina di Mealy | [Mealy e Moore in JFLAP](/appunti-sir-terza/jflap/08-mealy-e-moore/) |
+| **Moore Machine** | una macchina di Moore | [Mealy e Moore in JFLAP](/appunti-sir-terza/jflap/08-mealy-e-moore/) |
+| **Pushdown Automaton** | un automa a pila | (approfondimento) |
+| **Turing Machine**, **Multi-Tape Turing Machine** | macchine di Turing | (approfondimento) |
+| **Grammar** | una grammatica formale | (cenni) |
+| **L-System** | sistemi di Lindenmayer, per disegnare frattali e piante | (curiosità) |
+| **Regular Expression** | un'espressione regolare | [Espressioni regolari in JFLAP](/appunti-sir-terza/jflap/07-espressioni-regolari-e-grammatiche/) |
+| **Regular Pumping Lemma**, **Context-Free Pumping Lemma** | i "giochi" del pumping lemma | (approfondimento) |
+
+Dalla finestra principale si possono anche **aprire file salvati** (menu **File → Open…**) e cambiare le **preferenze** (menu **Preferences**).
+
+---
+
+## Preparare JFLAP per il laboratorio
+
+<Aside type="note" title="Consigli per il docente">
+- **Una copia sola per tutti.** Il file `JFLAP7.1.jar` si può mettere in una cartella condivisa della rete della scuola o copiare su ogni postazione: non richiede installazione né permessi di amministratore (Java sì, quello va installato dal tecnico).
+- **ε invece di λ.** Se nei libri e alla lavagna si usa ε per la stringa vuota, conviene impostarlo anche in JFLAP: **Preferences → Preferences** nella finestra principale (opzione *Set the Empty String Character*). Le preferenze sono salvate nel file `jflapPreferences.xml`, che va copiato insieme al `.jar` se si vuole la stessa impostazione su tutte le postazioni.
+- **Schermi ad alta risoluzione.** Su alcuni portatili Windows con schermo ad alta risoluzione la finestra di JFLAP appare minuscola. Rimedio: tasto destro sul file `javaw.exe` (o sul collegamento usato per avviare JFLAP) → **Proprietà** → **Compatibilità** → **Modifica impostazioni DPI elevati** → spuntare *Ignora comportamento ridimensionamento DPI elevati* e scegliere **Sistema**.
+- **Dove salvare.** Abituare gli alunni a salvare ogni esercizio con un nome parlante (`es03-finisce-con-01.jff`) in una cartella personale: i file `.jff` sono piccolissimi e si consegnano facilmente su piattaforme come Classroom o Teams.
+</Aside>

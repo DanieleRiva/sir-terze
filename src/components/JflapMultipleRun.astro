@@ -1,0 +1,85 @@
+---
+/** Tabella "Multiple Run" di JFLAP: una riga per stringa, con il risultato */
+interface Riga {
+	input: string;
+	result?: string;
+}
+interface Props {
+	righe: Riga[];
+}
+const { righe } = Astro.props;
+const pulsanti = ['Load Inputs', 'Run Inputs', 'Clear', 'Enter Lambda', 'View Trace'];
+---
+
+<div class="jfr">
+	<table>
+		<thead>
+			<tr><th>Input</th><th>Result</th></tr>
+		</thead>
+		<tbody>
+			{
+				righe.map((r) => (
+					<tr>
+						<td>{r.input === '' ? <i>(vuota)</i> : r.input}</td>
+						<td class:list={{ acc: r.result === 'Accept', rej: r.result === 'Reject' }}>{r.result ?? ''}</td>
+					</tr>
+				))
+			}
+			<tr><td>&nbsp;</td><td /></tr>
+		</tbody>
+	</table>
+	<div class="jfr-btns">{pulsanti.map((p) => <span>{p}</span>)}</div>
+</div>
+
+<style>
+	.jfr {
+		font-family: Arial, Helvetica, sans-serif;
+		font-size: 13px;
+		color: #111;
+		padding: 0.6rem;
+		background: #f2f2f2;
+	}
+	table {
+		width: 100%;
+		border-collapse: collapse;
+		background: #fff;
+		margin: 0;
+		display: table;
+	}
+	th,
+	td {
+		border: 1px solid #b5b5b5;
+		padding: 0.25rem 0.5rem;
+		text-align: left;
+		color: #111;
+		background: #fff;
+	}
+	th {
+		background: linear-gradient(#fafafa, #e0e0e0);
+		font-weight: 400;
+	}
+	td {
+		font-family: 'Courier New', monospace;
+	}
+	td.acc {
+		color: #0a7a0a;
+		font-weight: 700;
+	}
+	td.rej {
+		color: #b00000;
+		font-weight: 700;
+	}
+	.jfr-btns {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.35rem;
+		justify-content: center;
+		margin-top: 0.6rem;
+	}
+	.jfr-btns span {
+		padding: 0.25rem 0.7rem;
+		border: 1px solid #9a9a9a;
+		border-radius: 3px;
+		background: linear-gradient(#ffffff, #e3e3e3);
+	}
+</style>

@@ -1,0 +1,103 @@
+---
+title: Scheda riassuntiva
+description: Tutto l'essenziale in una pagina - definizioni, simboli, algoritmi e comandi JFLAP. Da stampare o da tenere aperta durante gli esercizi.
+sidebar:
+  order: 1
+---
+
+## Definizioni
+
+| Concetto | Definizione |
+| :-- | :-- |
+| **Alfabeto** Σ | insieme finito e non vuoto di simboli |
+| **Stringa** | sequenza finita di simboli; ε (o λ) è la stringa vuota, \|ε\| = 0 |
+| **Σ\*** | tutte le stringhe su Σ, compresa ε |
+| **Linguaggio** | un insieme di stringhe, cioè un sottoinsieme di Σ\* |
+| **DFA** | (Q, Σ, δ, q₀, F) con δ : Q × Σ → Q (una sola transizione per stato e simbolo) |
+| **NFA** | (Q, Σ, δ, q₀, F) con δ : Q × Σ → 𝒫(Q) (zero, una o più transizioni) |
+| **ε-NFA** | NFA con transizioni che non leggono simboli |
+| **Accettazione (DFA)** | la stringa porta dallo stato iniziale a uno stato finale |
+| **Accettazione (NFA)** | **almeno un** percorso porta a uno stato finale |
+| **Linguaggio regolare** | riconosciuto da un automa a stati finiti ⇔ descritto da un'espressione regolare |
+| **Moore** | (Q, Σ, Γ, δ, λ, q₀) con λ : Q → Γ (uscita sugli stati) |
+| **Mealy** | (Q, Σ, Γ, δ, λ, q₀) con λ : Q × Σ → Γ (uscita sulle transizioni) |
+
+## Simboli nei diagrammi
+
+| Disegno | Significato |
+| :-- | :-- |
+| cerchio | stato |
+| doppio cerchio | stato finale |
+| freccia entrante dal nulla (in JFLAP: triangolo) | stato iniziale |
+| freccia con etichetta `a` | transizione con il simbolo `a` |
+| etichetta `ε` (in JFLAP `λ`) | transizione vuota |
+| `a/1` (in JFLAP `a;1`) | Mealy: legge `a`, produce `1` |
+| `S/1` nello stato (in JFLAP: riquadro in alto a destra) | Moore: lo stato produce `1` |
+
+## Progettare un DFA in 6 passi
+
+1. Esempi di stringhe da accettare e da rifiutare (compresa ε).
+2. Che cosa devo **ricordare**? Ogni possibile valore → uno stato.
+3. Nomi parlanti per gli stati.
+4. Stato iniziale = situazione prima di leggere.
+5. Tabella completa: ogni stato × ogni simbolo.
+6. Stati finali e collaudo.
+
+## Algoritmi
+
+| Trasformazione | Idea chiave |
+| :-- | :-- |
+| **Completamento** | aggiungere lo stato pozzo per le transizioni mancanti |
+| **Complemento** | DFA **completo**, poi scambiare finali e non finali |
+| **Intersezione / unione** | costruzione prodotto: stati = coppie di stati |
+| **ε-chiusura** | stati raggiungibili con sole ε-transizioni (incluso sé stesso) |
+| **NFA → DFA** | ogni stato del DFA è un insieme di stati dell'NFA; finali gli insiemi con almeno un finale |
+| **Minimizzazione** | eliminare irraggiungibili; partire da &#123;finali&#125;, &#123;non finali&#125; e dividere i gruppi |
+| **RE → NFA** | Thompson: schemi per simbolo, unione, concatenazione, stella, uniti da ε |
+| **Automa → RE** | eliminazione degli stati, etichette p→q→r diventano R₁ R₂\* R₃ |
+| **Moore → Mealy** | l'uscita dello stato d'arrivo va sulla freccia |
+| **Mealy → Moore** | sdoppiare gli stati in cui si entra con uscite diverse |
+
+## Espressioni regolari
+
+| Teoria / JFLAP | Programmazione | Significato |
+| :-- | :-- | :-- |
+| `a+b` | `a\|b` | unione |
+| `ab` | `ab` | concatenazione |
+| `a*` | `a*` | zero o più |
+| `aa*` | `a+` | una o più |
+| `a+ε` (JFLAP: `a+!`) | `a?` | facoltativo |
+| — | `[abc]`, `[0-9]`, `.` | classi di caratteri |
+
+Precedenza: **stella** > **concatenazione** > **unione**.
+
+## JFLAP: dove trovare cosa
+
+| Voglio… | Comando |
+| :-- | :-- |
+| creare un automa | finestra principale → **Finite Automaton** |
+| stato iniziale / finale | Attribute Editor → clic destro sullo stato → **Initial** / **Final** |
+| transizione vuota | Transition Creator, casella vuota, Invio |
+| anello | Transition Creator, clic e rilascio sullo stesso stato |
+| simulare passo passo | **Input → Step with Closure…** |
+| provare tante stringhe | **Input → Multiple Run** (stringa vuota: **Enter Lambda**) |
+| vedere il non determinismo | **Test → Highlight Nondeterminism** |
+| confrontare due automi | **Test → Compare Equivalence** |
+| NFA → DFA | **Convert → Convert to DFA** |
+| aggiungere il pozzo | **Convert → Add Trap State to DFA** |
+| minimizzare | **Convert → Minimize DFA** |
+| automa → espressione regolare | **Convert → Convert FA to RE** |
+| espressione regolare → NFA | finestra principale → **Regular Expression** → **Convert → Convert to NFA** |
+| unire due automi | **Convert → Combine Automata** |
+| riordinare il disegno | menu **View** |
+| usare ε invece di λ | finestra principale → **Preferences** |
+
+## Errori da evitare
+
+- Dimenticare lo stato iniziale, o metterne due.
+- Stato iniziale finale per sbaglio → ε accettata.
+- Scrivere `0,1` su una transizione in JFLAP (va fatta una transizione per simbolo).
+- Spazi dentro le espressioni regolari in JFLAP.
+- Complementare un DFA non completo.
+- Pensare che un automa accetti "quando passa" da uno stato finale: conta solo lo stato **alla fine** della stringa.
+- Collaudare solo con stringhe che devono essere accettate.

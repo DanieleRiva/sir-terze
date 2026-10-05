@@ -1,0 +1,139 @@
+---
+title: Macchine di Moore
+description: Automi in cui l'uscita è associata agli stati - definizione, come si leggono, esempi svolti (parità, rilevatore di sequenza, semaforo).
+sidebar:
+  order: 2
+---
+
+import Automa from '~/components/Automa.astro';
+import { Aside } from '@astrojs/starlight/components';
+
+## L'uscita sta negli stati
+
+In una **macchina di Moore** ogni stato ha associata un'**uscita**. Ogni volta che la macchina **entra** in uno stato, produce l'uscita di quello stato.
+
+Nei diagrammi l'uscita si scrive dentro lo stato, di solito separata dal nome con una barra: **S₀ / 0**. In questi appunti la troviamo scritta sotto al nome, in colore. In JFLAP compare in un riquadro in alto a destra dello stato.
+
+<Aside type="note" title="Quante uscite produce?">
+Per convenzione una macchina di Moore produce un'uscita **anche all'inizio**, quella dello stato iniziale, prima di leggere qualsiasi input. Leggendo una stringa di *n* simboli produce quindi **n + 1** uscite. JFLAP segue questa convenzione. Alcuni libri invece non considerano l'uscita iniziale: l'importante è dichiarare quale convenzione si usa.
+</Aside>
+
+---
+
+## Esempio 1 · Il bit di parità
+
+Σ = &#123;0, 1&#125;, Γ = &#123;0, 1&#125;. Vogliamo una macchina che, dopo ogni bit letto, dica se il numero di `1` letti **fino a quel momento** è dispari (uscita `1`) o pari (uscita `0`). È il principio del **bit di parità** usato nella trasmissione dei dati per scoprire gli errori.
+
+<Automa
+	r={26}
+	states={[
+		{ id: 'P', x: 80, y: 90, initial: true, output: '0' },
+		{ id: 'D', x: 280, y: 90, output: '1' },
+	]}
+	transitions={[
+		{ from: 'P', to: 'D', label: '1' },
+		{ from: 'D', to: 'P', label: '1' },
+		{ from: 'P', to: 'P', label: '0' },
+		{ from: 'D', to: 'D', label: '0' },
+	]}
+	simula="1101"
+	caption="Macchina di Moore per la parità: P (pari) produce 0, D (dispari) produce 1."
+/>
+
+Con l'input `1101`:
+
+| Passo | inizio | 1 | 1 | 0 | 1 |
+| :-- | :-: | :-: | :-: | :-: | :-: |
+| Stato | P | D | P | P | D |
+| Uscita | 0 | 1 | 0 | 0 | 1 |
+
+Uscita complessiva: `01001` (cinque simboli per quattro input, perché c'è anche quella iniziale).
+
+È lo stesso automa del "numero pari di `a`" visto come riconoscitore: la differenza è che invece di dare un solo verdetto alla fine, ne dà uno **dopo ogni simbolo**.
+
+---
+
+## Esempio 2 · Rilevatore della sequenza `11`
+
+Σ = Γ = &#123;0, 1&#125;. La macchina deve produrre `1` ogni volta che gli **ultimi due bit letti sono `11`**, altrimenti `0`. Le sequenze possono sovrapporsi: con `111` vogliamo uscita `1` sia sul secondo sia sul terzo bit.
+
+Cosa ricordare? Quanti `1` consecutivi abbiamo appena letto: nessuno, uno, oppure almeno due. Siccome l'uscita dipende solo dallo stato, lo stato "almeno due `1`" sarà quello con uscita `1`.
+
+| Stato | Significato | Uscita | con `0` | con `1` |
+| :-- | :-- | :-: | :-: | :-: |
+| → S0 | l'ultimo bit non è `1` (o non ho letto nulla) | 0 | S0 | S1 |
+| S1 | ho letto un solo `1` | 0 | S0 | S2 |
+| S2 | ho letto almeno due `1` di fila | **1** | S0 | S2 |
+
+<Automa
+	r={26}
+	states={[
+		{ id: 'S0', x: 80, y: 100, initial: true, output: '0' },
+		{ id: 'S1', x: 250, y: 100, output: '0' },
+		{ id: 'S2', x: 420, y: 100, output: '1' },
+	]}
+	transitions={[
+		{ from: 'S0', to: 'S0', label: '0' },
+		{ from: 'S0', to: 'S1', label: '1' },
+		{ from: 'S1', to: 'S0', label: '0' },
+		{ from: 'S1', to: 'S2', label: '1' },
+		{ from: 'S2', to: 'S2', label: '1' },
+		{ from: 'S2', to: 'S0', label: '0', bend: 50 },
+	]}
+	simula="0110111"
+	caption="Rilevatore di <code>11</code> come macchina di Moore: servono tre stati."
+/>
+
+Con l'input `0110111`:
+
+| Input | — | 0 | 1 | 1 | 0 | 1 | 1 | 1 |
+| :-- | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+| Stato | S0 | S0 | S1 | S2 | S0 | S1 | S2 | S2 |
+| Uscita | 0 | 0 | 0 | **1** | 0 | 0 | **1** | **1** |
+
+Uscita: `00010011`.
+
+---
+
+## Esempio 3 · Il semaforo con chiamata pedonale
+
+Un semaforo per le auto resta **verde** finché un pedone non preme il pulsante di chiamata. Poi passa al **giallo** e al **rosso**; dopo il rosso torna verde. Gli input sono due eventi:
+
+- `p`: il pedone ha premuto il pulsante;
+- `t`: è scaduto il timer della fase corrente.
+
+L'uscita è la **luce accesa**, quindi dipende solo dallo stato: un caso perfetto per Moore.
+
+<Automa
+	r={30}
+	states={[
+		{ id: 'V', label: 'Verde', x: 90, y: 110, initial: true, output: 'V' },
+		{ id: 'G', label: 'Giallo', x: 290, y: 110, output: 'G' },
+		{ id: 'R', label: 'Rosso', x: 490, y: 110, output: 'R' },
+	]}
+	transitions={[
+		{ from: 'V', to: 'V', label: 't' },
+		{ from: 'V', to: 'G', label: 'p' },
+		{ from: 'G', to: 'R', label: 't' },
+		{ from: 'G', to: 'G', label: 'p' },
+		{ from: 'R', to: 'R', label: 'p' },
+		{ from: 'R', to: 'V', label: 't', bend: 60 },
+	]}
+	simula="tptpt"
+	caption="Semaforo pedonale (lato auto). Prova la sequenza <code>tptpt</code>."
+/>
+
+Osservazioni utili da fare in classe:
+
+- la tabella deve essere **completa**: cosa succede se il pedone preme il pulsante quando è già giallo o rosso? (Niente: anello `p`.) E se scade il timer quando è verde e nessuno ha chiamato? (Resta verde: anello `t`.)
+- un semaforo reale ha più stati: per esempio un **verde minimo** garantito alle auto anche se il pedone preme subito. È un ottimo esercizio di estensione: vedi la sezione [Progetti](/appunti-sir-terza/progetti/01-progetti-di-laboratorio/).
+
+---
+
+## Riepilogo
+
+- In una **macchina di Moore** l'uscita è associata agli **stati**: λ : Q → Γ.
+- La macchina produce l'uscita dello stato in cui **entra**; per convenzione anche quella dello stato iniziale.
+- Con *n* simboli di input si ottengono *n* + 1 simboli di output.
+- Non ci sono stati finali.
+- È il modello naturale quando l'uscita rappresenta una **condizione stabile** del sistema (la luce accesa, il motore acceso, la porta aperta).

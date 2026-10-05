@@ -1,0 +1,99 @@
+---
+title: Guida per il docente
+description: Una proposta di percorso didattico con tempi, sequenza delle lezioni, misconcezioni frequenti, idee per le verifiche e una verifica di esempio con soluzioni.
+sidebar:
+  order: 3
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Questa pagina raccoglie suggerimenti per **insegnare** gli argomenti della raccolta in una classe terza. Sono proposte, da adattare al tempo disponibile e alla classe.
+
+---
+
+## Proposta di percorso
+
+Ipotesi: **3 ore settimanali**, di cui una o due in laboratorio. Il percorso completo richiede circa **8 settimane**; una versione ridotta (senza capitoli 4 e 6) circa 5.
+
+| Settimana | Teoria (aula) | Laboratorio (JFLAP) | Pagine |
+| :-: | :-- | :-- | :-- |
+| 1 | Stati, eventi, transizioni. Attività "unplugged" | Installazione, [interfaccia](/appunti-sir-terza/jflap/02-interfaccia/) | 1.1, 1.2 |
+| 2 | DFA: definizione, esecuzione, tabella | [Scheda 1](/appunti-sir-terza/esercizi/06-schede-di-laboratorio/#scheda-1--il-primo-dfa) | 2.1, 2.2 |
+| 3 | Progettare DFA; stato pozzo; complemento | [Scheda 2](/appunti-sir-terza/esercizi/06-schede-di-laboratorio/#scheda-2--progettare-e-verificare) | 2.3 |
+| 4 | NFA ed ε-transizioni | [Scheda 3](/appunti-sir-terza/esercizi/06-schede-di-laboratorio/#scheda-3--non-determinismo-e-conversione), prima parte | 3.1, 3.2 |
+| 5 | Da NFA a DFA; minimizzazione | Scheda 3 (seconda parte) e [scheda 4](/appunti-sir-terza/esercizi/06-schede-di-laboratorio/#scheda-4--minimizzazione-e-operazioni) | 3.3, 4 |
+| 6 | Mealy e Moore; reti sequenziali | [Scheda 6](/appunti-sir-terza/esercizi/06-schede-di-laboratorio/#scheda-6--macchine-con-uscita) | 5 |
+| 7 | Espressioni regolari; limiti degli automi | [Scheda 5](/appunti-sir-terza/esercizi/06-schede-di-laboratorio/#scheda-5--il-cerchio-di-kleene) | 6 |
+| 8 | Dall'automa al codice; TCP | Avvio dei [progetti](/appunti-sir-terza/progetti/01-progetti-di-laboratorio/) | 7 |
+
+<Aside type="tip" title="Il filo rosso">
+Conviene usare **pochi esempi ricorrenti** in tutto il percorso: "finisce con `01`" (DFA progettato → NFA → conversione → codice), "numero pari di `a`" (DFA → espressione regolare → Moore della parità), "multipli di 2 o 3" (ε-NFA → DFA → minimizzazione). Ritrovare lo stesso automa con strumenti diversi aiuta gli alunni a vedere che sono facce della stessa teoria. La raccolta è costruita proprio così.
+</Aside>
+
+---
+
+## Le misconcezioni più frequenti
+
+| Lo studente pensa che… | In realtà… | Come intervenire |
+| :-- | :-- | :-- |
+| l'automa accetti appena passa da uno stato finale | conta solo lo stato **alla fine** della stringa | simulare `011` sul DFA "finisce con `01`": passa da q₂ ma finisce in q₀ |
+| ε sia uno spazio, o lo zero | ε è la stringa di lunghezza zero | chiedere sempre "e la stringa vuota?" in ogni esercizio |
+| uno stato possa essere solo iniziale o solo finale | può essere entrambe le cose | DFA "numero pari di `a`" |
+| in un DFA si possa "tornare indietro" sulla stringa | la lettura è solo da sinistra a destra, un simbolo alla volta | attività unplugged con le carte coperte |
+| per "contiene `aba`" si torni sempre all'inizio dopo un errore | si torna al **prefisso più lungo** ancora utile | far trovare la stringa che fa sbagliare (`aaba`) |
+| l'NFA "sceglie a caso" | l'NFA accetta se **esiste** una scelta giusta | albero delle computazioni; simulazione con gli insiemi in JFLAP |
+| il complemento si faccia sempre scambiando i finali | solo su un DFA **completo** | l'esempio di `ba` con l'automa parziale |
+| `+` significhi "una o più volte" nelle espressioni regolari | in teoria e in JFLAP è l'unione | tabella di confronto teoria/programmazione |
+| più stati = automa "più preciso" | due automi equivalenti fanno la stessa cosa; il minimo è il migliore | Compare Equivalence tra un DFA ridondante e il minimo |
+
+---
+
+## Idee per la valutazione
+
+**Verifiche scritte.** Funzionano bene gli esercizi di questi tipi:
+
+- *leggere* un automa: dire se alcune stringhe sono accettate, descrivere il linguaggio a parole;
+- *progettare* un DFA da una descrizione a parole (con tabella e diagramma);
+- *trasformare*: costruzione per sottoinsiemi, minimizzazione, Mealy ↔ Moore;
+- *spiegare*: domande aperte brevi (perché serve il pozzo per il complemento? perché aⁿbⁿ non è regolare?).
+
+**Prove pratiche in laboratorio.** Si assegnano 2–3 linguaggi; gli alunni consegnano i `.jff`. La correzione con **Compare Equivalence** è rapidissima e oggettiva; il voto può tenere conto anche dell'ordine del diagramma, delle etichette sugli stati e del file di prove.
+
+**Compito di realtà.** Modellare un oggetto quotidiano (ascensore, microonde, app) e presentarlo con JFLAP; oppure uno dei [progetti](/appunti-sir-terza/progetti/01-progetti-di-laboratorio/).
+
+---
+
+## Verifica di esempio (1 ora)
+
+1. **(2 punti)** Σ = &#123;a, b&#125;. Scrivere tutte le stringhe di lunghezza 2 che contengono almeno una `b`. Quante sono le stringhe di lunghezza 4?
+2. **(3 punti)** Dato il DFA con tabella
+
+   | δ | a | b |
+   | :-- | :-: | :-: |
+   | → q₀ | q₁ | q₀ |
+   | q₁ | q₁ | q₂ |
+   | \* q₂ | q₁ | q₀ |
+
+   disegnarlo, dire se accetta `aab`, `abb`, ε, e descrivere a parole il linguaggio.
+3. **(3 punti)** Progettare un DFA che accetta le stringhe su &#123;0, 1&#125; con un numero di `1` multiplo di 3. Scrivere tabella e diagramma.
+4. **(1 punto)** Spiegare con un esempio perché, per fare il complemento, il DFA deve essere completo.
+5. **(1 punto)** Disegnare una macchina di Mealy che, per ogni bit letto, produce `1` se è uguale al bit precedente e `0` altrimenti (al primo bit produce `0`).
+
+<details>
+<summary>Soluzioni</summary>
+
+1. `ab`, `ba`, `bb`. Le stringhe di lunghezza 4 sono 2⁴ = 16.
+2. `aab`: q₀ → q₁ → q₁ → q₂ **accettata**; `abb`: q₀ → q₁ → q₂ → q₀ **rifiutata**; ε: resta in q₀ **rifiutata**. Linguaggio: le stringhe che **finiscono con `ab`**.
+3. Tre stati R0 (iniziale e finale), R1, R2; con `0` si resta, con `1` si avanza ciclicamente R0 → R1 → R2 → R0.
+4. Esempio: "inizia con `a`" con il DFA parziale (q₀ —a→ q₁, anello `a, b` su q₁). Scambiando i finali, `ba` resta rifiutata (l'automa si blocca su `b`), ma `ba` non inizia con `a` e dovrebbe essere accettata dal complemento.
+5. Tre stati: I (iniziale, nessun bit letto), Z (ultimo bit 0), U (ultimo bit 1). I: `0/0` → Z, `1/0` → U. Z: `0/1` → Z, `1/0` → U. U: `0/0` → Z, `1/1` → U.
+
+</details>
+
+---
+
+## Accessibilità e inclusione
+
+- I diagrammi di questa raccolta sono disegnati con colori che funzionano sia con il tema chiaro sia con quello scuro e hanno sempre una didascalia testuale; ogni automa è accompagnato anche dalla **tabella di transizione**, che è leggibile con un sintetizzatore vocale.
+- Per gli alunni con DSA la **scheda riassuntiva** e la tabella "dove trovare cosa in JFLAP" funzionano bene come strumenti compensativi.
+- I simulatori nelle pagine permettono di esercitarsi anche da casa e da telefono, senza installare JFLAP.

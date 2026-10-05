@@ -1,0 +1,119 @@
+---
+title: Le ε-transizioni
+description: Transizioni che si attraversano senza leggere nessun simbolo, la ε-chiusura e come usarle per unire automi tra loro.
+sidebar:
+  order: 2
+---
+
+import Automa from '~/components/Automa.astro';
+import { Aside } from '@astrojs/starlight/components';
+
+## Muoversi senza leggere
+
+Gli NFA si possono rendere ancora più flessibili con le **ε-transizioni** (in JFLAP: **λ-transizioni**). Una ε-transizione è una freccia con etichetta **ε**: l'automa la può attraversare **senza leggere nessun simbolo**, "gratis", in qualunque momento.
+
+Un NFA con ε-transizioni si indica a volte con **ε-NFA**.
+
+Le ε-transizioni sono comodissime per **mettere insieme automi** già pronti. Vediamo un esempio.
+
+---
+
+## Esempio: multipli di 2 oppure di 3
+
+Σ = &#123;a&#125;. Vogliamo accettare le stringhe di sole `a` la cui lunghezza è **multipla di 2 oppure multipla di 3**: ε, `aa`, `aaa`, `aaaa`, `aaaaaa`, … ma non `a` né `aaaaa`.
+
+Sappiamo già costruire separatamente i due automi:
+
+- **lunghezza pari**: un ciclo di 2 stati (p₀, p₁);
+- **lunghezza multipla di 3**: un ciclo di 3 stati (r₀, r₁, r₂).
+
+Per l'unione basta aggiungere un nuovo stato iniziale **s** con due ε-transizioni, una verso ciascun automa. In pratica l'automa, all'inizio, "sceglie" senza leggere niente quale dei due tentativi fare (o meglio, li prova entrambi).
+
+<Automa
+	states={[
+		{ id: 's', x: 70, y: 170, initial: true },
+		{ id: 'p0', x: 210, y: 70, final: true },
+		{ id: 'p1', x: 370, y: 70 },
+		{ id: 'r0', x: 210, y: 280, final: true },
+		{ id: 'r1', x: 370, y: 230 },
+		{ id: 'r2', x: 370, y: 340 },
+	]}
+	transitions={[
+		{ from: 's', to: 'p0', label: 'ε' },
+		{ from: 's', to: 'r0', label: 'ε' },
+		{ from: 'p0', to: 'p1', label: 'a' },
+		{ from: 'p1', to: 'p0', label: 'a' },
+		{ from: 'r0', to: 'r1', label: 'a' },
+		{ from: 'r1', to: 'r2', label: 'a' },
+		{ from: 'r2', to: 'r0', label: 'a' },
+	]}
+	simula="aaaa"
+	caption="ε-NFA: lunghezza multipla di 2 (in alto) <strong>oppure</strong> di 3 (in basso)."
+/>
+
+---
+
+## La ε-chiusura
+
+Quando l'automa si trova in uno stato con delle ε-transizioni uscenti, in realtà si trova **contemporaneamente** anche negli stati raggiungibili attraverso di esse (perché le può attraversare gratis).
+
+> La **ε-chiusura** di uno stato *q*, scritta **ECLOSE(q)**, è l'insieme degli stati raggiungibili da *q* usando **solo ε-transizioni** (zero o più), compreso *q* stesso.
+
+Nel nostro esempio:
+
+- ECLOSE(s) = &#123; s, p₀, r₀ &#125;
+- ECLOSE(p₀) = &#123; p₀ &#125; (nessuna ε-transizione esce da p₀)
+
+Attenzione: le ε-transizioni possono essere **concatenate**. Se esistesse una ε-transizione da p₀ a un altro stato *t*, anche *t* farebbe parte di ECLOSE(s).
+
+La ε-chiusura di un **insieme** di stati è l'unione delle ε-chiusure dei suoi elementi.
+
+---
+
+## Simulare un ε-NFA
+
+La simulazione con gli insiemi funziona come per gli NFA, con un'aggiunta: **dopo ogni passo si calcola la ε-chiusura**.
+
+1. Insieme iniziale = ECLOSE(stato iniziale).
+2. Per ogni simbolo letto: si calcolano gli stati raggiungibili con quel simbolo, poi se ne fa la ε-chiusura.
+3. Alla fine si accetta se l'insieme contiene uno stato finale.
+
+Con la stringa `aaaa`:
+
+| Passo | Simbolo | Stati raggiunti col simbolo | Dopo la ε-chiusura | Finale? |
+| :-: | :-: | :-- | :-- | :-: |
+| inizio | — | — | &#123; s, p₀, r₀ &#125; | sì (ε accettata) |
+| 1 | `a` | &#123; p₁, r₁ &#125; | &#123; p₁, r₁ &#125; | no |
+| 2 | `a` | &#123; p₀, r₂ &#125; | &#123; p₀, r₂ &#125; | sì |
+| 3 | `a` | &#123; p₁, r₀ &#125; | &#123; p₁, r₀ &#125; | sì |
+| 4 | `a` | &#123; p₀, r₁ &#125; | &#123; p₀, r₁ &#125; | **sì → accettata** |
+
+La stringa `aaaaa` (lunghezza 5) arriverebbe in &#123; p₁, r₂ &#125;, che non contiene stati finali: rifiutata.
+
+<Aside type="caution" title="ε-transizioni in JFLAP">
+In JFLAP, per creare una transizione vuota basta **lasciare vuota** la casella dell'etichetta e premere Invio: comparirà il simbolo **λ**. Per simulare un automa con λ-transizioni si usa **Input → Step with Closure…**, che calcola automaticamente la chiusura a ogni passo.
+</Aside>
+
+---
+
+## A cosa servono davvero
+
+Le ε-transizioni non aumentano la potenza degli automi (ogni ε-NFA si trasforma in un DFA), ma rendono semplicissimo **comporre** automi.
+
+Dati due automi *A* e *B*:
+
+- **Unione** (L(A) oppure L(B)): nuovo stato iniziale con ε verso gli stati iniziali di *A* e di *B*, come nell'esempio.
+- **Concatenazione** (una stringa di L(A) seguita da una di L(B)): ε dagli stati finali di *A* verso lo stato iniziale di *B*; gli stati finali di *A* smettono di essere finali.
+- **Stella** (zero o più stringhe di L(A) in fila): nuovo stato iniziale finale con ε verso l'iniziale di *A*, ed ε dai finali di *A* di nuovo verso l'inizio.
+
+Sono esattamente le operazioni delle **espressioni regolari**: grazie alle ε-transizioni potremo trasformare qualunque espressione regolare in un automa ([capitolo 6](/appunti-sir-terza/lezioni/06-espressioni-regolari/02-automi-ed-espressioni-regolari/)).
+
+---
+
+## Riepilogo
+
+- Una **ε-transizione** si attraversa senza leggere simboli.
+- La **ε-chiusura** di uno stato è l'insieme degli stati raggiungibili con sole ε-transizioni, lui compreso.
+- Nella simulazione, dopo ogni passo (e all'inizio) si applica la ε-chiusura.
+- Le ε-transizioni servono a **comporre** automi: unione, concatenazione, stella.
+- In JFLAP si chiamano **λ-transizioni** e si creano lasciando vuota l'etichetta.

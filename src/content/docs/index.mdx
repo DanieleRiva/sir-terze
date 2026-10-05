@@ -1,0 +1,73 @@
+---
+title: Automi a Stati Finiti
+description: Una raccolta completa di spiegazioni sugli automi a stati finiti e sul loro uso con JFLAP - teoria, esempi, simulatori interattivi, laboratorio ed esercizi con soluzioni.
+template: splash
+hero:
+  tagline: Teoria, esempi interattivi e laboratorio con JFLAP.<br/>Appunti per le classi terze di Sistemi e Reti · Istituto Greppi · prof. Daniele Riva
+  image:
+    file: /public/favicon.png
+  actions:
+    - text: Inizia da qui
+      link: /appunti-sir-terza/lezioni/
+      icon: right-arrow
+    - text: Vai a JFLAP
+      link: /appunti-sir-terza/jflap/01-introduzione-e-installazione/
+      icon: external
+      variant: minimal
+---
+
+import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
+import Automa from '~/components/Automa.astro';
+
+## Prova subito
+
+Questo è un **automa a stati finiti**: riconosce le stringhe binarie che **finiscono con `01`**. Scrivi una stringa di `0` e `1` e premi **Passo ▶** per seguirlo simbolo per simbolo.
+
+<Automa
+	states={[
+		{ id: 'q0', x: 80, y: 100, initial: true },
+		{ id: 'q1', x: 240, y: 100 },
+		{ id: 'q2', x: 400, y: 100, final: true },
+	]}
+	transitions={[
+		{ from: 'q0', to: 'q0', label: '1' },
+		{ from: 'q0', to: 'q1', label: '0' },
+		{ from: 'q1', to: 'q1', label: '0' },
+		{ from: 'q1', to: 'q2', label: '1' },
+		{ from: 'q2', to: 'q1', label: '0' },
+		{ from: 'q2', to: 'q0', label: '1', bend: 45 },
+	]}
+	simula="1101"
+/>
+
+## Cosa trovi in questa raccolta
+
+<CardGrid stagger>
+	<Card title="Le basi" icon="open-book">
+		Stati, eventi e transizioni con esempi quotidiani; alfabeti, stringhe e linguaggi.
+	</Card>
+	<Card title="DFA e NFA" icon="random">
+		Automi deterministici e non deterministici, come progettarli, come convertirli e minimizzarli.
+	</Card>
+	<Card title="Mealy e Moore" icon="setting">
+		Automi con uscita: distributori, semafori, rilevatori di sequenze e il legame con i circuiti.
+	</Card>
+	<Card title="Espressioni regolari" icon="seti:config">
+		Dalle formule agli automi e ritorno; i limiti di ciò che un automa può riconoscere.
+	</Card>
+	<Card title="JFLAP in pratica" icon="laptop">
+		Installazione, interfaccia, simulazione, collaudo, conversioni, con file di esempio da scaricare.
+	</Card>
+	<Card title="Esercizi e progetti" icon="pencil">
+		Esercizi con soluzioni simulabili, schede di laboratorio pronte e progetti con griglia di valutazione.
+	</Card>
+</CardGrid>
+
+## Da dove cominciare
+
+<CardGrid>
+	<LinkCard title="Come usare questa raccolta" description="Percorso consigliato, prerequisiti e mappa dei capitoli." href="/appunti-sir-terza/lezioni/" />
+	<LinkCard title="Cos'è un automa a stati finiti" description="Il primo capitolo: l'idea di stato spiegata con la lampada e il tornello." href="/appunti-sir-terza/lezioni/01-basi/01-cos-e-un-automa/" />
+	<LinkCard title="Installare JFLAP" description="Download, avvio su Windows, macOS e Linux, consigli per il laboratorio." href="/appunti-sir-terza/jflap/01-introduzione-e-installazione/" />
+	<LinkCard title="Scheda riassuntiva" description="Tutto l'essenziale in una pagina, da stampare." href="/appunti-sir-terza/riferimenti/01-scheda-riassuntiva/" />
+</CardGrid>

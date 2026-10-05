@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><!--Created with JFLAP 7.1.--><structure>
+	<type>moore</type>
+	<automaton>
+		<!--The list of states.-->
+		<state id="0" name="Verde">
+			<x>172.5</x>
+			<y>197.5</y>
+			<initial/>
+			<output>V</output>
+		</state>
+		<state id="1" name="Giallo">
+			<x>422.5</x>
+			<y>197.5</y>
+			<output>G</output>
+		</state>
+		<state id="2" name="Rosso">
+			<x>672.5</x>
+			<y>197.5</y>
+			<output>R</output>
+		</state>
+		<!--The list of transitions.-->
+		<transition>
+			<from>0</from>
+			<to>0</to>
+			<read>t</read>
+			<transout>V</transout>
+		</transition>
+		<transition>
+			<from>0</from>
+			<to>1</to>
+			<read>p</read>
+			<transout>G</transout>
+		</transition>
+		<transition>
+			<from>1</from>
+			<to>2</to>
+			<read>t</read>
+			<transout>R</transout>
+		</transition>
+		<transition>
+			<from>1</from>
+			<to>1</to>
+			<read>p</read>
+			<transout>G</transout>
+		</transition>
+		<transition>
+			<from>2</from>
+			<to>2</to>
+			<read>p</read>
+			<transout>R</transout>
+		</transition>
+		<transition>
+			<from>2</from>
+			<to>0</to>
+			<read>t</read>
+			<transout>V</transout>
+		</transition>
+	</automaton>
+</structure>

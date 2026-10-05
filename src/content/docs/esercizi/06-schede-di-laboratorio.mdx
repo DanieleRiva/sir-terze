@@ -1,0 +1,113 @@
+---
+title: Schede di laboratorio con JFLAP
+description: Sei esercitazioni pronte da svolgere in laboratorio con JFLAP, con obiettivi, consegne, tempi e cosa consegnare.
+sidebar:
+  order: 6
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Sei schede di laboratorio, una per ogni blocco di teoria. Ognuna è pensata per **2 ore** di laboratorio. Le consegne si possono copiare e incollare direttamente su Classroom o Teams.
+
+<Aside type="tip" title="Organizzazione consigliata">
+- All'inizio di ogni scheda, 10 minuti di **ripasso alla lavagna** del concetto chiave.
+- Gli alunni lavorano **a coppie**: uno usa il mouse, l'altro controlla sulla carta; a metà tempo si scambiano.
+- Ogni automa si consegna come file `.jff` con nome `cognome-esNN.jff`.
+- In correzione, il docente usa **Compare Equivalence** con la propria soluzione e **Multiple Run** con un file di prove.
+</Aside>
+
+---
+
+## Scheda 1 · Il primo DFA
+
+**Obiettivi:** conoscere l'editor di JFLAP; costruire, simulare e collaudare un DFA.
+
+**Prerequisiti:** [DFA](/appunti-sir-terza/lezioni/02-dfa/01-definizione-dfa/), [tutorial JFLAP](/appunti-sir-terza/jflap/03-costruire-un-automa/).
+
+1. Seguire il tutorial e costruire il DFA "finisce con `01`". Salvarlo come `es01.jff`.
+2. Simularlo con **Step with Closure** sulle stringhe `0101` e `0110`, scrivendo sul quaderno la sequenza degli stati.
+3. Caricare con **Multiple Run → Load Inputs** il file [prove-finisce-con-01.txt](/appunti-sir-terza/jflap/prove-finisce-con-01.txt) e aggiungere la stringa vuota con **Enter Lambda**. Tutti i risultati sono corretti?
+4. Costruire e collaudare i DFA per "numero pari di `a`" (`es02.jff`) e "almeno una `a`" (`es03.jff`).
+5. **Sfida:** modificare `es02.jff` in modo che accetti le stringhe con un numero **dispari** di `a`. Quante modifiche servono?
+
+**Consegna:** `es01.jff`, `es02.jff`, `es03.jff`, risposta alla sfida.
+
+---
+
+## Scheda 2 · Progettare e verificare
+
+**Obiettivi:** applicare il metodo dei sei passi; verificare un automa con Compare Equivalence.
+
+**Prerequisiti:** [Come si progetta un DFA](/appunti-sir-terza/lezioni/02-dfa/03-progettare-un-dfa/).
+
+Per ognuno dei linguaggi seguenti: tabella su carta → automa in JFLAP → collaudo con Multiple Run (almeno 8 stringhe, metà da accettare e metà da rifiutare, compresa ε).
+
+1. Contiene `aba`.
+2. Non contiene `bb`.
+3. Esattamente due `a`.
+4. Numeri binari multipli di 3.
+
+Al termine il docente distribuisce i file delle soluzioni: aprirli e usare **Test → Compare Equivalence** per verificare i propri automi. Se un automa **non** è equivalente, trovare con Multiple Run una stringa su cui i due automi danno risultati diversi e correggere l'errore.
+
+**Consegna:** quattro file `.jff` corretti e, per ogni errore trovato, la stringa che lo ha rivelato.
+
+---
+
+## Scheda 3 · Non determinismo e conversione
+
+**Obiettivi:** costruire NFA e ε-NFA; osservare le configurazioni multiple; usare Convert to DFA.
+
+**Prerequisiti:** [capitolo 3](/appunti-sir-terza/lezioni/03-nfa/01-automi-non-deterministici/), [NFA in JFLAP](/appunti-sir-terza/jflap/05-nfa-e-conversione/).
+
+1. Costruire l'NFA "contiene `abb`" (4 stati). Verificare con **Highlight Nondeterminism** quali stati sono non deterministici.
+2. Simularlo con **Step with Closure** su `aabba`: quante configurazioni ci sono dopo ogni passo? Confrontare con la simulazione con gli insiemi fatta a mano.
+3. **Convert to DFA**, usando lo strumento **Expand Group on Terminal** e calcolando ogni insieme sul quaderno. Usare *State Expander* solo per controllare.
+4. Costruire l'ε-NFA dei multipli di 2 o 3 e convertirlo in DFA. Quanti stati ha il DFA?
+5. Verificare con **Compare Equivalence** che ogni NFA sia equivalente al suo DFA.
+
+**Consegna:** i due NFA e i due DFA ottenuti; le tabelle della costruzione fatte a mano (foto del quaderno).
+
+---
+
+## Scheda 4 · Minimizzazione e operazioni
+
+**Obiettivi:** minimizzare un DFA; costruire unioni con Combine Automata; complemento.
+
+**Prerequisiti:** [capitolo 4](/appunti-sir-terza/lezioni/04-minimizzazione/01-minimizzare-un-dfa/), [Minimizzare in JFLAP](/appunti-sir-terza/jflap/06-minimizzare-e-confrontare/).
+
+1. Aprire [09-dfa-da-minimizzare.jff](/appunti-sir-terza/jflap/09-dfa-da-minimizzare.jff). Individuare lo stato irraggiungibile e cancellarlo.
+2. Minimizzare l'automa a mano (partizioni sul quaderno), poi con **Convert → Minimize DFA** usando **Set Terminal** e **Check Node**. I gruppi coincidono?
+3. Minimizzare il DFA a 6 stati ottenuto nella scheda 3 (contiene `abb`).
+4. Aprire [06-inizia-con-a-parziale.jff](/appunti-sir-terza/jflap/06-inizia-con-a-parziale.jff), completarlo con **Add Trap State to DFA** e costruire il complemento. Verificare con Multiple Run che `ba` e ε siano accettate.
+5. Con **Combine Automata** costruire l'unione di "numero pari di `a`" e "finisce con `b`", convertirla in DFA e minimizzarla. Quanti stati restano?
+
+**Consegna:** i file `.jff` dei punti 2, 3, 4, 5 e la risposta alla domanda del punto 5.
+
+---
+
+## Scheda 5 · Il cerchio di Kleene
+
+**Obiettivi:** passare da espressioni regolari ad automi e viceversa.
+
+**Prerequisiti:** [capitolo 6](/appunti-sir-terza/lezioni/06-espressioni-regolari/01-espressioni-regolari/), [Espressioni regolari in JFLAP](/appunti-sir-terza/jflap/07-espressioni-regolari-e-grammatiche/).
+
+1. Scrivere in JFLAP l'espressione `(a+b)*b` (senza spazi!), convertirla in NFA, poi in DFA, poi minimizzarla. Quanti stati ha il risultato?
+2. Partendo dal DFA "numero pari di `a`", ricavare l'espressione regolare con **Convert FA to RE**. Confrontarla con `(b+ab*a)*`: sono uguali? Descrivono lo stesso linguaggio? (Suggerimento: convertire entrambe in automa e usare Compare Equivalence.)
+3. Per ognuno dei linguaggi della scheda 2, scrivere un'espressione regolare e verificarla con il procedimento del punto 2.
+
+**Consegna:** le espressioni regolari scritte e gli esiti dei confronti.
+
+---
+
+## Scheda 6 · Macchine con uscita
+
+**Obiettivi:** costruire e simulare macchine di Mealy e Moore.
+
+**Prerequisiti:** [capitolo 5](/appunti-sir-terza/lezioni/05-mealy-moore/01-automi-con-uscita/), [Mealy e Moore in JFLAP](/appunti-sir-terza/jflap/08-mealy-e-moore/).
+
+1. Costruire il rilevatore di `11` sia come **Mealy** sia come **Moore**. Con **Multiple Run** confrontare gli output sulle stringhe `0110111`, `1111`, `1010`, `0`.
+2. Costruire il rilevatore di `101` come macchina di Mealy. Provarlo su `10101` e `1001`.
+3. Costruire il **distributore a 2 €** come Mealy e come Moore.
+4. **Sfida:** modificare il distributore perché la bibita costi **3 €** (monete da 1 € e 2 €). Quanti stati servono nella versione Mealy? E in quella Moore?
+
+**Consegna:** tutti i file `.jff` e la risposta alla sfida.

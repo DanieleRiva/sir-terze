@@ -1,0 +1,153 @@
+---
+title: Stringhe e linguaggi
+description: Esercizi di base su alfabeti, stringhe, operazioni e linguaggi, con soluzioni.
+sidebar:
+  order: 1
+---
+
+Esercizi sul capitolo [Alfabeti, stringhe e linguaggi](/appunti-sir-terza/lezioni/01-basi/02-alfabeti-stringhe-linguaggi/). Le soluzioni sono nascoste: provare prima da soli, poi cliccare su **Soluzione**.
+
+---
+
+### Esercizio 1
+
+Sia Σ = &#123;a, b&#125;.
+
+1. Elencare tutte le stringhe di lunghezza 2.
+2. Quante sono le stringhe di lunghezza 3? E di lunghezza 5?
+3. Quante sono le stringhe di lunghezza **al massimo** 2 (compresa la stringa vuota)?
+
+<details>
+<summary>Soluzione</summary>
+
+1. `aa`, `ab`, `ba`, `bb`.
+2. 2³ = **8**; 2⁵ = **32**.
+3. 1 (ε) + 2 (lunghezza 1) + 4 (lunghezza 2) = **7**.
+
+</details>
+
+---
+
+### Esercizio 2
+
+Data *w* = `abbab`:
+
+1. Calcolare |*w*|, |*w*|ₐ e |*w*|_b.
+2. Elencare tutti i prefissi e tutti i suffissi di *w*.
+3. `bba` è una sottostringa di *w*? E `aa`?
+
+<details>
+<summary>Soluzione</summary>
+
+1. |*w*| = 5, |*w*|ₐ = 2, |*w*|_b = 3.
+2. Prefissi: ε, `a`, `ab`, `abb`, `abba`, `abbab`. Suffissi: ε, `b`, `ab`, `bab`, `bbab`, `abbab`.
+3. `bba` sì (posizioni 2–4). `aa` no: le due `a` non sono consecutive.
+
+</details>
+
+---
+
+### Esercizio 3
+
+Siano *x* = `ab` e *y* = `ba`. Scrivere:
+
+1. *xy* e *yx*. Sono uguali?
+2. *x*²*y*
+3. *x*ε*y*
+4. |*x*³|
+
+<details>
+<summary>Soluzione</summary>
+
+1. *xy* = `abba`, *yx* = `baab`: diverse (la concatenazione non è commutativa).
+2. *x*²*y* = `ababba`.
+3. *x*ε*y* = *xy* = `abba` (ε è neutro).
+4. |*x*³| = |`ababab`| = 6.
+
+</details>
+
+---
+
+### Esercizio 4
+
+Sia L il linguaggio su &#123;a, b&#125; delle stringhe con un **numero pari di `b`**. Quali di queste stringhe appartengono a L?
+
+ε · `b` · `bb` · `abba` · `bab` · `aaa` · `babab`
+
+<details>
+<summary>Soluzione</summary>
+
+Appartengono a L: **ε** (zero `b`), **`bb`**, **`abba`**, **`bab`** (due `b`), **`aaa`** (zero `b`).
+Non appartengono: `b` (una `b`), `babab` (tre `b`).
+
+</details>
+
+---
+
+### Esercizio 5
+
+Sia L = &#123; *w* ∈ &#123;a, b&#125;\* : *w* inizia e finisce con lo stesso simbolo &#125;.
+
+1. Scrivere tre stringhe di L e tre stringhe che non stanno in L.
+2. `a` appartiene a L? E ε?
+
+<details>
+<summary>Soluzione</summary>
+
+1. In L: `aba`, `bb`, `abbba`. Fuori da L: `ab`, `ba`, `aab`.
+2. `a` **sì**: il primo e l'ultimo simbolo sono lo stesso (è lo stesso simbolo!). ε è un caso da **decidere**: non ha né un primo né un ultimo simbolo; di solito si considera **non** appartenente. In un esercizio ben scritto questo va specificato: è un ottimo spunto di discussione.
+
+</details>
+
+---
+
+### Esercizio 6
+
+Vero o falso? Motivare.
+
+1. ∅ e &#123;ε&#125; sono lo stesso linguaggio.
+2. ε ∈ Σ⁺.
+3. Se Σ ha 3 simboli, Σ\* è un insieme finito.
+4. Il complemento del linguaggio "stringhe che iniziano con `a`" (su &#123;a, b&#125;) è "stringhe che iniziano con `b`".
+
+<details>
+<summary>Soluzione</summary>
+
+1. **Falso**: ∅ non contiene stringhe, &#123;ε&#125; ne contiene una (la stringa vuota).
+2. **Falso**: Σ⁺ è Σ\* senza ε.
+3. **Falso**: Σ\* è sempre infinito (non c'è limite alla lunghezza).
+4. **Falso**: il complemento contiene anche **ε**, che non inizia né con `a` né con `b`.
+
+</details>
+
+---
+
+### Esercizio 7
+
+Su &#123;a, b&#125; siano L₁ = "stringhe che iniziano con `a`" e L₂ = "stringhe che finiscono con `b`". Trovare (se esiste) una stringa:
+
+1. che sta in L₁ ∩ L₂;
+2. che sta in L₁ ∪ L₂ ma non in L₁ ∩ L₂;
+3. che non sta in L₁ ∪ L₂.
+
+<details>
+<summary>Soluzione</summary>
+
+1. `ab` (inizia con `a` e finisce con `b`).
+2. `a` (sta in L₁ ma non in L₂), oppure `bb` (sta in L₂ ma non in L₁).
+3. `ba`, oppure ε.
+
+</details>
+
+---
+
+### Esercizio 8
+
+Sia L = &#123; `ab` &#125;\*. Elencare le prime quattro stringhe di L in ordine di lunghezza. `aabb` appartiene a L?
+
+<details>
+<summary>Soluzione</summary>
+
+ε, `ab`, `abab`, `ababab`. `aabb` **non** appartiene a L: le stringhe di L sono ripetizioni del blocco `ab`, mentre `aabb` inizia con `aa`.
+
+</details>

@@ -1,0 +1,246 @@
+---
+title: Come si progetta un DFA
+description: Un metodo in sei passi per costruire un automa a partire dalla descrizione di un linguaggio, con quattro esempi svolti e gli errori più comuni.
+sidebar:
+  order: 3
+---
+
+import Automa from '~/components/Automa.astro';
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Leggere un automa già fatto è facile. **Costruirlo** a partire da una frase come "le stringhe binarie che finiscono con 01" è la vera abilità da allenare. Non esiste una formula magica, ma esiste un **metodo** che funziona quasi sempre.
+
+---
+
+## Il metodo in sei passi
+
+<Steps>
+
+1. **Capire il linguaggio con degli esempi.** Prima di disegnare, scriviamo una lista di stringhe che **devono** essere accettate e una lista di stringhe che **devono** essere rifiutate. Inseriamo sempre la stringa vuota ε e qualche stringa "al limite" (molto corta, oppure quasi giusta).
+
+2. **Chiedersi: "che cosa devo ricordare?"** L'automa legge un simbolo alla volta e non può tornare indietro. Mentre legge, che informazione **minima** deve conservare per poter decidere alla fine? Ogni possibile valore di questa informazione diventa **uno stato**.
+
+3. **Dare agli stati un nome che dice cosa ricordano.** Per esempio *"non ho ancora visto niente di utile"*, *"l'ultimo simbolo era 0"*, *"ho già trovato la sequenza"*. Un nome parlante evita metà degli errori.
+
+4. **Scegliere lo stato iniziale.** È la situazione **prima di aver letto qualsiasi simbolo**.
+
+5. **Riempire la tabella di transizione.** Per **ogni** stato e **ogni** simbolo ci chiediamo: "se mi trovo qui e leggo questo simbolo, cosa devo ricordare adesso?". La tabella aiuta a non dimenticare nessun caso.
+
+6. **Scegliere gli stati finali e collaudare.** Sono finali gli stati in cui la risposta è "sì". Poi si provano **tutte** le stringhe della lista del passo 1, sia quelle da accettare sia quelle da rifiutare.
+
+</Steps>
+
+Vediamo il metodo all'opera su quattro esempi di difficoltà crescente.
+
+---
+
+## Esempio 1 · Stringhe binarie che finiscono con `01`
+
+**Passo 1 · Esempi.**
+
+| Da accettare | Da rifiutare |
+| :-- | :-- |
+| `01`, `101`, `001`, `1101`, `0101` | ε, `0`, `1`, `10`, `011`, `0110` |
+
+**Passo 2 · Cosa devo ricordare?** Non so quando la stringa finirà, quindi devo sempre sapere **quanto sono vicino** a vedere `01` come ultimi simboli. Le situazioni possibili sono tre:
+
+- **q₀**: gli ultimi simboli non sono un inizio utile di `01` (ad esempio non ho letto nulla, oppure ho appena letto un `1` non preceduto da `0` utile);
+- **q₁**: l'ultimo simbolo letto è `0` (ho "metà" della sequenza);
+- **q₂**: gli ultimi due simboli letti sono `01` (sequenza completa).
+
+**Passi 4-5 · Stato iniziale e tabella.** Si parte da q₀. Ora riempiamo la tabella ragionando caso per caso:
+
+| δ | 0 | 1 | Ragionamento |
+| :-- | :-: | :-: | :-- |
+| → q₀ | q₁ | q₀ | con `0` inizio la sequenza; con `1` sono ancora al punto di partenza |
+| q₁ | q₁ | q₂ | con `0` l'ultimo simbolo è ancora `0`; con `1` completo `01` |
+| \* q₂ | q₁ | q₀ | con `0` l'ultimo simbolo è `0` (riparto da metà); con `1` gli ultimi due sono `11`: da capo |
+
+**Passo 6 · Finali e collaudo.** L'unico stato finale è q₂.
+
+<Automa
+	states={[
+		{ id: 'q0', x: 80, y: 100, initial: true },
+		{ id: 'q1', x: 240, y: 100 },
+		{ id: 'q2', x: 400, y: 100, final: true },
+	]}
+	transitions={[
+		{ from: 'q0', to: 'q0', label: '1' },
+		{ from: 'q0', to: 'q1', label: '0' },
+		{ from: 'q1', to: 'q1', label: '0' },
+		{ from: 'q1', to: 'q2', label: '1' },
+		{ from: 'q2', to: 'q1', label: '0' },
+		{ from: 'q2', to: 'q0', label: '1', bend: 45 },
+	]}
+	simula="1101"
+	caption="DFA delle stringhe binarie che finiscono con <code>01</code>."
+/>
+
+Collaudo di qualche stringa:
+
+- `1101`: q₀ →1 q₀ →1 q₀ →0 q₁ →1 q₂ ✓
+- `0101`: q₀ →0 q₁ →1 q₂ →0 q₁ →1 q₂ ✓
+- `011`: q₀ →0 q₁ →1 q₂ →1 q₀ ✗ (giusto: finisce con `11`)
+- ε: resta in q₀ ✗ (giusto)
+
+<Aside type="caution" title="L'errore tipico di questo esercizio">
+Molti, da q₂ con `0`, tornano a q₀ invece che a q₁. Ma se ho appena letto `0`, quello zero **può essere l'inizio** di un nuovo `01`! Pensiamo sempre: "dopo questo simbolo, qual è il **pezzo più lungo** della sequenza cercata che ho già in mano?".
+</Aside>
+
+---
+
+## Esempio 2 · Stringhe che contengono `aba`
+
+Σ = &#123;a, b&#125;. Qui la sequenza può comparire **in qualunque punto**; una volta trovata, la stringa è accettata qualunque cosa venga dopo.
+
+**Cosa devo ricordare?** Quanta parte di `aba` ho appena visto:
+
+- **q₀**: niente di utile;
+- **q₁**: ho appena visto `a`;
+- **q₂**: ho appena visto `ab`;
+- **q₃**: ho trovato `aba` (finale, e da qui non si esce più).
+
+| δ | a | b | Ragionamento |
+| :-- | :-: | :-: | :-- |
+| → q₀ | q₁ | q₀ | |
+| q₁ | q₁ | q₂ | con `a` ho ancora una `a` utile (`aa` → l'ultima `a` può iniziare `aba`) |
+| q₂ | q₃ | q₀ | con `a` completo `aba`; con `b` ho `abb`, che non serve a niente: da capo |
+| \* q₃ | q₃ | q₃ | sequenza già trovata: accetto in ogni caso |
+
+<Automa
+	states={[
+		{ id: 'q0', x: 80, y: 100, initial: true },
+		{ id: 'q1', x: 220, y: 100 },
+		{ id: 'q2', x: 360, y: 100 },
+		{ id: 'q3', x: 500, y: 100, final: true },
+	]}
+	transitions={[
+		{ from: 'q0', to: 'q0', label: 'b' },
+		{ from: 'q0', to: 'q1', label: 'a' },
+		{ from: 'q1', to: 'q1', label: 'a' },
+		{ from: 'q1', to: 'q2', label: 'b' },
+		{ from: 'q2', to: 'q3', label: 'a' },
+		{ from: 'q2', to: 'q0', label: 'b', bend: 50 },
+		{ from: 'q3', to: 'q3', label: 'a, b' },
+	]}
+	simula="babbaba"
+	caption="DFA delle stringhe che contengono <code>aba</code>."
+/>
+
+Prova `abba` (rifiutata: contiene `ab` e `ba` ma non `aba`), `aaba` (accettata), `babbaba` (accettata).
+
+<Aside type="note" title="&quot;Inizia con&quot;, &quot;finisce con&quot;, &quot;contiene&quot;">
+Confrontiamo gli esempi visti finora:
+
+- **inizia con** *x*: dopo aver letto *x* si entra in uno stato finale da cui non si esce; se si sbaglia all'inizio si finisce nel pozzo.
+- **contiene** *x*: come sopra, ma se si sbaglia **non** si va nel pozzo: si torna indietro e si riprova.
+- **finisce con** *x*: dallo stato finale **si può uscire**, perché la stringa può continuare e "rovinare" la fine.
+</Aside>
+
+---
+
+## Esempio 3 · Numeri binari divisibili per 3
+
+Σ = &#123;0, 1&#125;. L'automa legge un numero binario **a partire dalla cifra più significativa** e deve accettarlo se è un **multiplo di 3**. Esempi: `0`, `11` (3), `110` (6), `1001` (9) sì; `1` (1), `10` (2), `100` (4), `111` (7) no.
+
+**Cosa devo ricordare?** Non il numero intero (potrebbe essere enorme), ma solo il suo **resto nella divisione per 3**: 0, 1 oppure 2. Tre stati: **R0**, **R1**, **R2**.
+
+**Come cambia il resto?** Se ho letto un numero *n* e aggiungo a destra la cifra *c*, il nuovo numero è **2·n + c** (in binario, aggiungere una cifra a destra significa raddoppiare e sommare la cifra). Quindi il nuovo resto è **(2·r + c) mod 3**:
+
+| δ | 0 | 1 | Calcolo |
+| :-- | :-: | :-: | :-- |
+| → \* R0 | R0 | R1 | (2·0+0) mod 3 = 0; (2·0+1) mod 3 = 1 |
+| R1 | R2 | R0 | (2·1+0) mod 3 = 2; (2·1+1) mod 3 = 0 |
+| R2 | R1 | R2 | (2·2+0) mod 3 = 1; (2·2+1) mod 3 = 2 |
+
+<Automa
+	r={24}
+	states={[
+		{ id: 'R0', x: 80, y: 100, initial: true, final: true },
+		{ id: 'R1', x: 240, y: 100 },
+		{ id: 'R2', x: 400, y: 100 },
+	]}
+	transitions={[
+		{ from: 'R0', to: 'R0', label: '0' },
+		{ from: 'R0', to: 'R1', label: '1' },
+		{ from: 'R1', to: 'R0', label: '1' },
+		{ from: 'R1', to: 'R2', label: '0' },
+		{ from: 'R2', to: 'R1', label: '0' },
+		{ from: 'R2', to: 'R2', label: '1' },
+	]}
+	simula="1001"
+	caption="DFA dei numeri binari multipli di 3: ogni stato è un possibile resto."
+/>
+
+Collaudo con `1001` (cioè 9): R0 →1 R1 →0 R2 →0 R1 →1 R0 ✓.
+
+<Aside type="note">
+Lo stato iniziale R0 è anche finale, quindi la stringa vuota è accettata. È una scelta discutibile (la stringa vuota non è un numero), ma ragionevole se pensiamo che "nessuna cifra" valga 0. Se non la vogliamo, basta aggiungere un nuovo stato iniziale non finale che con `0` va in R0 e con `1` va in R1. È un buon esercizio di discussione in classe!
+</Aside>
+
+Questa idea, **"ricordo solo un resto"**, funziona per qualsiasi divisore: per i multipli di *k* servono *k* stati.
+
+---
+
+## Esempio 4 · Due condizioni insieme
+
+Σ = &#123;a, b&#125;, L = stringhe con un **numero pari di `a`** e che **finiscono con `b`**.
+
+Qui le cose da ricordare sono **due**, indipendenti tra loro:
+
+1. il numero di `a` letto finora è **pari** o **dispari**?
+2. l'ultimo simbolo letto è una `b` oppure no?
+
+Ogni combinazione è uno stato: 2 × 2 = **4 stati**. Li chiamiamo con due lettere: **P**/**D** per la parità, **X**/**Y** per "l'ultimo simbolo **non** è `b`" / "l'ultimo simbolo è `b`".
+
+| δ | a | b |
+| :-- | :-: | :-: |
+| → PX | DX | PY |
+| \* PY | DX | PY |
+| DX | PX | DY |
+| DY | PX | DY |
+
+La `a` cambia la parità e porta in X; la `b` lascia la parità com'è e porta in Y. È finale solo **PY** (pari **e** finisce con `b`).
+
+<Automa
+	r={24}
+	states={[
+		{ id: 'PX', x: 90, y: 90, initial: true },
+		{ id: 'DX', x: 330, y: 90 },
+		{ id: 'PY', x: 90, y: 260, final: true },
+		{ id: 'DY', x: 330, y: 260 },
+	]}
+	transitions={[
+		{ from: 'PX', to: 'DX', label: 'a' },
+		{ from: 'DX', to: 'PX', label: 'a' },
+		{ from: 'PX', to: 'PY', label: 'b' },
+		{ from: 'PY', to: 'PY', label: 'b', loop: 'left' },
+		{ from: 'PY', to: 'DX', label: 'a', bend: 18 },
+		{ from: 'DX', to: 'DY', label: 'b' },
+		{ from: 'DY', to: 'DY', label: 'b', loop: 'right' },
+		{ from: 'DY', to: 'PX', label: 'a', bend: 18 },
+	]}
+	simula="abab"
+	caption="Automa «prodotto»: ogni stato combina un'informazione sulla parità (P/D) e una sull'ultimo simbolo (X/Y)."
+/>
+
+Questa tecnica si chiama **costruzione prodotto** ed è molto potente: se sappiamo costruire un automa per la condizione 1 e uno per la condizione 2, possiamo **combinarli** e ottenere:
+
+- l'**intersezione** (condizione 1 **e** condizione 2) rendendo finali gli stati in cui **entrambe** le componenti sono finali, come qui;
+- l'**unione** (condizione 1 **oppure** condizione 2) rendendo finali gli stati in cui **almeno una** componente è finale. Nel nostro esempio sarebbero finali PX, PY e DY.
+
+---
+
+## Gli errori più comuni
+
+| Errore | Come accorgersene | Come evitarlo |
+| :-- | :-- | :-- |
+| Una transizione mancante "per dimenticanza" | Una stringa che dovrebbe essere accettata viene rifiutata | Compilare **sempre** la tabella completa |
+| Tornare allo stato iniziale quando non serve | Fallisce su stringhe come `001` o `aaba` | Chiedersi qual è il pezzo più lungo già utile |
+| Stato iniziale finale per sbaglio | ε viene accettata | Provare **sempre** la stringa vuota |
+| Stato finale con anello su tutto quando la stringa può "rovinarsi" | Accetta `011` per "finisce con 01" | Distinguere "contiene" da "finisce con" |
+| Stati con lo stesso significato | L'automa è più grande del necessario | Dare nomi parlanti; poi eventualmente **minimizzare** (capitolo 4) |
+
+<Aside type="tip" title="Il collaudo si fa con JFLAP">
+Il passo 6 è il più noioso a mano e il più veloce al computer. In JFLAP, con **Input → Multiple Run**, si scrivono decine di stringhe e si vede in un colpo solo quali sono accettate e quali rifiutate. Lo vediamo nel capitolo [Eseguire e collaudare un automa](/appunti-sir-terza/jflap/04-eseguire-e-collaudare/).
+</Aside>

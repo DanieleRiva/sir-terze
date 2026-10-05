@@ -1,0 +1,130 @@
+---
+title: Macchine di Mealy
+description: Automi in cui l'uscita è associata alle transizioni - definizione, notazione input/uscita ed esempi svolti (rilevatore di sequenza, flip-flop D, distributore automatico).
+sidebar:
+  order: 3
+---
+
+import Automa from '~/components/Automa.astro';
+import { Aside } from '@astrojs/starlight/components';
+
+## L'uscita sta sulle transizioni
+
+In una **macchina di Mealy** l'uscita è prodotta **durante la transizione**: dipende dallo stato di partenza **e** dal simbolo letto.
+
+Ogni transizione si etichetta con **input / uscita**. Per esempio `1/0` significa: "se leggi `1`, segui questa freccia e produci `0`".
+
+<Aside type="note" title="La notazione in JFLAP">
+In JFLAP le etichette delle macchine di Mealy usano il **punto e virgola** al posto della barra: `1;0`. Quando si crea la transizione compaiono **due caselle**: nella prima si scrive l'input, nella seconda l'uscita.
+</Aside>
+
+Leggendo *n* simboli una macchina di Mealy produce esattamente **n** uscite, una per ogni transizione (non c'è un'uscita "iniziale").
+
+---
+
+## Esempio 1 · Rilevatore della sequenza `11`
+
+Stesso problema della lezione precedente: uscita `1` quando gli ultimi due bit sono `11`. Questa volta l'uscita dipende anche dal bit appena letto, quindi basta ricordare **se l'ultimo bit era `1`**:
+
+- **A**: l'ultimo bit letto non è `1` (o non ho letto nulla);
+- **B**: l'ultimo bit letto è `1`.
+
+| Stato | con `0` | con `1` |
+| :-- | :-- | :-- |
+| → A | A, uscita 0 | B, uscita 0 |
+| B | A, uscita 0 | B, uscita **1** |
+
+<Automa
+	states={[
+		{ id: 'A', x: 80, y: 100, initial: true },
+		{ id: 'B', x: 280, y: 100 },
+	]}
+	transitions={[
+		{ from: 'A', to: 'A', label: '0/0' },
+		{ from: 'A', to: 'B', label: '1/0' },
+		{ from: 'B', to: 'A', label: '0/0' },
+		{ from: 'B', to: 'B', label: '1/1' },
+	]}
+	simula="0110111"
+	caption="Rilevatore di <code>11</code> come macchina di Mealy: bastano due stati (Moore ne richiedeva tre)."
+/>
+
+Con l'input `0110111`:
+
+| Input | 0 | 1 | 1 | 0 | 1 | 1 | 1 |
+| :-- | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+| Transizione | A→A | A→B | B→B | B→A | A→B | B→B | B→B |
+| Uscita | 0 | 0 | **1** | 0 | 0 | **1** | **1** |
+
+Uscita: `0010011`. È la stessa uscita della macchina di Moore, **senza il primo simbolo** (quello iniziale).
+
+---
+
+## Esempio 2 · Il flip-flop D (ritardo di un passo)
+
+Σ = Γ = &#123;0, 1&#125;. Vogliamo una macchina che produca in uscita **il bit letto al passo precedente** (e `0` al primo passo). È il comportamento di un **flip-flop D**, l'elemento base della memoria dei computer.
+
+Lo stato ricorda l'ultimo bit letto; l'uscita è il bit ricordato **prima** di aggiornarlo.
+
+<Automa
+	states={[
+		{ id: 'Z0', label: 'M0', x: 80, y: 100, initial: true },
+		{ id: 'Z1', label: 'M1', x: 280, y: 100 },
+	]}
+	transitions={[
+		{ from: 'Z0', to: 'Z0', label: '0/0' },
+		{ from: 'Z0', to: 'Z1', label: '1/0' },
+		{ from: 'Z1', to: 'Z0', label: '0/1' },
+		{ from: 'Z1', to: 'Z1', label: '1/1' },
+	]}
+	simula="1101"
+	caption="Ritardo di un passo: M0 = «ricordo 0», M1 = «ricordo 1»."
+/>
+
+Input `1101` → uscita `0110`: è l'input "spostato a destra" di una posizione.
+
+---
+
+## Esempio 3 · Il distributore automatico
+
+Un distributore vende una bibita a **2 €** e accetta monete da **1 €** e da **2 €**. Quando il credito raggiunge o supera i 2 € eroga la bibita ed eventualmente dà il resto.
+
+- Alfabeto di input Σ = &#123;`1`, `2`&#125; (la moneta inserita).
+- Alfabeto di uscita Γ = &#123;`–`, `B`, `BR`&#125;: nessuna azione, eroga la bibita, eroga bibita e resto di 1 €.
+- Stati: il **credito** accumulato, **C0** (0 €) oppure **C1** (1 €).
+
+| Stato | moneta `1` | moneta `2` |
+| :-- | :-- | :-- |
+| → C0 | C1, uscita – | C0, uscita B |
+| C1 | C0, uscita B | C0, uscita BR |
+
+<Automa
+	r={24}
+	states={[
+		{ id: 'C0', x: 90, y: 110, initial: true },
+		{ id: 'C1', x: 320, y: 110 },
+	]}
+	transitions={[
+		{ from: 'C0', to: 'C1', label: '1/–' },
+		{ from: 'C1', to: 'C0', label: '1/B, 2/BR' },
+		{ from: 'C0', to: 'C0', label: '2/B' },
+	]}
+	simula="1212"
+	caption="Distributore a 2 €. L'etichetta «1/B, 2/BR» raggruppa due transizioni con stessa partenza e stesso arrivo."
+/>
+
+Con le monete `1`, `2`, `1`, `2` l'uscita è `– BR – BR`: due bibite, con il resto entrambe le volte.
+
+<Aside type="tip" title="Perché Mealy qui è naturale">
+L'azione "eroga la bibita" è un **evento istantaneo** legato all'arrivo di una moneta, non una condizione che dura nel tempo. Le macchine di Mealy sono la scelta naturale per descrivere **reazioni a eventi** (inviare un messaggio, erogare un prodotto, emettere un segnale).
+</Aside>
+
+---
+
+## Riepilogo
+
+- In una **macchina di Mealy** l'uscita è associata alle **transizioni**: λ : Q × Σ → Γ.
+- Le etichette si scrivono **input/uscita** (in JFLAP **input;uscita**).
+- Con *n* simboli di input si ottengono esattamente *n* simboli di output.
+- Spesso servono **meno stati** che con Moore.
+- È il modello naturale per sistemi che **reagiscono a eventi** producendo azioni.

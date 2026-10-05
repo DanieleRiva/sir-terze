@@ -1,0 +1,94 @@
+---
+title: Glossario
+description: I termini della teoria degli automi in ordine alfabetico, con la traduzione inglese usata in JFLAP e nei libri.
+sidebar:
+  order: 2
+---
+
+Tra parentesi il termine inglese, utile per leggere i menu di JFLAP e la documentazione.
+
+**Accettare** (*accept*) · Un automa accetta una stringa se, dopo averla letta tutta, si trova in uno stato finale (per un NFA: se almeno un percorso finisce in uno stato finale).
+
+**Alfabeto** (*alphabet*) · Insieme finito e non vuoto di simboli, indicato con Σ.
+
+**Alfabeto di uscita** (*output alphabet*) · L'insieme dei simboli che una macchina di Mealy o di Moore può produrre, indicato con Γ.
+
+**Automa a pila** (*pushdown automaton*, PDA) · Automa a stati finiti dotato di una pila; riconosce i linguaggi liberi dal contesto.
+
+**Automa a stati finiti** (*finite automaton*, FA, o *finite state machine*, FSM) · Modello di calcolo con un numero finito di stati e transizioni tra di essi provocate dagli input.
+
+**Automa completo** · DFA in cui ogni stato ha una transizione per ogni simbolo dell'alfabeto.
+
+**Automa parziale** · DFA in cui mancano alcune transizioni; se l'automa le incontra si blocca e rifiuta.
+
+**Concatenazione** (*concatenation*) · Operazione che mette due stringhe (o linguaggi) una dopo l'altra.
+
+**Configurazione** (*configuration*) · In JFLAP, la coppia "stato attuale + parte di input ancora da leggere" durante una simulazione.
+
+**Costruzione per sottoinsiemi** (*subset construction*) · Algoritmo che trasforma un NFA in un DFA equivalente; ogni stato del DFA è un insieme di stati dell'NFA.
+
+**Costruzione prodotto** (*product construction*) · Tecnica per combinare due DFA in uno che simula entrambi; serve per intersezione e unione.
+
+**Determinismo** (*determinism*) · Proprietà di un automa per cui, in ogni stato e per ogni simbolo, c'è al più una transizione.
+
+**DFA** (*deterministic finite automaton*) · Automa a stati finiti deterministico.
+
+**Equivalenza di automi** (*equivalence*) · Due automi sono equivalenti se riconoscono lo stesso linguaggio. JFLAP: *Test → Compare Equivalence*.
+
+**Equivalenza di stati** · Due stati sono equivalenti (indistinguibili) se, per ogni stringa, da entrambi si ottiene lo stesso esito.
+
+**Espressione regolare** (*regular expression*, RE, regex) · Formula costruita con simboli, unione, concatenazione e stella, che descrive un linguaggio regolare.
+
+**ε-chiusura** (*ε-closure*, *λ-closure*) · Insieme degli stati raggiungibili da uno stato usando solo ε-transizioni.
+
+**ε-transizione** (*ε-transition*, in JFLAP *λ-transition*) · Transizione che si attraversa senza leggere simboli.
+
+**Funzione di transizione** (*transition function*) · δ: dice in quale stato (DFA) o insieme di stati (NFA) si va da uno stato con un simbolo.
+
+**Funzione di uscita** (*output function*) · λ: dice quale simbolo produce una macchina di Mealy (su ogni transizione) o di Moore (in ogni stato).
+
+**Gerarchia di Chomsky** (*Chomsky hierarchy*) · Classificazione dei linguaggi in quattro livelli: regolari, liberi dal contesto, dipendenti dal contesto, ricorsivamente enumerabili.
+
+**Grammatica** (*grammar*) · Insieme di regole di riscrittura che genera un linguaggio.
+
+**Linguaggio** (*language*) · Insieme di stringhe su un alfabeto.
+
+**Linguaggio regolare** (*regular language*) · Linguaggio riconosciuto da un automa a stati finiti (equivalentemente, descritto da un'espressione regolare).
+
+**Macchina di Mealy** (*Mealy machine*) · Automa con uscita in cui l'uscita è associata alle transizioni.
+
+**Macchina di Moore** (*Moore machine*) · Automa con uscita in cui l'uscita è associata agli stati.
+
+**Macchina di Turing** (*Turing machine*) · Modello di calcolo con nastro infinito su cui leggere e scrivere; il modello più potente della gerarchia.
+
+**Minimizzazione** (*minimization*) · Procedimento che trasforma un DFA nel DFA equivalente con il minor numero di stati.
+
+**NFA** (*nondeterministic finite automaton*) · Automa a stati finiti non deterministico.
+
+**Pumping lemma** · Proprietà dei linguaggi regolari usata per dimostrare che un linguaggio non è regolare.
+
+**Riconoscitore** (*recognizer*, *acceptor*) · Automa che risponde sì/no su una stringa.
+
+**Rifiutare** (*reject*) · Un automa rifiuta una stringa se non la accetta: finisce in uno stato non finale oppure si blocca.
+
+**Stato** (*state*) · Una delle situazioni in cui l'automa si può trovare; riassume ciò che l'automa deve ricordare del passato.
+
+**Stato finale** (*final state*, *accepting state*) · Stato in cui, se la stringa è finita, l'automa accetta. Doppio cerchio.
+
+**Stato iniziale** (*initial state*, *start state*) · Lo stato da cui parte l'automa. Freccia entrante (in JFLAP: triangolo).
+
+**Stato irraggiungibile** (*unreachable state*) · Stato che non si può raggiungere dallo stato iniziale con nessuna stringa.
+
+**Stato pozzo** (*trap state*, *dead state*) · Stato non finale da cui non si esce; raccoglie le transizioni mancanti. JFLAP: *Convert → Add Trap State to DFA*.
+
+**Stella di Kleene** (*Kleene star*) · Operazione che indica zero o più ripetizioni: L\*.
+
+**Stringa** o **parola** (*string*, *word*) · Sequenza finita di simboli di un alfabeto.
+
+**Stringa vuota** (*empty string*) · La stringa senza simboli, indicata con ε o λ.
+
+**Tabella di transizione** (*transition table*) · Rappresentazione di δ come tabella stati × simboli.
+
+**Transizione** (*transition*) · Passaggio da uno stato a un altro (o allo stesso) provocato da un simbolo.
+
+**Trasduttore** (*transducer*) · Automa che produce una sequenza di uscite (macchine di Mealy e Moore).

@@ -1,0 +1,109 @@
+---
+title: Come usare questa raccolta
+description: A chi è rivolta la raccolta, come è organizzata, in che ordine leggerla e come funzionano i diagrammi interattivi.
+---
+
+import Automa from '~/components/Automa.astro';
+import { Aside, LinkCard, CardGrid } from '@astrojs/starlight/components';
+
+## A chi è rivolta
+
+Questa raccolta spiega gli **automi a stati finiti** e il loro uso con **JFLAP**, il programma più diffuso per disegnarli e simularli. È pensata per due tipi di lettori:
+
+- gli **alunni** delle classi terze, che la usano come libro di appunti, per ripassare e per esercitarsi;
+- il **docente**, che la usa per preparare le lezioni e il laboratorio: ogni capitolo contiene anche note didattiche (nei riquadri "Per il docente"), e la sezione [Riferimenti](/appunti-sir-terza/riferimenti/03-guida-per-il-docente/) contiene un percorso con i tempi, le misconcezioni più frequenti e una verifica di esempio.
+
+Non servono prerequisiti particolari oltre alla matematica del biennio (insiemi, funzioni) e un minimo di familiarità con la programmazione per il capitolo 7.
+
+---
+
+## Come è organizzata
+
+La raccolta ha quattro parti, che si trovano nel menu a sinistra.
+
+### 📘 Teoria degli automi
+
+| Capitolo | Argomento | Domanda guida |
+| :-- | :-- | :-- |
+| **1 · Le basi** | stati e transizioni; alfabeti, stringhe, linguaggi | Che cos'è uno stato? |
+| **2 · DFA** | automi deterministici, stato pozzo, progettazione | Come costruisco un automa che riconosce un linguaggio? |
+| **3 · NFA** | non determinismo, ε-transizioni, costruzione per sottoinsiemi | Posso semplificarmi la vita "indovinando"? |
+| **4 · Minimizzazione** | stati equivalenti, algoritmo delle partizioni | Qual è l'automa più piccolo possibile? |
+| **5 · Automi con uscita** | macchine di Mealy e di Moore | Come modello un sistema che reagisce, non solo che risponde sì/no? |
+| **6 · Espressioni regolari** | regex, teorema di Kleene, limiti degli automi | Che rapporto c'è tra automi e regex? Cosa non sanno fare? |
+| **7 · Dall'automa al codice** | implementazione in C/Arduino/Python; applicazioni reali (TCP) | Dove si usano davvero? |
+
+### 🧰 JFLAP in pratica
+
+Nove capitoli che seguono la teoria passo passo: installazione, interfaccia, primo automa, simulazione e collaudo, NFA e conversioni, minimizzazione e confronto, espressioni regolari, macchine di Mealy e Moore, file e risoluzione dei problemi. Con **file `.jff` di esempio** da scaricare.
+
+### 📝 Esercizi e 🛠️ Progetti
+
+Esercizi divisi per argomento con **soluzioni nascoste** (si aprono con un clic), sei **schede di laboratorio** pronte per JFLAP e cinque **progetti** di gruppo con griglia di valutazione.
+
+### 📎 Riferimenti
+
+Scheda riassuntiva da stampare, glossario italiano-inglese, guida per il docente, fonti.
+
+---
+
+## In che ordine leggere
+
+Il percorso consigliato alterna **teoria** e **JFLAP**:
+
+1. Capitolo 1 (le basi) → JFLAP: [installazione](/appunti-sir-terza/jflap/01-introduzione-e-installazione/) e [interfaccia](/appunti-sir-terza/jflap/02-interfaccia/).
+2. Capitolo 2 (DFA) → JFLAP: [costruire](/appunti-sir-terza/jflap/03-costruire-un-automa/) e [collaudare](/appunti-sir-terza/jflap/04-eseguire-e-collaudare/) un automa.
+3. Capitolo 3 (NFA) → JFLAP: [NFA e conversione](/appunti-sir-terza/jflap/05-nfa-e-conversione/).
+4. Capitolo 4 (minimizzazione) → JFLAP: [minimizzare e confrontare](/appunti-sir-terza/jflap/06-minimizzare-e-confrontare/).
+5. Capitolo 5 (Mealy e Moore) → JFLAP: [Mealy e Moore](/appunti-sir-terza/jflap/08-mealy-e-moore/).
+6. Capitolo 6 (espressioni regolari) → JFLAP: [espressioni regolari](/appunti-sir-terza/jflap/07-espressioni-regolari-e-grammatiche/).
+7. Capitolo 7 (applicazioni) → progetti.
+
+Alla fine di ogni capitolo di teoria ci sono gli esercizi corrispondenti nella sezione Esercizi.
+
+<Aside type="tip" title="Percorso breve">
+Con poco tempo a disposizione, il nucleo irrinunciabile è: capitoli **1, 2, 3.1, 5** e i capitoli JFLAP **1–4 e 8**. Minimizzazione ed espressioni regolari si possono trattare come approfondimento.
+</Aside>
+
+---
+
+## I diagrammi interattivi
+
+In tutta la raccolta gli automi sono disegnati con le convenzioni standard:
+
+<Automa
+	r={22}
+	states={[
+		{ id: 'q0', x: 80, y: 90, initial: true },
+		{ id: 'q1', x: 250, y: 90, final: true },
+	]}
+	transitions={[
+		{ from: 'q0', to: 'q1', label: 'a' },
+		{ from: 'q0', to: 'q0', label: 'b' },
+		{ from: 'q1', to: 'q1', label: 'a, b' },
+	]}
+	simula="bba"
+	caption="Freccia entrante = stato iniziale · doppio cerchio = stato finale · «a, b» = una transizione per ciascun simbolo."
+/>
+
+Molti diagrammi hanno sotto un **simulatore** (il riquadro colorato):
+
+- si scrive una stringa nella casella;
+- **Passo ▶** legge un simbolo alla volta (anche il tasto Invio fa lo stesso);
+- **Tutta ⏭** legge la stringa fino alla fine;
+- **Ricomincia ↺** riparte dallo stato iniziale.
+
+Lo stato attivo e la transizione appena usata si colorano. Con gli automi non deterministici si colorano **più stati insieme**; con le macchine di Mealy e Moore compare anche l'**uscita prodotta**. Si possono usare in classe alla LIM per le dimostrazioni, o a casa da qualunque dispositivo, anche senza JFLAP.
+
+<Aside type="note" title="Le finestre di JFLAP">
+Le immagini delle finestre di JFLAP presenti nella raccolta sono **riproduzioni schematiche** disegnate apposta, fedeli nei nomi dei menu e dei pulsanti (JFLAP 7.1, in inglese), ma semplificate nella grafica.
+</Aside>
+
+---
+
+## Pronti?
+
+<CardGrid>
+	<LinkCard title="Capitolo 1 · Cos'è un automa a stati finiti" href="/appunti-sir-terza/lezioni/01-basi/01-cos-e-un-automa/" />
+	<LinkCard title="Installare JFLAP" href="/appunti-sir-terza/jflap/01-introduzione-e-installazione/" />
+</CardGrid>

@@ -1,0 +1,136 @@
+---
+/** Schema a blocchi di una rete sequenziale (macchina di Moore o di Mealy) */
+interface Props {
+	tipo: 'moore' | 'mealy';
+	caption?: string;
+}
+const { tipo, caption } = Astro.props;
+const mealy = tipo === 'mealy';
+---
+
+<figure class="schema not-content">
+	<div class="schema-box">
+		<svg viewBox="0 0 720 215" role="img" aria-label={`Schema a blocchi di una macchina di ${mealy ? 'Mealy' : 'Moore'}`}>
+			<!-- input -->
+			<text x="22" y="72" class="lbl">ingresso</text>
+			<path d="M 10 95 L 82 95" class="ln" />
+			<polygon points="90,95 80,90 80,100" class="hd" />
+
+			<!-- logica stato futuro -->
+			<rect x="90" y="60" width="160" height="70" rx="8" class="bx" />
+			<text x="170" y="88" class="bt">Logica dello</text>
+			<text x="170" y="106" class="bt">stato futuro</text>
+
+			<path d="M 250 95 L 302 95" class="ln" />
+			<polygon points="310,95 300,90 300,100" class="hd" />
+
+			<!-- registro -->
+			<rect x="310" y="60" width="150" height="70" rx="8" class="bx acc" />
+			<text x="385" y="88" class="bt">Registro di stato</text>
+			<text x="385" y="106" class="bs">(flip-flop)</text>
+			<path d="M 385 148 L 385 132" class="ln" />
+			<polygon points="385,130 380,140 390,140" class="hd" />
+			<text x="385" y="160" class="bs">clock</text>
+
+			<!-- verso logica di uscita -->
+			<path d="M 460 95 L 522 95" class="ln" />
+			<polygon points="530,95 520,90 520,100" class="hd" />
+			<text x="495" y="85" class="bs">stato</text>
+
+			<rect x="530" y="60" width="140" height="70" rx="8" class="bx" />
+			<text x="600" y="88" class="bt">Logica</text>
+			<text x="600" y="106" class="bt">di uscita</text>
+			<path d="M 670 95 L 702 95" class="ln" />
+			<polygon points="710,95 700,90 700,100" class="hd" />
+			<text x="672" y="122" class="lbl">uscita</text>
+
+			<!-- retroazione dello stato -->
+			<path d="M 490 95 L 490 190 L 60 190 L 60 115 L 82 115" class="ln" />
+			<polygon points="90,115 80,110 80,120" class="hd" />
+			<circle cx="490" cy="95" r="3.5" class="dot" />
+			<text x="275" y="182" class="bs">stato attuale (retroazione)</text>
+
+			{
+				mealy && (
+					<g class="mealy">
+						<circle cx="40" cy="95" r="3.5" class="dot" />
+						<path d="M 40 95 L 40 30 L 600 30 L 600 52" class="ln" />
+						<polygon points="600,60 595,50 605,50" class="hd" />
+						<text x="320" y="22" class="bs">anche l'ingresso arriva direttamente alla logica di uscita</text>
+					</g>
+				)
+			}
+		</svg>
+	</div>
+	{caption && <figcaption set:html={caption} />}
+</figure>
+
+<style>
+	.schema {
+		margin: 1.75rem 0;
+		color: var(--sl-color-white);
+	}
+	.schema-box {
+		overflow-x: auto;
+		padding: 0.75rem;
+		border: 1px solid var(--sl-color-hairline);
+		border-radius: 0.75rem;
+	}
+	svg {
+		display: block;
+		width: 100%;
+		min-width: 560px;
+		max-width: 720px;
+		margin-inline: auto;
+		height: auto;
+	}
+	.ln {
+		fill: none;
+		stroke: currentColor;
+		stroke-width: 1.6;
+	}
+	.hd,
+	.dot {
+		fill: currentColor;
+	}
+	.bx {
+		fill: var(--sl-color-bg);
+		stroke: currentColor;
+		stroke-width: 1.6;
+	}
+	.bx.acc {
+		fill: var(--sl-color-accent-low);
+		stroke: var(--sl-color-accent);
+	}
+	text {
+		fill: currentColor;
+		text-anchor: middle;
+		dominant-baseline: central;
+		font-family: var(--sl-font, sans-serif);
+	}
+	.bt {
+		font-size: 14px;
+		font-weight: 600;
+	}
+	.bs,
+	.lbl {
+		font-size: 12px;
+	}
+	.lbl {
+		text-anchor: start;
+		font-weight: 600;
+	}
+	.mealy {
+		color: var(--sl-color-text-accent);
+	}
+	.mealy .ln {
+		stroke-dasharray: 6 4;
+		stroke-width: 2;
+	}
+	figcaption {
+		margin-top: 0.6rem;
+		text-align: center;
+		font-size: var(--sl-text-sm);
+		color: var(--sl-color-gray-2);
+	}
+</style>

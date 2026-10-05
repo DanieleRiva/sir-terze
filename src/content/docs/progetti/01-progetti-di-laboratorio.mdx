@@ -1,0 +1,154 @@
+---
+title: Progetti di laboratorio
+description: Cinque progetti più ampi da assegnare a gruppi, dal lucchetto a combinazione al protocollo stop-and-wait, con traccia, fasi di lavoro e griglia di valutazione.
+sidebar:
+  order: 1
+---
+
+import Automa from '~/components/Automa.astro';
+import { Aside } from '@astrojs/starlight/components';
+
+Progetti da svolgere in gruppi di 2–3 alunni, in 2–4 settimane, alla fine del percorso. Ognuno richiede di **modellare un sistema reale** con un automa, **costruirlo e collaudarlo in JFLAP**, e (per alcuni) **implementarlo in codice**.
+
+Ogni gruppo consegna:
+
+1. una breve **relazione** (2–4 pagine) con la descrizione del sistema, la scelta di stati, input e output, la tabella di transizione;
+2. i file **`.jff`** di JFLAP;
+3. il file di **prove** usato con Multiple Run e i risultati ottenuti;
+4. per i progetti con implementazione, il **codice** commentato.
+
+---
+
+## Progetto 1 · Il lucchetto a combinazione
+
+Un lucchetto elettronico ha tre tasti, `A`, `B` e `C`. Si apre quando vengono premuti **in sequenza** i tasti del codice segreto **`ABAC`**. Gli altri tasti premuti prima non contano: si apre appena gli **ultimi quattro** tasti premuti sono `ABAC`.
+
+**Fase 1.** Progettare un **DFA** su &#123;A, B, C&#125; che accetta le sequenze che **finiscono con** `ABAC`. Attenzione ai casi di "sovrapposizione": cosa succede se, dopo `ABA`, si preme `B`?
+
+**Fase 2.** Trasformarlo in una **macchina di Mealy** con uscita `apri` sulla transizione che completa il codice e `-` altrimenti.
+
+**Fase 3 (estensione).** Dopo **tre codici errati consecutivi** il lucchetto si **blocca** e non si apre più. Definire con precisione cosa si intende per "codice errato" (suggerimento: un tentativo è una sequenza di 4 tasti) e modificare l'automa.
+
+<details>
+<summary>Aiuto per la fase 1</summary>
+
+Servono 5 stati, uno per ogni prefisso del codice già letto: ε, `A`, `AB`, `ABA`, `ABAC`. Ecco l'inizio:
+
+<Automa
+	r={24}
+	states={[
+		{ id: 'S0', label: 'ε', x: 70, y: 110, initial: true },
+		{ id: 'S1', label: 'A', x: 200, y: 110 },
+		{ id: 'S2', label: 'AB', x: 330, y: 110 },
+		{ id: 'S3', label: 'ABA', x: 460, y: 110 },
+		{ id: 'S4', label: 'ABAC', x: 590, y: 110, final: true },
+	]}
+	transitions={[
+		{ from: 'S0', to: 'S1', label: 'A' },
+		{ from: 'S1', to: 'S2', label: 'B' },
+		{ from: 'S2', to: 'S3', label: 'A' },
+		{ from: 'S3', to: 'S4', label: 'C' },
+	]}
+	caption="Lo «scheletro» del lucchetto: mancano tutte le transizioni di ritorno."
+/>
+
+Per ogni stato e ogni tasto chiedersi: "dopo aver premuto questo tasto, qual è il **prefisso più lungo** del codice con cui finiscono i tasti premuti?". Per esempio da `ABA` con `B` si va in `AB` (perché `ABAB` finisce con `AB`).
+
+</details>
+
+---
+
+## Progetto 2 · Il distributore automatico completo
+
+Un distributore vende un solo prodotto a **1,50 €**. Accetta monete da **0,50 €**, **1 €** e **2 €** e ha un pulsante **annulla** che restituisce il credito inserito.
+
+- Input: `m50`, `m1`, `m2`, `annulla` (in JFLAP si possono usare simboli brevi, per esempio `x`, `y`, `z`, `n`, spiegandoli nella relazione).
+- Output: niente, eroga il prodotto, eroga il prodotto e dà il resto (specificando quanto), restituisce il credito.
+
+**Fasi.** Individuare gli stati (quanti diversi valori di credito ci possono essere?); costruire la macchina come **Mealy**; costruirla come **Moore**; confrontare il numero di stati; collaudare entrambe con le stesse sequenze di monete.
+
+**Domande per la relazione.** Cosa succede se si inseriscono 2 € quando si ha già 1 € di credito? Il distributore deve dare resto di 1,50 €? Come si gestirebbe un secondo prodotto da 1 €?
+
+---
+
+## Progetto 3 · Il semaforo pedonale intelligente
+
+Si parte dal [semaforo con chiamata pedonale](/appunti-sir-terza/lezioni/05-mealy-moore/02-macchine-di-moore/#esempio-3--il-semaforo-con-chiamata-pedonale) e lo si rende realistico:
+
+1. aggiungere le **luci per i pedoni** (rosso/verde), che devono essere coerenti con quelle delle auto;
+2. il verde per le auto deve durare **almeno 20 secondi** anche se il pedone preme subito il pulsante (servono due stati di "verde": prima e dopo il tempo minimo);
+3. se il pedone preme il pulsante mentre il verde minimo non è ancora finito, la chiamata va **ricordata**;
+4. di notte il semaforo passa al **giallo lampeggiante** (input `notte` e `giorno`).
+
+**Fasi.** Elenco degli stati e degli eventi; macchina di **Moore** in JFLAP (uscita = combinazione di luci accese, per esempio `VR` = verde auto e rosso pedoni); simulazione di scenari; implementazione su **Arduino** (o sul simulatore Tinkercad Circuits) con lo [schema a eventi](/appunti-sir-terza/lezioni/07-applicazioni/01-implementare-un-automa/#schema-3--macchina-a-stati-a-eventi-arduino) e `millis()`.
+
+---
+
+## Progetto 4 · Un mini analizzatore lessicale
+
+Progettare un DFA che legge **una parola** e dice di che tipo è:
+
+- **identificatore**: inizia con una lettera o `_`, poi lettere, cifre o `_` (`somma`, `x1`, `_tmp`);
+- **numero intero**: solo cifre (`42`, `007`);
+- **numero decimale**: cifre, un punto, almeno una cifra (`3.14`, `0.5`);
+- **operatore**: uno tra `+ - * / =`;
+- altrimenti: **errore**.
+
+**Fasi.** In JFLAP usare un alfabeto ridotto e rappresentativo, per esempio `l` (una lettera qualsiasi), `c` (una cifra qualsiasi), `_`, `.`, `+`. Il DFA ha più stati finali, uno per tipo di parola. Poi implementarlo in **Python** con lo schema a [tabella di transizione](/appunti-sir-terza/lezioni/07-applicazioni/01-implementare-un-automa/#schema-2--tabella-di-transizione), facendo restituire alla funzione il **tipo** della parola invece di vero/falso. Infine scrivere un programma che legge una riga di codice, la divide in parole e stampa il tipo di ciascuna.
+
+---
+
+## Progetto 5 · Il protocollo stop-and-wait (Sistemi e Reti)
+
+Il protocollo **stop-and-wait** con **bit alternato** è il più semplice protocollo per trasmettere dati in modo affidabile su un canale che può perdere i pacchetti. È l'antenato dei meccanismi di TCP.
+
+Il **mittente** funziona così:
+
+- quando l'applicazione gli dà dei dati, li invia in un pacchetto numerato **0** e aspetta la conferma `ACK0`;
+- se arriva `ACK0`, il prossimo pacchetto sarà numerato **1** (e si aspetterà `ACK1`), e così via alternando;
+- se invece scade il **timeout** prima della conferma, **ritrasmette** lo stesso pacchetto;
+- le conferme con il numero sbagliato vengono ignorate.
+
+<Automa
+	r={34}
+	states={[
+		{ id: 'P0', label: 'Pronto 0', x: 90, y: 90, initial: true },
+		{ id: 'A0', label: 'Attesa 0', x: 380, y: 90 },
+		{ id: 'A1', label: 'Attesa 1', x: 90, y: 300 },
+		{ id: 'P1', label: 'Pronto 1', x: 380, y: 300 },
+	]}
+	transitions={[
+		{ from: 'P0', to: 'A0', label: 'dati / invia pkt0' },
+		{ from: 'A0', to: 'A0', label: 'timeout / reinvia pkt0' },
+		{ from: 'A0', to: 'P1', label: 'ACK0 / –' },
+		{ from: 'P1', to: 'A1', label: 'dati / invia pkt1' },
+		{ from: 'A1', to: 'A1', label: 'timeout / reinvia pkt1', loop: 'bottom' },
+		{ from: 'A1', to: 'P0', label: 'ACK1 / –' },
+	]}
+	caption="Il mittente stop-and-wait come macchina di Mealy (versione base, da completare)."
+/>
+
+**Fasi.**
+
+1. Completare la macchina del mittente: cosa succede se in *Attesa 0* arriva `ACK1`? E se l'applicazione fornisce dati mentre si è in attesa?
+2. Progettare la macchina del **destinatario** (stati *Aspetto 0* e *Aspetto 1*; input: `pkt0`, `pkt1`; output: consegna i dati all'applicazione e invia l'ACK). Cosa deve fare se riceve di nuovo un pacchetto già ricevuto (perché il suo ACK era andato perso)?
+3. Costruire entrambe le macchine in JFLAP come **macchine di Mealy**, usando simboli brevi (`d`, `t`, `0`, `1`…) e spiegandoli nella relazione.
+4. Scrivere degli **scenari** (sequenze di eventi) con perdita di un pacchetto e perdita di un ACK, e simularli.
+5. **Approfondimento:** confrontare con la [macchina a stati di TCP](/appunti-sir-terza/lezioni/07-applicazioni/02-automi-nel-mondo-reale/#le-reti-la-macchina-a-stati-di-tcp).
+
+---
+
+## Griglia di valutazione
+
+| Criterio | Peso | Insufficiente | Sufficiente | Buono / Ottimo |
+| :-- | :-: | :-- | :-- | :-- |
+| **Modellazione** (scelta di stati, input, output) | 30% | stati confusi o ridondanti, input non definiti | modello corretto ma con stati superflui o poco motivati | modello essenziale, ogni stato ha un significato chiaro e documentato |
+| **Correttezza dell'automa** | 25% | errori evidenti nei casi base | corretto nei casi tipici, errori nei casi limite | corretto in tutti i casi, verificato anche con Compare Equivalence dove possibile |
+| **Collaudo** | 15% | poche prove, solo casi positivi | prove positive e negative | prove sistematiche: ε, casi limite, ogni stato e ogni transizione coperti |
+| **Uso di JFLAP** | 10% | diagramma disordinato, file mancanti | diagramma leggibile | diagramma ordinato, etichette sugli stati, uso degli strumenti di conversione/verifica |
+| **Relazione** | 10% | incompleta | completa ma solo descrittiva | chiara, con tabella, motivazioni e risposte alle domande |
+| **Implementazione** (se prevista) | 10% | non funziona | funziona ma non rispecchia l'automa | codice che traduce fedelmente il diagramma, commentato |
+
+<Aside type="tip" title="Presentazione finale">
+Una presentazione di 10 minuti per gruppo, con **simulazione dal vivo in JFLAP** di uno scenario scelto dal docente, è un ottimo momento di valutazione orale: fa emergere subito se il gruppo ha capito il proprio modello.
+</Aside>

@@ -1,0 +1,247 @@
+---
+title: Implementare un automa in un programma
+description: Tre modi di trasformare un automa in codice - switch-case, tabella di transizione e macchina a stati a eventi su Arduino - con esempi in C/C++ e Python.
+sidebar:
+  order: 1
+---
+
+import Automa from '~/components/Automa.astro';
+import { Aside, Tabs, TabItem } from '@astrojs/starlight/components';
+
+Un automa disegnato è una **specifica**: dice esattamente cosa deve fare il sistema. Trasformarlo in un programma è quasi meccanico. Vediamo i tre schemi più usati, usando come esempio il DFA delle stringhe binarie che **finiscono con `01`**.
+
+<Automa
+	states={[
+		{ id: 'q0', x: 80, y: 100, initial: true },
+		{ id: 'q1', x: 240, y: 100 },
+		{ id: 'q2', x: 400, y: 100, final: true },
+	]}
+	transitions={[
+		{ from: 'q0', to: 'q0', label: '1' },
+		{ from: 'q0', to: 'q1', label: '0' },
+		{ from: 'q1', to: 'q1', label: '0' },
+		{ from: 'q1', to: 'q2', label: '1' },
+		{ from: 'q2', to: 'q1', label: '0' },
+		{ from: 'q2', to: 'q0', label: '1', bend: 45 },
+	]}
+/>
+
+---
+
+## Schema 1 · Variabile di stato + `switch`
+
+È lo schema più diffuso e più leggibile:
+
+- una **variabile** contiene lo stato attuale (meglio se di tipo `enum`, così gli stati hanno un nome);
+- un **ciclo** legge un simbolo alla volta;
+- uno **`switch`** sullo stato decide, in base al simbolo, il nuovo stato;
+- alla fine si controlla se lo stato è **finale**.
+
+<Tabs syncKey="linguaggio">
+<TabItem label="C / C++">
+
+```cpp
+#include <stdio.h>
+#include <stdbool.h>
+
+enum Stato { Q0, Q1, Q2 };
+
+bool accetta(const char *s) {
+    enum Stato stato = Q0;                 // stato iniziale
+
+    for (int i = 0; s[i] != '\0'; i++) {
+        char c = s[i];
+        if (c != '0' && c != '1') {
+            return false;                  // simbolo fuori dall'alfabeto: pozzo
+        }
+        switch (stato) {
+            case Q0: stato = (c == '0') ? Q1 : Q0; break;
+            case Q1: stato = (c == '0') ? Q1 : Q2; break;
+            case Q2: stato = (c == '0') ? Q1 : Q0; break;
+        }
+    }
+    return stato == Q2;                    // lo stato finale e' Q2
+}
+
+int main(void) {
+    const char *prove[] = { "01", "1101", "011", "" };
+    for (int i = 0; i < 4; i++) {
+        printf("\"%s\" -> %s\n", prove[i], accetta(prove[i]) ? "accettata" : "rifiutata");
+    }
+    return 0;
+}
+```
+
+</TabItem>
+<TabItem label="Python">
+
+```python
+def accetta(stringa: str) -> bool:
+    stato = "q0"                      # stato iniziale
+
+    for c in stringa:
+        if c not in "01":
+            return False              # simbolo fuori dall'alfabeto: pozzo
+        match stato:
+            case "q0": stato = "q1" if c == "0" else "q0"
+            case "q1": stato = "q1" if c == "0" else "q2"
+            case "q2": stato = "q1" if c == "0" else "q0"
+
+    return stato == "q2"              # lo stato finale è q2
+
+
+for prova in ["01", "1101", "011", ""]:
+    print(repr(prova), "->", "accettata" if accetta(prova) else "rifiutata")
+```
+
+</TabItem>
+</Tabs>
+
+Ogni `case` corrisponde a **una riga della tabella di transizione**: se il diagramma è corretto, il codice lo è quasi automaticamente.
+
+---
+
+## Schema 2 · Tabella di transizione
+
+Invece di scrivere la logica nel codice, si scrive la **tabella** come struttura dati. Il programma diventa **generico**: per cambiare automa basta cambiare la tabella, senza toccare il resto.
+
+<Tabs syncKey="linguaggio">
+<TabItem label="C / C++">
+
+```cpp
+#include <stdio.h>
+#include <stdbool.h>
+
+#define N_STATI   3
+#define N_SIMBOLI 2
+#define POZZO    -1
+
+// delta[stato][simbolo] = nuovo stato   (simbolo 0 = '0', simbolo 1 = '1')
+const int delta[N_STATI][N_SIMBOLI] = {
+    /* q0 */ { 1, 0 },
+    /* q1 */ { 1, 2 },
+    /* q2 */ { 1, 0 },
+};
+const int  INIZIALE = 0;
+const bool finale[N_STATI] = { false, false, true };
+
+bool accetta(const char *s) {
+    int stato = INIZIALE;
+    for (int i = 0; s[i] != '\0'; i++) {
+        int simbolo = s[i] - '0';                  // '0' -> 0, '1' -> 1
+        if (simbolo < 0 || simbolo >= N_SIMBOLI) return false;
+        stato = delta[stato][simbolo];
+        if (stato == POZZO) return false;
+    }
+    return finale[stato];
+}
+```
+
+</TabItem>
+<TabItem label="Python">
+
+```python
+# Tabella di transizione: (stato, simbolo) -> nuovo stato
+DELTA = {
+    ("q0", "0"): "q1", ("q0", "1"): "q0",
+    ("q1", "0"): "q1", ("q1", "1"): "q2",
+    ("q2", "0"): "q1", ("q2", "1"): "q0",
+}
+INIZIALE = "q0"
+FINALI = {"q2"}
+
+
+def accetta(stringa: str) -> bool:
+    stato = INIZIALE
+    for simbolo in stringa:
+        if (stato, simbolo) not in DELTA:
+            return False              # transizione mancante: pozzo implicito
+        stato = DELTA[(stato, simbolo)]
+    return stato in FINALI
+```
+
+</TabItem>
+</Tabs>
+
+<Aside type="tip" title="Simulare un NFA è altrettanto facile">
+Con la tabella è semplice anche simulare un **NFA**: basta che ogni cella contenga un **insieme** di stati e che il programma tenga un insieme di stati attivi, esattamente come facciamo a mano.
+
+```python
+DELTA_NFA = {("q0", "0"): {"q0", "q1"}, ("q0", "1"): {"q0"}, ("q1", "1"): {"q2"}}
+
+def accetta_nfa(stringa: str) -> bool:
+    attivi = {"q0"}
+    for c in stringa:
+        attivi = set().union(*(DELTA_NFA.get((q, c), set()) for q in attivi))
+    return "q2" in attivi
+```
+</Aside>
+
+---
+
+## Schema 3 · Macchina a stati a eventi (Arduino)
+
+Nei sistemi embedded l'input non è una stringa già pronta, ma una sequenza di **eventi** che arrivano nel tempo: un pulsante premuto, un timer scaduto, un sensore che supera una soglia. Il programma gira in un ciclo infinito (`loop()`) e, ad ogni giro, controlla se è arrivato un evento che fa scattare una transizione.
+
+Realizziamo il **semaforo con chiamata pedonale** del [capitolo sulle macchine di Moore](/appunti-sir-terza/lezioni/05-mealy-moore/02-macchine-di-moore/#esempio-3--il-semaforo-con-chiamata-pedonale): stati *Verde*, *Giallo*, *Rosso*; eventi *p* (pulsante) e *t* (timer scaduto).
+
+```cpp
+enum Stato { VERDE, GIALLO, ROSSO };
+
+const int LED_VERDE  = 4;
+const int LED_GIALLO = 3;
+const int LED_ROSSO  = 2;
+const int PULSANTE   = 7;
+
+const unsigned long DURATA_GIALLO = 3000;   // ms
+const unsigned long DURATA_ROSSO  = 8000;   // ms
+
+Stato stato;
+unsigned long inizioFase;                   // quando siamo entrati nello stato attuale
+
+// Cambia stato e aggiorna le uscite.
+// Macchina di Moore: le uscite dipendono SOLO dallo stato.
+void entra(Stato nuovo) {
+  stato = nuovo;
+  inizioFase = millis();
+  digitalWrite(LED_VERDE,  stato == VERDE);
+  digitalWrite(LED_GIALLO, stato == GIALLO);
+  digitalWrite(LED_ROSSO,  stato == ROSSO);
+}
+
+void setup() {
+  pinMode(LED_VERDE, OUTPUT);
+  pinMode(LED_GIALLO, OUTPUT);
+  pinMode(LED_ROSSO, OUTPUT);
+  pinMode(PULSANTE, INPUT_PULLUP);          // premuto = LOW
+  entra(VERDE);                             // stato iniziale
+}
+
+void loop() {
+  bool p = digitalRead(PULSANTE) == LOW;              // evento "p"
+  unsigned long trascorso = millis() - inizioFase;
+
+  switch (stato) {
+    case VERDE:
+      if (p) entra(GIALLO);
+      break;
+    case GIALLO:
+      if (trascorso >= DURATA_GIALLO) entra(ROSSO);   // evento "t"
+      break;
+    case ROSSO:
+      if (trascorso >= DURATA_ROSSO) entra(VERDE);    // evento "t"
+      break;
+  }
+}
+```
+
+Le regole d'oro di questo schema:
+
+1. **Una sola variabile di stato**, di tipo `enum`. Niente "flag" booleani sparsi che insieme formano uno stato implicito.
+2. **Nessun `delay()`**: il tempo si misura con `millis()`, così il programma continua a leggere gli ingressi anche mentre "aspetta".
+3. **Le transizioni stanno tutte nello `switch`**: per capire il comportamento del sistema basta leggere quel blocco, che è la traduzione diretta del diagramma.
+4. **Le uscite si aggiornano in un punto solo** (la funzione `entra`): è lo stile Moore. Per uno stile Mealy si eseguono le azioni direttamente nel `case`, al momento della transizione.
+
+<Aside type="caution" title="Disegnare prima, programmare dopo">
+Con gli alunni conviene pretendere **sempre** il diagramma (o la tabella) prima del codice, magari verificato in JFLAP. I programmi "a forza di `if`" scritti senza un modello a stati diventano presto ingestibili; con il diagramma accanto, il codice si scrive in pochi minuti e gli errori si trovano subito confrontando `case` e frecce.
+</Aside>

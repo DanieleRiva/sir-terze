@@ -1,0 +1,101 @@
+---
+/** Riproduzione schematica della finestra iniziale di JFLAP 7.1 */
+interface Props {
+	evidenzia?: string;
+	caption?: string;
+}
+const { evidenzia = 'Finite Automaton', caption } = Astro.props;
+const voci = [
+	'Finite Automaton',
+	'Mealy Machine',
+	'Moore Machine',
+	'Pushdown Automaton',
+	'Turing Machine',
+	'Multi-Tape Turing Machine',
+	'Grammar',
+	'L-System',
+	'Regular Expression',
+	'Regular Pumping Lemma',
+	'Context-Free Pumping Lemma',
+];
+---
+
+<figure class="jfm not-content">
+	<div class="jfm-win">
+		<div class="jfm-title"><span class="jfm-icon">J</span> JFLAP 7.1</div>
+		<div class="jfm-menubar"><span>File</span><span>Help</span><span>Batch</span><span>Preferences</span></div>
+		<div class="jfm-body">
+			{voci.map((v) => <div class:list={['jfm-btn', { hl: v === evidenzia }]}>{v}</div>)}
+		</div>
+	</div>
+	{caption && <figcaption set:html={caption} />}
+</figure>
+
+<style>
+	.jfm {
+		margin: 1.75rem 0;
+	}
+	.jfm-win {
+		width: min(100%, 17rem);
+		margin-inline: auto;
+		background: #eeeeee;
+		color: #111;
+		border: 1px solid #8d8d8d;
+		border-radius: 8px;
+		overflow: hidden;
+		box-shadow: 0 10px 30px -12px rgb(0 0 0 / 0.45);
+		font-family: Arial, Helvetica, sans-serif;
+		font-size: 13px;
+	}
+	.jfm-title {
+		display: flex;
+		gap: 0.5rem;
+		align-items: center;
+		padding: 0.35rem 0.6rem;
+		background: linear-gradient(#f4f4f4, #dcdcdc);
+		border-bottom: 1px solid #b5b5b5;
+		font-size: 12.5px;
+	}
+	.jfm-icon {
+		width: 16px;
+		height: 16px;
+		display: grid;
+		place-items: center;
+		background: #c62828;
+		color: #fff;
+		font-weight: 700;
+		font-size: 11px;
+		border-radius: 3px;
+	}
+	.jfm-menubar {
+		display: flex;
+		gap: 1rem;
+		padding: 0.25rem 0.7rem;
+		border-bottom: 1px solid #cfcfcf;
+	}
+	.jfm-body {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+		padding: 0.7rem;
+	}
+	.jfm-btn {
+		text-align: center;
+		padding: 0.32rem 0.5rem;
+		border: 1px solid #9a9a9a;
+		border-radius: 3px;
+		background: linear-gradient(#ffffff, #e3e3e3);
+	}
+	.jfm-btn.hl {
+		border-color: #2f6db5;
+		background: linear-gradient(#e2edfa, #b8cfe5);
+		font-weight: 700;
+		box-shadow: 0 0 0 2px #7aa6dc;
+	}
+	figcaption {
+		margin-top: 0.75rem;
+		text-align: center;
+		font-size: var(--sl-text-sm);
+		color: var(--sl-color-gray-2);
+	}
+</style>

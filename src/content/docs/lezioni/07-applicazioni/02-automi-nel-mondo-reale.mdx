@@ -1,0 +1,159 @@
+---
+title: Gli automi nel mondo reale
+description: Dove si usano davvero gli automi a stati finiti - protocolli di rete (TCP), compilatori, validazione dei dati, videogiochi, controllo industriale.
+sidebar:
+  order: 2
+---
+
+import Automa from '~/components/Automa.astro';
+import { Aside } from '@astrojs/starlight/components';
+
+Gli automi a stati finiti non sono un esercizio scolastico: sono uno degli strumenti più usati in informatica e in elettronica. Ecco una carrellata di esempi, utili anche come spunti per lezioni e progetti.
+
+---
+
+## Le reti: la macchina a stati di TCP
+
+Per un corso di **Sistemi e Reti** l'esempio più importante è il protocollo **TCP**, quello che garantisce la consegna affidabile dei dati su Internet (lo usano il web, la posta, le chat…). La specifica ufficiale di TCP (RFC 793, oggi RFC 9293) descrive il comportamento di ogni estremo della connessione proprio come una **macchina a stati finiti**.
+
+Gli input sono **eventi** (una richiesta del programma, l'arrivo di un segmento con certi flag, lo scadere di un timer); le uscite sono i **segmenti inviati**. Le etichette hanno la forma `evento / azione`: è una macchina di **Mealy**!
+
+<Automa
+	r={46}
+	states={[
+		{ id: 'CL', label: 'CLOSED', x: 360, y: 60, initial: 'top' },
+		{ id: 'LI', label: 'LISTEN', x: 140, y: 190 },
+		{ id: 'SS', label: 'SYN-SENT', x: 580, y: 190 },
+		{ id: 'SR', label: 'SYN-RCVD', x: 140, y: 330 },
+		{ id: 'ES', label: 'ESTABLISHED', x: 360, y: 330, hl: true },
+		{ id: 'F1', label: 'FIN-WAIT-1', x: 140, y: 470 },
+		{ id: 'CW', label: 'CLOSE-WAIT', x: 580, y: 470 },
+		{ id: 'F2', label: 'FIN-WAIT-2', x: 140, y: 610 },
+		{ id: 'LA', label: 'LAST-ACK', x: 580, y: 610 },
+		{ id: 'TW', label: 'TIME-WAIT', x: 140, y: 750 },
+		{ id: 'CL2', label: 'CLOSED', x: 580, y: 750, dim: true },
+	]}
+	transitions={[
+		{ from: 'CL', to: 'LI', label: 'listen' },
+		{ from: 'CL', to: 'SS', label: 'connect / SYN' },
+		{ from: 'LI', to: 'SR', label: 'SYN / SYN+ACK' },
+		{ from: 'SR', to: 'ES', label: 'ACK' },
+		{ from: 'SS', to: 'ES', label: 'SYN+ACK / ACK' },
+		{ from: 'ES', to: 'F1', label: 'close / FIN' },
+		{ from: 'ES', to: 'CW', label: 'FIN / ACK' },
+		{ from: 'F1', to: 'F2', label: 'ACK' },
+		{ from: 'CW', to: 'LA', label: 'close / FIN' },
+		{ from: 'F2', to: 'TW', label: 'FIN / ACK' },
+		{ from: 'LA', to: 'CL2', label: 'ACK' },
+		{ from: 'TW', to: 'CL2', label: 'timeout' },
+	]}
+	caption="Macchina a stati di TCP (semplificata). A sinistra il server che apre in ascolto e il lato che chiude per primo; a destra il client che si connette e il lato che chiude per secondo. Lo stato CLOSED in basso è lo stesso di quello in alto, ridisegnato per non incrociare le frecce."
+/>
+
+Seguendo il diagramma si "vedono" due procedure famose:
+
+- **Three-way handshake** (apertura): il client invia `SYN` (CLOSED → SYN-SENT), il server risponde `SYN+ACK` (LISTEN → SYN-RCVD), il client conferma con `ACK`. Entrambi arrivano in **ESTABLISHED**, lo stato in cui si scambiano i dati.
+- **Chiusura in quattro passi**: chi chiude per primo invia `FIN` e passa per FIN-WAIT-1, FIN-WAIT-2 e TIME-WAIT; l'altro passa per CLOSE-WAIT e LAST-ACK.
+
+<Aside type="tip" title="Da vedere in laboratorio">
+Su qualunque computer il comando `netstat -an` (oppure `ss -tan` su Linux) mostra le connessioni TCP aperte **con il loro stato**: si trovano proprio scritte come `LISTEN`, `ESTABLISHED`, `TIME_WAIT`, `CLOSE_WAIT`. Con Wireshark si possono catturare i segmenti `SYN`, `SYN+ACK`, `ACK` e `FIN` e seguire la macchina a stati in diretta. È un bellissimo collegamento tra la teoria degli automi e il programma di reti.
+</Aside>
+
+Anche molti altri protocolli sono descritti da automi: **DHCP** (il client passa per INIT, SELECTING, REQUESTING, BOUND, RENEWING…), i protocolli di routing come **BGP** e **OSPF**, il **Wi-Fi** durante l'associazione all'access point.
+
+---
+
+## I compilatori: l'analizzatore lessicale
+
+Il primo passo di un compilatore (o di un interprete, come quello di Python) è l'**analisi lessicale**: il testo del programma viene diviso in "parole" chiamate **token**: identificatori, numeri, operatori, parole chiave.
+
+Ogni tipo di token è descritto da un'**espressione regolare**, e il programma che li riconosce (il *lexer*) è un **DFA**. Ecco una versione ridotta che distingue identificatori e numeri interi:
+
+<Automa
+	r={28}
+	states={[
+		{ id: 'S', label: 'inizio', x: 80, y: 140, initial: true },
+		{ id: 'ID', label: 'ident', x: 300, y: 60, final: true },
+		{ id: 'NUM', label: 'num', x: 300, y: 220, final: true },
+	]}
+	transitions={[
+		{ from: 'S', to: 'ID', label: 'lettera, _' },
+		{ from: 'ID', to: 'ID', label: 'lettera, cifra, _', loop: 'right' },
+		{ from: 'S', to: 'NUM', label: 'cifra' },
+		{ from: 'NUM', to: 'NUM', label: 'cifra', loop: 'right' },
+	]}
+	caption="DFA di un analizzatore lessicale minimo: un identificatore inizia con una lettera o un trattino basso; un numero è fatto di sole cifre."
+/>
+
+Strumenti come **lex**, **flex** o **ANTLR** generano automaticamente il DFA a partire dalle espressioni regolari dei token, con gli stessi algoritmi visti nei capitoli 3, 4 e 6 (Thompson, sottoinsiemi, minimizzazione).
+
+---
+
+## La validazione dei dati
+
+Ogni volta che un modulo web controlla un **codice fiscale**, un **CAP**, un **IBAN**, un **indirizzo email** o un **numero di telefono**, dietro c'è quasi sempre un'espressione regolare, cioè un automa.
+
+In HTML basta un attributo:
+
+```html
+<input name="cap" pattern="[0-9]{5}" title="Il CAP è formato da 5 cifre">
+```
+
+e in Python:
+
+```python
+import re
+if re.fullmatch(r"[0-9]{5}", cap):
+    print("CAP valido")
+```
+
+Anche comandi come `grep` (Linux), la funzione **Trova e sostituisci** degli editor di testo e gli strumenti di analisi dei log usano gli automi per cercare testo in modo velocissimo.
+
+---
+
+## I videogiochi
+
+Il comportamento dei personaggi non giocanti è spesso programmato con una macchina a stati. L'esempio più famoso sono i **fantasmi di Pac-Man** (1980):
+
+<Automa
+	r={40}
+	states={[
+		{ id: 'SC', label: 'Disperde', x: 90, y: 90, initial: true },
+		{ id: 'CH', label: 'Insegue', x: 420, y: 90 },
+		{ id: 'FR', label: 'Spaventato', x: 90, y: 350 },
+		{ id: 'EA', label: 'Mangiato', x: 420, y: 350 },
+	]}
+	transitions={[
+		{ from: 'SC', to: 'CH', label: 'timer', bend: 28 },
+		{ from: 'CH', to: 'SC', label: 'timer', bend: 28 },
+		{ from: 'SC', to: 'FR', label: 'super-pillola' },
+		{ from: 'CH', to: 'FR', label: 'super-pillola' },
+		{ from: 'FR', to: 'CH', label: 'fine effetto' },
+		{ from: 'FR', to: 'EA', label: 'toccato' },
+		{ from: 'EA', to: 'CH', label: 'a casa' },
+	]}
+	caption="Una versione semplificata del comportamento di un fantasma di Pac-Man."
+/>
+
+Motori di gioco come **Unity** e **Unreal** hanno editor grafici di macchine a stati (per le animazioni e per l'intelligenza artificiale) che assomigliano moltissimo a JFLAP.
+
+---
+
+## Il controllo di macchine e impianti
+
+- I **PLC** (controllori logici programmabili) che governano nastri trasportatori, ascensori, cancelli automatici e impianti industriali sono spesso programmati come macchine a stati; il linguaggio standard **SFC** (*Sequential Function Chart*, norma IEC 61131-3) è proprio un diagramma di stati e transizioni.
+- Gli **elettrodomestici** (lavatrice, forno a microonde, macchina del caffè) hanno un microcontrollore che esegue una macchina a stati.
+- I **circuiti digitali** sequenziali (contatori, registri, unità di controllo dei processori) sono macchine di Mealy o di Moore realizzate con flip-flop e porte logiche.
+
+---
+
+## Interfacce utente e software
+
+- Una **procedura guidata** (*wizard*) di installazione: Benvenuto → Licenza → Cartella → Installazione → Fine, con i pulsanti *Avanti* e *Indietro* come input.
+- Il **lettore multimediale**: Fermo, In riproduzione, In pausa, con i tasti Play, Pausa, Stop.
+- Lo **stato di un ordine** in un e-commerce: Creato → Pagato → Spedito → Consegnato (oppure Annullato).
+- Lo **stato di un processo** nel sistema operativo: Nuovo, Pronto, In esecuzione, In attesa, Terminato. Anche questo è un automa, e lo si ritrova nel programma di Sistemi!
+
+<Aside type="note" title="Un'idea per la classe">
+Chiedere agli alunni di scegliere un oggetto o un'app che usano ogni giorno, individuarne gli stati e gli eventi, disegnare l'automa in JFLAP e presentarlo ai compagni. È un'attività che funziona molto bene come verifica orale o come compito di realtà.
+</Aside>

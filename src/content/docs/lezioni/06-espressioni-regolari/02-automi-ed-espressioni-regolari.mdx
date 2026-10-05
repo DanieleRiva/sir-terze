@@ -1,0 +1,189 @@
+---
+title: Automi ed espressioni regolari
+description: Il teorema di Kleene - ogni espressione regolare si trasforma in un automa e viceversa. Costruzione di Thompson ed eliminazione degli stati.
+sidebar:
+  order: 2
+---
+
+import Automa from '~/components/Automa.astro';
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+## Il teorema di Kleene
+
+Abbiamo ora tre modi per descrivere un linguaggio: DFA, NFA (con o senza ε) ed espressioni regolari. Il **teorema di Kleene** (1956) afferma che sono **tutti equivalenti**:
+
+> Un linguaggio è descritto da un'**espressione regolare** se e solo se è riconosciuto da un **automa a stati finiti**.
+
+Questi linguaggi si chiamano **linguaggi regolari**. Il quadro completo delle trasformazioni è questo:
+
+| Da | A | Come | Dove |
+| :-- | :-- | :-- | :-- |
+| Espressione regolare | ε-NFA | costruzione di Thompson | questa lezione |
+| ε-NFA / NFA | DFA | costruzione per sottoinsiemi | [capitolo 3](/appunti-sir-terza/lezioni/03-nfa/03-da-nfa-a-dfa/) |
+| DFA | DFA minimo | raffinamento delle partizioni | [capitolo 4](/appunti-sir-terza/lezioni/04-minimizzazione/01-minimizzare-un-dfa/) |
+| Automa | Espressione regolare | eliminazione degli stati | questa lezione |
+
+JFLAP sa fare **tutte** queste trasformazioni, passo per passo.
+
+---
+
+## Da espressione regolare ad automa: la costruzione di Thompson
+
+L'idea è costruire l'automa **un pezzo alla volta**, seguendo la struttura dell'espressione. Per ogni mattone e per ogni operazione c'è uno "schema" fisso, e gli schemi si incastrano tra loro grazie alle **ε-transizioni**.
+
+Ogni pezzo costruito ha **un solo stato iniziale** e **un solo stato finale**.
+
+### Il mattone: un simbolo
+
+Per il simbolo `a`: due stati e una freccia.
+
+<Automa
+	r={18}
+	states={[
+		{ id: 'i', x: 60, y: 60, initial: true },
+		{ id: 'f', x: 190, y: 60, final: true },
+	]}
+	transitions={[{ from: 'i', to: 'f', label: 'a' }]}
+	caption="Schema per un singolo simbolo <code>a</code>."
+/>
+
+### Concatenazione: `ab`
+
+Si mettono in fila i due pezzi e si collega il finale del primo all'iniziale del secondo con una ε-transizione (il finale del primo smette di essere finale).
+
+<Automa
+	r={18}
+	states={[
+		{ id: '1', x: 60, y: 60, initial: true },
+		{ id: '2', x: 170, y: 60 },
+		{ id: '3', x: 280, y: 60 },
+		{ id: '4', x: 390, y: 60, final: true },
+	]}
+	transitions={[
+		{ from: '1', to: '2', label: 'a' },
+		{ from: '2', to: '3', label: 'ε' },
+		{ from: '3', to: '4', label: 'b' },
+	]}
+	caption="Schema della concatenazione <code>ab</code>."
+/>
+
+### Unione: `a + b`
+
+Nuovo stato iniziale con due ε-transizioni verso i due pezzi; nuovo stato finale raggiunto con ε da entrambi.
+
+<Automa
+	r={18}
+	states={[
+		{ id: 's', x: 60, y: 120, initial: true },
+		{ id: '1', x: 180, y: 50 },
+		{ id: '2', x: 310, y: 50 },
+		{ id: '3', x: 180, y: 190 },
+		{ id: '4', x: 310, y: 190 },
+		{ id: 'f', x: 430, y: 120, final: true },
+	]}
+	transitions={[
+		{ from: 's', to: '1', label: 'ε' },
+		{ from: 's', to: '3', label: 'ε' },
+		{ from: '1', to: '2', label: 'a' },
+		{ from: '3', to: '4', label: 'b' },
+		{ from: '2', to: 'f', label: 'ε' },
+		{ from: '4', to: 'f', label: 'ε' },
+	]}
+	simula="b"
+	caption="Schema dell'unione <code>a + b</code>."
+/>
+
+### Stella: `a*`
+
+Nuovo stato iniziale e nuovo stato finale. Si può: saltare tutto (ε diretta dall'inizio alla fine, per la stringa vuota), oppure entrare nel pezzo, e dalla sua fine **tornare indietro** per ripeterlo o uscire.
+
+<Automa
+	r={18}
+	states={[
+		{ id: 's', x: 60, y: 90, initial: true },
+		{ id: '1', x: 180, y: 90 },
+		{ id: '2', x: 300, y: 90 },
+		{ id: 'f', x: 420, y: 90, final: true },
+	]}
+	transitions={[
+		{ from: 's', to: '1', label: 'ε' },
+		{ from: '1', to: '2', label: 'a' },
+		{ from: '2', to: 'f', label: 'ε' },
+		{ from: '2', to: '1', label: 'ε', bend: 30 },
+		{ from: 's', to: 'f', label: 'ε', bend: 60 },
+	]}
+	simula="aaa"
+	caption="Schema della stella <code>a*</code>: la freccia in alto permette di saltare tutto, quella in basso (da 2 a 1) di ripetere."
+/>
+
+Questo procedimento è completamente meccanico: produce automi con molti stati e molte ε-transizioni, che poi si possono convertire in DFA e minimizzare. In JFLAP si fa con **Regular Expression → Convert → Convert to NFA**.
+
+<Aside type="tip" title="A mano si può essere più furbi">
+Quando si lavora a mano, non è obbligatorio seguire Thompson alla lettera. Per esempio, per `(a + b)*b` viene subito in mente l'NFA a due stati: uno stato iniziale con un anello `a, b` e una freccia `b` verso lo stato finale. Thompson serve a garantire che **la trasformazione è sempre possibile**, ed è il metodo che usano i programmi.
+</Aside>
+
+---
+
+## Da automa a espressione regolare: l'eliminazione degli stati
+
+Per il viaggio inverso si usa un'idea diversa: si permette alle frecce di avere come etichetta **un'intera espressione regolare** (un automa così si chiama **automa generalizzato**). Poi si **eliminano gli stati uno alla volta**, aggiustando le etichette, finché restano solo lo stato iniziale e quello finale.
+
+<Steps>
+
+1. **Preparazione.** Ci deve essere un solo stato finale, diverso dall'iniziale. Se non è così si aggiungono un nuovo stato iniziale e un nuovo stato finale, collegati con ε. Le frecce parallele tra gli stessi due stati si fondono in una sola, unendo le etichette con +.
+
+2. **Eliminazione.** Si sceglie uno stato *q* da eliminare (né iniziale né finale). Per ogni coppia di stati *p* → *q* → *r*, si aggiunge una freccia diretta *p* → *r* con etichetta
+
+   > (etichetta *p*→*q*) (etichetta dell'anello su *q*)\* (etichetta *q*→*r*)
+
+   Se esisteva già una freccia *p* → *r*, la nuova etichetta si unisce alla vecchia con +.
+
+3. **Fine.** Quando restano solo due stati, l'etichetta tra di loro (con gli eventuali anelli) dà l'espressione regolare.
+
+</Steps>
+
+### Esempio: numero pari di `a`
+
+Partiamo dal DFA del numero pari di `a`:
+
+<Automa
+	r={22}
+	states={[
+		{ id: 'P', x: 80, y: 90, initial: true, final: true },
+		{ id: 'D', x: 270, y: 90 },
+	]}
+	transitions={[
+		{ from: 'P', to: 'D', label: 'a' },
+		{ from: 'D', to: 'P', label: 'a' },
+		{ from: 'P', to: 'P', label: 'b' },
+		{ from: 'D', to: 'D', label: 'b' },
+	]}
+/>
+
+Qui P è sia iniziale sia finale; per tenerlo semplice possiamo eliminare direttamente D. L'unico percorso che passa per D è **P → D → P**: con `a` si entra in D, si gira sull'anello `b` quante volte si vuole, e con `a` si torna in P. La nuova freccia P → P ha etichetta **`ab*a`**, che si unisce all'anello `b` già presente:
+
+<Automa
+	r={22}
+	states={[{ id: 'P', x: 80, y: 90, initial: true, final: true }]}
+	transitions={[{ from: 'P', to: 'P', label: 'b + ab*a', loop: 'right' }]}
+	caption="Dopo l'eliminazione di D: un solo stato con un anello."
+/>
+
+Uno stato iniziale e finale con un anello etichettato R riconosce **R\***. Quindi:
+
+> **( b + ab\*a )\***
+
+Si legge: "una sequenza di blocchi, dove ogni blocco è una `b` oppure una coppia di `a` con in mezzo delle `b`". È un'altra espressione per lo stesso linguaggio di `b*(ab*ab*)*` vista nella lezione precedente: l'espressione regolare di un linguaggio **non è unica**.
+
+<Aside type="note" title="In JFLAP">
+La trasformazione si fa con **Convert → Convert FA to RE**. JFLAP guida attraverso tutte le fasi: crea l'unico stato finale, aggiunge le frecce mancanti con etichetta ∅, e poi chiede di cliccare sugli stati da eliminare con lo strumento **State Collapser**. Alla fine il pulsante **Export** apre l'espressione regolare in una nuova finestra. Vedi [Espressioni regolari e grammatiche in JFLAP](/appunti-sir-terza/jflap/07-espressioni-regolari-e-grammatiche/).
+</Aside>
+
+---
+
+## Riepilogo
+
+- **Teorema di Kleene**: espressioni regolari e automi a stati finiti descrivono esattamente gli stessi linguaggi, i **linguaggi regolari**.
+- **Espressione → automa**: costruzione di Thompson, un pezzo per volta, usando ε-transizioni.
+- **Automa → espressione**: eliminazione degli stati, usando frecce etichettate con espressioni.
+- L'espressione regolare di un linguaggio non è unica; il DFA minimo invece sì.

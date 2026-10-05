@@ -1,0 +1,81 @@
+---
+title: Automi con uscita - l'idea
+description: Dagli automi che dicono solo sì o no agli automi che producono uscite, i trasduttori. Il legame con le reti sequenziali.
+sidebar:
+  order: 1
+---
+
+import SchemaSequenziale from '~/components/SchemaSequenziale.astro';
+import { Aside } from '@astrojs/starlight/components';
+
+## Dal "sì/no" alle uscite
+
+Gli automi visti finora sono **riconoscitori**: leggono una stringa e alla fine danno una sola risposta, accettata o rifiutata.
+
+Molti sistemi reali però non devono "rispondere alla fine", ma **reagire continuamente** a ciò che succede:
+
+- il **distributore automatico** deve erogare la bibita appena il credito è sufficiente;
+- il **semaforo** deve accendere la luce giusta in ogni momento;
+- un **circuito rilevatore** deve segnalare con un `1` ogni volta che compare una certa sequenza di bit;
+- un **protocollo di rete** deve inviare il messaggio giusto quando ne riceve uno.
+
+Per questi sistemi servono automi che, mentre leggono gli input, **producono una sequenza di uscite**. Si chiamano **trasduttori** (o *automi con uscita*), e ne esistono due modelli classici:
+
+| Modello | L'uscita dipende da… | Dove si scrive l'uscita nel diagramma |
+| :-- | :-- | :-- |
+| **Macchina di Moore** (Edward Moore, 1956) | solo dallo **stato attuale** | dentro lo **stato** |
+| **Macchina di Mealy** (George Mealy, 1955) | dallo **stato attuale e dall'input** | sulla **transizione**, nella forma `input/uscita` |
+
+Ai trasduttori **non servono stati finali**: non devono accettare o rifiutare, ma tradurre una sequenza di input in una sequenza di output. Anche in JFLAP le macchine di Mealy e Moore non hanno stati finali.
+
+---
+
+## Gli ingredienti in più
+
+Rispetto a un DFA ci sono due ingredienti nuovi:
+
+- un **alfabeto di uscita**, indicato con **Γ** (gamma maiuscola) oppure **Λ**: i simboli che la macchina può produrre;
+- una **funzione di uscita**, indicata con **λ** (lambda minuscola) oppure **ω**: dice quale simbolo produrre.
+
+Una macchina con uscita è quindi una **sestupla**:
+
+> **M = ( Q, Σ, Γ, δ, λ, q₀ )**
+
+La differenza tra Moore e Mealy sta tutta nella funzione di uscita λ:
+
+- **Moore**: λ : Q → Γ (a ogni **stato** corrisponde un'uscita)
+- **Mealy**: λ : Q × Σ → Γ (a ogni **coppia stato-input**, cioè a ogni transizione, corrisponde un'uscita)
+
+<Aside type="caution" title="Attenzione alle lettere">
+In questo contesto **λ** indica la funzione di uscita, non la stringa vuota! Purtroppo JFLAP usa λ anche per la stringa vuota. Il significato si capisce dal contesto.
+</Aside>
+
+---
+
+## Il legame con l'elettronica: le reti sequenziali
+
+Mealy e Moore non erano matematici "puri": lavoravano ai Bell Labs e pensavano ai **circuiti**. Una macchina a stati finiti con uscita è esattamente il modello di una **rete sequenziale sincrona**, il tipo di circuito digitale che ha una memoria.
+
+- Lo **stato** è memorizzato in un **registro** fatto di flip-flop. Con *n* flip-flop si rappresentano fino a 2ⁿ stati.
+- Una **rete combinatoria** calcola lo **stato futuro** a partire da stato attuale e ingresso: è la funzione δ.
+- Un'altra rete combinatoria calcola l'**uscita**: è la funzione λ.
+- Ad ogni impulso di **clock** il registro memorizza lo stato futuro, che diventa lo stato attuale.
+
+<SchemaSequenziale tipo="moore" caption="Macchina di <strong>Moore</strong>: la logica di uscita riceve <strong>solo lo stato</strong>." />
+
+<SchemaSequenziale tipo="mealy" caption="Macchina di <strong>Mealy</strong>: la logica di uscita riceve lo stato <strong>e anche l'ingresso</strong> (linea tratteggiata)." />
+
+La differenza si vede subito nello schema:
+
+- in una macchina di **Moore** l'uscita cambia **solo quando cambia lo stato**, cioè in corrispondenza del clock: è più "stabile" e prevedibile;
+- in una macchina di **Mealy** l'uscita può cambiare **appena cambia l'ingresso**, anche tra un colpo di clock e l'altro: è più reattiva, ma un disturbo sull'ingresso arriva direttamente all'uscita.
+
+Questo è il motivo per cui nei circuiti digitali e nella programmazione dei controllori (PLC, microcontrollori come Arduino) si parla continuamente di "macchine a stati": il modello è lo stesso.
+
+---
+
+## Nelle prossime lezioni
+
+- [Macchine di Moore](/appunti-sir-terza/lezioni/05-mealy-moore/02-macchine-di-moore/): uscita sugli stati, con esempi (parità, rilevatore di sequenza, semaforo).
+- [Macchine di Mealy](/appunti-sir-terza/lezioni/05-mealy-moore/03-macchine-di-mealy/): uscita sulle transizioni, con esempi (rilevatore di sequenza, distributore automatico).
+- [Confronto e conversione](/appunti-sir-terza/lezioni/05-mealy-moore/04-confronto-e-conversione/): quando usare l'una o l'altra, e come trasformare una nell'altra.

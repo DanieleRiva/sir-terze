@@ -1,0 +1,111 @@
+---
+title: Espressioni regolari e grammatiche in JFLAP
+description: Scrivere espressioni regolari in JFLAP, convertirle in NFA, ricavare un'espressione regolare da un automa e cenni alla conversione in grammatica.
+sidebar:
+  order: 7
+---
+
+import Automa from '~/components/Automa.astro';
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+## Scrivere un'espressione regolare
+
+Dalla finestra principale si sceglie **Regular Expression**: si apre un editor con una casella di testo in cui scrivere l'espressione.
+
+La sintassi di JFLAP è quella "teorica" del [capitolo 6](/appunti-sir-terza/lezioni/06-espressioni-regolari/01-espressioni-regolari/):
+
+| Simbolo in JFLAP | Significato |
+| :-: | :-- |
+| `+` | unione (alternativa) |
+| `*` | stella di Kleene |
+| *(niente)* | concatenazione: basta scrivere i pezzi uno dopo l'altro |
+| `(` `)` | parentesi per raggruppare |
+| `!` | la **stringa vuota** (λ/ε) |
+
+Esempi: `(a+b)*b`, `b*(ab*ab*)*`, `(0+1)*01`, `a(!+b)` (cioè `a` oppure `ab`).
+
+<Aside type="danger" title="Niente spazi!">
+JFLAP considera lo spazio **un simbolo dell'alfabeto**. Scrivendo `(a + b)*` l'espressione conterrebbe anche il simbolo "spazio". Si scrive sempre **senza spazi**: `(a+b)*`.
+</Aside>
+
+---
+
+## Da espressione regolare a NFA
+
+Con l'espressione scritta nell'editor si sceglie **Convert → Convert to NFA**. JFLAP applica la costruzione "a pezzi" (simile a quella di Thompson) partendo da un automa con **due stati** e **una sola freccia etichettata con tutta l'espressione**, e poi la scompone un passo alla volta.
+
+<Automa
+	r={20}
+	states={[
+		{ id: 'q0', x: 70, y: 70, initial: true },
+		{ id: 'q1', x: 300, y: 70, final: true },
+	]}
+	transitions={[{ from: 'q0', to: 'q1', label: '(a+b)*b' }]}
+	caption="Il punto di partenza della conversione: una sola transizione con l'intera espressione."
+/>
+
+| Strumento / pulsante | Cosa fa |
+| :-- | :-- |
+| **(D)e-expressionify Transition** | si clicca su una transizione che contiene un'espressione composta: JFLAP la **scompone** secondo l'operatore principale (unione, concatenazione o stella) |
+| **(T)ransition Creator** | per aggiungere a mano le λ-transizioni richieste dallo schema |
+| **Do Step** | JFLAP esegue da solo il prossimo passo |
+| **Do All** | JFLAP completa tutta la conversione |
+| **Export** | apre l'NFA ottenuto in una nuova finestra |
+
+L'NFA prodotto ha **molti stati e molte λ-transizioni**: è normale, è il prezzo di un metodo completamente meccanico. Dalla nuova finestra si può poi fare **Convert to DFA** e **Minimize DFA** per arrivare all'automa minimo.
+
+<Aside type="tip" title="Esercizio: dalla regex all'automa minimo">
+1. Scrivere in JFLAP l'espressione `(a+b)*b`.
+2. **Convert to NFA** → **Do All** → **Export**.
+3. Sul risultato: **Convert to DFA** → **Complete** → **Done?**
+4. Sul DFA: **Minimize DFA** fino al **Done?** finale.
+
+Il risultato deve avere **2 stati**: "l'ultimo simbolo non è `b`" (iniziale) e "l'ultimo simbolo è `b`" (finale). È il percorso completo del teorema di Kleene, eseguito in pochi minuti.
+</Aside>
+
+---
+
+## Da automa a espressione regolare
+
+Con un automa a stati finiti aperto si sceglie **Convert → Convert FA to RE**. JFLAP guida attraverso il metodo di **eliminazione degli stati** visto nel [capitolo 6](/appunti-sir-terza/lezioni/06-espressioni-regolari/02-automi-ed-espressioni-regolari/#da-automa-a-espressione-regolare-leliminazione-degli-stati).
+
+<Steps>
+
+1. **Un solo stato finale.** Se l'automa ha più stati finali (o se lo stato finale coincide con l'iniziale), JFLAP chiede di creare un **nuovo stato finale** e di collegarvi i vecchi finali con **λ-transizioni**.
+
+2. **Frecce parallele.** Se tra due stati ci sono più transizioni, vanno fuse in una sola con l'unione: si usa lo strumento **Transition Collapser**.
+
+3. **Frecce mancanti.** Lo schema richiede che ci sia una transizione tra **ogni coppia** di stati (anelli compresi). Le transizioni che mancano si aggiungono con il **Transition Creator** e hanno etichetta **∅** (insieme vuoto: "da qui non si passa").
+
+4. **Eliminazione degli stati.** Con lo strumento **State Collapser** si clicca, uno alla volta, sugli stati diversi dall'iniziale e dal finale. Per ogni stato eliminato JFLAP mostra in una finestra le nuove etichette delle transizioni coinvolte, che si confermano.
+
+5. **Fine.** Quando restano solo stato iniziale e stato finale, si preme **Export**: l'espressione regolare si apre in una nuova finestra.
+
+</Steps>
+
+<Aside type="caution" title="Espressioni lunghe e &quot;strane&quot;">
+L'espressione prodotta da JFLAP è **corretta** ma spesso molto più lunga di quella che scriveremmo a mano, piena di parentesi e di `!`. Non va presa come "la" soluzione: è uno strumento per **verificare**. Un buon esercizio è chiedere agli alunni di semplificarla usando le uguaglianze del capitolo 6, oppure di scrivere la propria espressione, convertirla in automa e confrontarla con **Compare Equivalence**.
+</Aside>
+
+---
+
+## Cenni: da automa a grammatica
+
+Un altro modo di descrivere un linguaggio è una **grammatica**: un insieme di regole di riscrittura (produzioni) del tipo S → aA. Ai linguaggi regolari corrispondono le **grammatiche regolari** (o lineari destre), in cui ogni regola ha la forma "un simbolo seguito al più da una variabile".
+
+Il passaggio da automa a grammatica è diretto:
+
+- ogni **stato** diventa una **variabile** (lo stato iniziale diventa S);
+- ogni **transizione** p —a→ q diventa la produzione **P → aQ**;
+- ogni **stato finale** f dà la produzione **F → λ**.
+
+Per esempio, il DFA del numero pari di `a` (P iniziale e finale, D) dà la grammatica:
+
+```text
+S → aD | bS | λ
+D → aS | bD
+```
+
+In JFLAP si usa **Convert → Convert to Grammar**: si clicca sulle transizioni (o sugli stati finali) e la produzione corrispondente compare a destra. I pulsanti **Hint** (aggiunge una produzione), **What's Left?** (mostra cosa manca), **Show All** (le aggiunge tutte) ed **Export** (apre la grammatica in una nuova finestra) guidano il procedimento.
+
+Nella finestra della grammatica JFLAP permette anche di provare a **derivare** una stringa (menu *Input*, con i vari *parser*), e di fare il percorso inverso: **Convert → Convert Right-Linear Grammar to FA**. Sono argomenti da approfondimento, utili per collegare gli automi alle grammatiche dei linguaggi di programmazione.

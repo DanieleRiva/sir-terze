@@ -1,0 +1,96 @@
+---
+/**
+ * Pannello di simulazione passo-passo di JFLAP (Input → Step...):
+ * una "configurazione" per ogni percorso aperto + i pulsanti di controllo.
+ */
+interface Config {
+	stato: string;
+	letto: string;
+	resto: string;
+	esito?: 'accept' | 'reject';
+	selezionata?: boolean;
+}
+interface Props {
+	configs: Config[];
+}
+const { configs } = Astro.props;
+const pulsanti = ['Step', 'Reset', 'Freeze', 'Thaw', 'Trace', 'Remove'];
+---
+
+<div class="jfs">
+	<div class="jfs-configs">
+		{
+			configs.map((c) => (
+				<div class:list={['jfs-conf', c.esito, { sel: c.selezionata }]}>
+					<div class="jfs-stato">{c.stato}</div>
+					<div class="jfs-input">
+						<span class="letto">{c.letto}</span>
+						<span class="resto">{c.resto}</span>
+					</div>
+				</div>
+			))
+		}
+	</div>
+	<div class="jfs-btns">{pulsanti.map((p) => <span>{p}</span>)}</div>
+</div>
+
+<style>
+	.jfs {
+		font-family: Arial, Helvetica, sans-serif;
+		font-size: 13px;
+		color: #111;
+	}
+	.jfs-configs {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem;
+		margin-bottom: 0.6rem;
+	}
+	.jfs-conf {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		padding: 0.35rem 0.6rem;
+		background: #fff;
+		border: 1px solid #999;
+	}
+	.jfs-conf.sel {
+		box-shadow: 0 0 0 2px #2f6db5;
+	}
+	.jfs-conf.accept {
+		background: #b9f5b9;
+	}
+	.jfs-conf.reject {
+		background: #f8b4b4;
+	}
+	.jfs-stato {
+		width: 30px;
+		height: 30px;
+		border-radius: 50%;
+		display: grid;
+		place-items: center;
+		background: #ffff9a;
+		border: 1px solid #000;
+		font-size: 12px;
+	}
+	.jfs-input {
+		font-family: 'Courier New', monospace;
+		font-size: 15px;
+		letter-spacing: 1px;
+	}
+	.jfs-input .letto {
+		color: #9a9a9a;
+	}
+	.jfs-btns {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.35rem;
+		justify-content: center;
+	}
+	.jfs-btns span {
+		padding: 0.25rem 0.8rem;
+		border: 1px solid #9a9a9a;
+		border-radius: 3px;
+		background: linear-gradient(#ffffff, #e3e3e3);
+	}
+</style>

@@ -1,0 +1,95 @@
+---
+title: Cosa un automa non sa fare
+description: I limiti degli automi a stati finiti - linguaggi non regolari, l'intuizione del pumping lemma e uno sguardo alla gerarchia di Chomsky.
+sidebar:
+  order: 3
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## La memoria finita è un limite
+
+Un automa a stati finiti ricorda soltanto **in quale stato si trova**. Se ha 10 stati, può distinguere al massimo 10 "situazioni diverse". Questo basta per moltissime cose, ma non per tutte.
+
+Consideriamo il linguaggio:
+
+> L = &#123; aⁿbⁿ : n ≥ 0 &#125; = &#123; ε, ab, aabb, aaabbb, … &#125;
+
+cioè **un certo numero di `a` seguito dallo stesso numero di `b`**. Sembra semplicissimo, eppure **nessun automa a stati finiti** lo riconosce.
+
+### Perché? Il ragionamento dei cassetti
+
+Supponiamo per assurdo che esista un DFA con, diciamo, **k** stati che riconosce L. Facciamogli leggere le stringhe
+
+> ε, a, aa, aaa, …, aᵏ
+
+Sono **k + 1** stringhe, ma l'automa ha solo **k** stati. Per il **principio dei cassetti** (se metto k + 1 calzini in k cassetti, almeno un cassetto ne contiene due), almeno due di queste stringhe, diciamo aⁱ e aʲ con i ≠ j, portano l'automa **nello stesso stato**.
+
+Da quello stato, l'automa non ha modo di sapere se ha letto i oppure j `a`. Se ora gli facciamo leggere bⁱ:
+
+- partendo da aⁱ otteniamo aⁱbⁱ, che **va accettata**;
+- partendo da aʲ otteniamo aʲbⁱ, che **va rifiutata** (i ≠ j).
+
+Ma l'automa, dallo stesso stato e con lo stesso input bⁱ, arriva per forza nello **stesso** stato finale: o le accetta entrambe o le rifiuta entrambe. **Contraddizione.** Quindi un tale automa non esiste.
+
+<Aside type="tip" title="L'intuizione da trasmettere agli alunni">
+Per riconoscere aⁿbⁿ bisogna **contare** le `a` senza un limite massimo, e per contare fino a un numero qualsiasi servono **infiniti stati**. Un automa a stati finiti sa contare solo **fino a un numero fissato** (o "modulo" un numero fissato, come nei multipli di 3).
+</Aside>
+
+---
+
+## Altri linguaggi non regolari
+
+Con lo stesso ragionamento si dimostra che non sono regolari:
+
+- le **parentesi bilanciate**: `()`, `(())`, `()(())`, … (bisogna ricordare quante parentesi sono ancora aperte);
+- i **palindromi**, cioè le stringhe che si leggono uguali nei due versi (`abba`, `aba`, `radar`): bisognerebbe ricordare tutta la prima metà;
+- le stringhe con **tante `a` quante `b`**, in qualsiasi ordine;
+- &#123; aⁿ : n è un numero primo &#125;.
+
+Attenzione invece a non esagerare: "un numero **pari** di `a`" oppure "un numero di `a` multiplo di 3" **sono** regolari, perché basta ricordare un resto, che ha un numero finito di valori.
+
+Questo ha conseguenze molto concrete: un'espressione regolare **non può** verificare che le parentesi di un'espressione matematica o i tag di un file HTML siano bilanciati. Per queste cose servono strumenti più potenti (i *parser*).
+
+---
+
+## Il pumping lemma, in breve
+
+Il ragionamento dei cassetti si può generalizzare in un teorema, il **pumping lemma** (lemma del "pompaggio") per i linguaggi regolari. In parole semplici:
+
+> Se L è regolare, esiste un numero *p* tale che **ogni stringa di L lunga almeno *p*** si può dividere in tre parti *xyz*, con *y* non vuota e *xy* lunga al più *p*, in modo che **ripetendo *y* quante volte si vuole** (anche zero) si ottengono ancora stringhe di L: *xz*, *xyz*, *xyyz*, *xyyyz*, … stanno tutte in L.
+
+L'idea: una stringa lunga almeno quanto il numero di stati fa sicuramente passare l'automa **due volte dallo stesso stato**, quindi c'è un **ciclo** nel percorso. Il pezzo *y* è quello letto durante il ciclo, e un ciclo si può percorrere zero, una o mille volte.
+
+Il pumping lemma si usa **al contrario**, per dimostrare che un linguaggio **non** è regolare: si trova una stringa lunga che, "pompata", esce dal linguaggio. JFLAP ha un intero modulo dedicato, **Regular Pumping Lemma**, che lo trasforma in un gioco a due giocatori contro il computer: è un modo divertente per introdurlo agli alunni più curiosi.
+
+---
+
+## Oltre gli automi a stati finiti: la gerarchia di Chomsky
+
+Gli automi a stati finiti sono il primo gradino di una scala di modelli sempre più potenti, descritta dal linguista Noam Chomsky (1956):
+
+| Tipo | Linguaggi | Macchina che li riconosce | Memoria | Esempio |
+| :-- | :-- | :-- | :-- | :-- |
+| 3 | **regolari** | automa a stati finiti | solo lo stato | `(a + b)*abb` |
+| 2 | liberi dal contesto | automa a pila (PDA) | stato + una **pila** | aⁿbⁿ, parentesi bilanciate |
+| 1 | dipendenti dal contesto | automa linearmente limitato | nastro lungo quanto l'input | aⁿbⁿcⁿ |
+| 0 | ricorsivamente enumerabili | **macchina di Turing** | nastro infinito | tutto ciò che è calcolabile |
+
+Ogni livello contiene quello sotto: tutti i linguaggi regolari sono anche liberi dal contesto, e così via.
+
+- L'**automa a pila** aggiunge a un automa a stati finiti una pila (come una pila di piatti: si può aggiungere o togliere solo in cima). Con la pila può "contare" le `a` impilandole e poi toglierne una per ogni `b`. È il modello alla base dei **compilatori**.
+- La **macchina di Turing** ha un nastro infinito su cui può leggere, scrivere e muoversi avanti e indietro. Per quanto ne sappiamo, può calcolare **tutto ciò che è calcolabile**: ogni computer reale è, in fondo, una macchina di Turing (con memoria finita).
+
+<Aside type="note" title="E JFLAP?">
+JFLAP permette di costruire e simulare anche automi a pila (*Pushdown Automaton*) e macchine di Turing (*Turing Machine*, anche a più nastri), con la stessa interfaccia degli automi a stati finiti. È un ottimo approfondimento per le classi più avanti o per gli alunni che vogliono andare oltre.
+</Aside>
+
+---
+
+## Riepilogo
+
+- Un automa a stati finiti ha **memoria finita**: non può contare senza limiti.
+- Esempi di linguaggi **non regolari**: aⁿbⁿ, parentesi bilanciate, palindromi.
+- Il **pumping lemma** formalizza l'idea: le stringhe lunghe di un linguaggio regolare contengono un pezzo che si può ripetere.
+- Gli automi a stati finiti sono il livello più basso della **gerarchia di Chomsky**; sopra ci sono automi a pila e macchine di Turing.

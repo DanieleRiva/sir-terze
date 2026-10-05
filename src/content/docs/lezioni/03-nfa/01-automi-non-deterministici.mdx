@@ -1,0 +1,184 @@
+---
+title: Automi non deterministici (NFA)
+description: Automi in cui da uno stato possono partire più transizioni con lo stesso simbolo - come funzionano, quando accettano e perché sono utili.
+sidebar:
+  order: 1
+---
+
+import Automa from '~/components/Automa.astro';
+import { Aside } from '@astrojs/starlight/components';
+
+## Un'idea "magica"
+
+In un DFA, da ogni stato esce esattamente una freccia per ogni simbolo. Proviamo ad allentare questa regola e a permettere che da uno stato escano:
+
+- **più frecce con lo stesso simbolo**, verso stati diversi;
+- **nessuna freccia** per un certo simbolo.
+
+Un automa così si chiama **NFA**, *Nondeterministic Finite Automaton*: **automa a stati finiti non deterministico**.
+
+Riprendiamo il linguaggio delle stringhe binarie che **finiscono con `01`**. Il DFA del capitolo precedente era un po' laborioso da ragionare. Ecco invece un NFA per lo stesso linguaggio:
+
+<Automa
+	states={[
+		{ id: 'q0', x: 80, y: 100, initial: true },
+		{ id: 'q1', x: 230, y: 100 },
+		{ id: 'q2', x: 380, y: 100, final: true },
+	]}
+	transitions={[
+		{ from: 'q0', to: 'q0', label: '0, 1' },
+		{ from: 'q0', to: 'q1', label: '0' },
+		{ from: 'q1', to: 'q2', label: '1' },
+	]}
+	simula="1101"
+	caption="NFA delle stringhe che finiscono con <code>01</code>. Da q₀, con il simbolo <code>0</code>, ci sono <strong>due</strong> scelte."
+/>
+
+Si legge quasi come una frase: "resta in q₀ finché vuoi, leggendo qualunque cosa; poi, **quando arriva lo `0` giusto**, cioè il penultimo simbolo, passa in q₁, leggi `1` e fermati in q₂".
+
+Ma come fa l'automa a sapere qual è "lo `0` giusto", se non sa quando la stringa finirà? Non lo sa. Il non determinismo si può immaginare in due modi equivalenti.
+
+1. **L'automa indovina.** Ad ogni bivio sceglie sempre la strada giusta, come se avesse la sfera di cristallo.
+2. **L'automa si clona.** Ad ogni bivio si divide in più copie, una per ogni strada possibile. Le copie avanzano in parallelo; una copia che non ha frecce da seguire "muore".
+
+La seconda idea è quella che ci permette di simulare un NFA a mano (e che usano JFLAP e il simulatore di questa pagina).
+
+---
+
+## Quando un NFA accetta
+
+> Un NFA **accetta** una stringa se **esiste almeno un percorso** che, leggendo tutta la stringa, termina in uno stato finale.
+
+Basta **una** copia che arriva in fondo in uno stato finale. Non importa quante altre copie siano morte per strada o siano finite in stati non finali.
+
+Una stringa è **rifiutata** se **nessun** percorso funziona: tutte le copie sono morte oppure sono arrivate alla fine in stati non finali.
+
+### L'albero delle computazioni
+
+Ecco tutte le strade possibili dell'NFA con la stringa `0101`. Ogni livello corrisponde a un simbolo letto.
+
+<Automa
+	r={20}
+	states={[
+		{ id: 'a', label: 'q0', x: 60, y: 150 },
+		{ id: 'b', label: 'q0', x: 180, y: 90 },
+		{ id: 'c', label: 'q1', x: 180, y: 210, hl: true },
+		{ id: 'd', label: 'q0', x: 300, y: 90 },
+		{ id: 'e', label: 'q2', x: 300, y: 210, hl: true },
+		{ id: 'f', label: 'q0', x: 420, y: 50 },
+		{ id: 'g', label: 'q1', x: 420, y: 130 },
+		{ id: 'x', label: '✗', x: 420, y: 210, dim: true },
+		{ id: 'h', label: 'q0', x: 540, y: 50 },
+		{ id: 'i', label: 'q2', x: 540, y: 130, final: true },
+	]}
+	transitions={[
+		{ from: 'a', to: 'b', label: '0' },
+		{ from: 'a', to: 'c', label: '0' },
+		{ from: 'b', to: 'd', label: '1' },
+		{ from: 'c', to: 'e', label: '1' },
+		{ from: 'd', to: 'f', label: '0' },
+		{ from: 'd', to: 'g', label: '0' },
+		{ from: 'e', to: 'x', label: '0', dim: true },
+		{ from: 'f', to: 'h', label: '1' },
+		{ from: 'g', to: 'i', label: '1' },
+	]}
+	caption="Albero delle computazioni per <code>0101</code>. Il ramo che passa per q₂ a metà stringa muore (da q₂ non si esce con <code>0</code>), ma il ramo in basso a destra arriva in q₂ alla fine: la stringa è <strong>accettata</strong>."
+/>
+
+---
+
+## Simulare un NFA con gli insiemi di stati
+
+Disegnare l'albero diventa scomodo con stringhe lunghe. C'è un modo più compatto: invece di seguire le singole copie, teniamo traccia dell'**insieme degli stati in cui c'è almeno una copia**.
+
+Con la stringa `0101`:
+
+| Passo | Simbolo letto | Insieme degli stati attivi |
+| :-: | :-: | :-- |
+| inizio | — | &#123; q₀ &#125; |
+| 1 | `0` | &#123; q₀, q₁ &#125; |
+| 2 | `1` | &#123; q₀, q₂ &#125; |
+| 3 | `0` | &#123; q₀, q₁ &#125; |
+| 4 | `1` | &#123; q₀, **q₂** &#125; → contiene uno stato finale: **accettata** ✓ |
+
+La regola è semplice: **il nuovo insieme è formato da tutti gli stati raggiungibili, con il simbolo letto, da almeno uno degli stati dell'insieme attuale**. Alla fine, la stringa è accettata se l'insieme contiene almeno uno stato finale.
+
+Prova a simulare nel riquadro qui sopra (il primo diagramma): vedrai che il simulatore colora **più stati insieme**.
+
+<Aside type="tip" title="Un'osservazione che vale oro">
+Notiamo che gli insiemi che compaiono sono pochi e si ripetono: &#123;q₀&#125;, &#123;q₀, q₁&#125;, &#123;q₀, q₂&#125;. Se trattiamo **ogni insieme come un unico stato**, otteniamo… un DFA! È esattamente l'idea della **costruzione per sottoinsiemi**, che vedremo tra due lezioni.
+</Aside>
+
+---
+
+## La definizione formale
+
+Un NFA è ancora una quintupla **A = (Q, Σ, δ, q₀, F)**. L'unica differenza rispetto al DFA è la funzione di transizione, che ora restituisce un **insieme** di stati (eventualmente vuoto):
+
+> δ : Q × Σ → 𝒫(Q)
+
+dove 𝒫(Q) è l'insieme di tutti i sottoinsiemi di Q. La tabella di transizione dell'NFA di prima è:
+
+| δ | 0 | 1 |
+| :-- | :-: | :-: |
+| → q₀ | &#123;q₀, q₁&#125; | &#123;q₀&#125; |
+| q₁ | ∅ | &#123;q₂&#125; |
+| \* q₂ | ∅ | ∅ |
+
+Una cella **∅** significa che non c'è nessuna transizione: la copia che si trova lì e legge quel simbolo muore.
+
+---
+
+## DFA e NFA a confronto
+
+| | DFA | NFA |
+| :-- | :-- | :-- |
+| Transizioni per stato e simbolo | esattamente **una** | **zero, una o più** |
+| δ restituisce | uno stato | un insieme di stati |
+| Percorsi per una stringa | uno solo | possono essere molti |
+| Accetta se | l'unico percorso finisce in uno stato finale | **almeno un** percorso finisce in uno stato finale |
+| Facilità di progettazione | a volte laborioso | spesso molto più semplice e naturale |
+| Facilità di esecuzione (programma, circuito) | immediata | va simulato (con gli insiemi) o convertito |
+
+<Aside type="note" title="Gli NFA sono più potenti?">
+No, ed è un risultato fondamentale (Rabin e Scott, 1959): **per ogni NFA esiste un DFA equivalente**. Gli NFA non riconoscono linguaggi "nuovi": sono solo un modo **più comodo** di descriverli. Il prezzo da pagare è che il DFA equivalente può avere molti più stati (nel caso peggiore, fino a 2ⁿ se l'NFA ne ha *n*).
+
+Ogni DFA, del resto, è anche un NFA particolare: quello in cui ogni insieme di arrivo contiene esattamente uno stato.
+</Aside>
+
+---
+
+## Un esempio in cui l'NFA brilla
+
+Σ = &#123;a, b&#125;, L = stringhe in cui il **terzultimo simbolo è `a`**.
+
+Con un NFA basta "indovinare" quando si è arrivati al terzultimo simbolo:
+
+<Automa
+	states={[
+		{ id: 'q0', x: 80, y: 100, initial: true },
+		{ id: 'q1', x: 220, y: 100 },
+		{ id: 'q2', x: 360, y: 100 },
+		{ id: 'q3', x: 500, y: 100, final: true },
+	]}
+	transitions={[
+		{ from: 'q0', to: 'q0', label: 'a, b' },
+		{ from: 'q0', to: 'q1', label: 'a' },
+		{ from: 'q1', to: 'q2', label: 'a, b' },
+		{ from: 'q2', to: 'q3', label: 'a, b' },
+	]}
+	simula="babb"
+	caption="NFA: il terzultimo simbolo è <code>a</code>. Quattro stati."
+/>
+
+Il DFA equivalente deve ricordare **gli ultimi tre simboli letti** (2³ = 8 combinazioni) e ha quindi **8 stati**. Con il "quartultimo simbolo" diventerebbero 16, con il "decimultimo" 1024. L'NFA, invece, cresce di un solo stato alla volta.
+
+---
+
+## Riepilogo
+
+- In un **NFA**, da uno stato possono uscire zero, una o più transizioni con lo stesso simbolo.
+- Una stringa è **accettata** se **almeno un percorso** la legge tutta e termina in uno stato finale.
+- Si simula tenendo l'**insieme degli stati attivi**.
+- NFA e DFA riconoscono **gli stessi linguaggi**: ogni NFA si può trasformare in un DFA equivalente.
+- In JFLAP gli stati non deterministici si evidenziano con **Test → Highlight Nondeterminism**.

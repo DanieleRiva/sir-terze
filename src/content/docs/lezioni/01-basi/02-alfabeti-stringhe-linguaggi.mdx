@@ -1,0 +1,165 @@
+---
+title: Alfabeti, stringhe e linguaggi
+description: Il vocabolario minimo per parlare di automi - simboli, alfabeti, stringhe, stringa vuota, concatenazione e linguaggi.
+sidebar:
+  order: 2
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Prima di studiare gli automi riconoscitori ci serve un piccolo vocabolario. Sono parole semplici, ma vanno usate con precisione: le ritroveremo in ogni capitolo e anche dentro JFLAP.
+
+---
+
+## Simbolo e alfabeto
+
+Un **simbolo** è un "mattoncino" indivisibile: una lettera, una cifra, un segno. Ad esempio `a`, `b`, `0`, `1`, `#`.
+
+Un **alfabeto** è un **insieme finito e non vuoto di simboli**. Si indica di solito con la lettera greca **Σ** (sigma maiuscola).
+
+| Alfabeto | Che cosa contiene |
+| :-- | :-- |
+| Σ = &#123;0, 1&#125; | l'alfabeto **binario** |
+| Σ = &#123;a, b&#125; | due lettere, l'alfabeto più usato negli esercizi |
+| Σ = &#123;0, 1, 2, …, 9&#125; | le cifre decimali |
+| Σ = &#123;moneta, spinta&#125; | gli eventi del tornello: anche una "parola" può essere un unico simbolo |
+
+<Aside type="note">
+Il simbolo è indivisibile **per l'automa**, anche se noi lo scriviamo con più lettere. Nel tornello `moneta` è un solo simbolo: un unico evento.
+</Aside>
+
+---
+
+## Stringa (o parola)
+
+Una **stringa** (o **parola**) su un alfabeto Σ è una **sequenza finita di simboli** di Σ, scritti uno dopo l'altro.
+
+Con Σ = &#123;a, b&#125; sono stringhe, ad esempio: `a`, `b`, `ab`, `ba`, `aab`, `bbbb`, `abba`.
+
+La **lunghezza** di una stringa *w* si scrive **|w|** ed è il numero di simboli che contiene (contando le ripetizioni):
+
+- |`abba`| = 4
+- |`a`| = 1
+- |`bbbbbb`| = 6
+
+Spesso serve anche contare un solo simbolo: **|w|ₐ** indica quante `a` ci sono in *w*. Ad esempio |`abba`|ₐ = 2.
+
+### La stringa vuota ε
+
+Esiste una stringa speciale che **non contiene nessun simbolo**: la **stringa vuota**. Si indica con **ε** (epsilon) oppure con **λ** (lambda); JFLAP, per esempio, usa λ come impostazione predefinita.
+
+- |ε| = 0
+- ε **non è un simbolo** dell'alfabeto: è una stringa (quella di lunghezza zero).
+
+<Aside type="caution" title="Errore frequente">
+ε non è uno spazio e non è lo zero: è "niente". Se un automa accetta ε, vuol dire che risponde "sì" **ancora prima di leggere qualcosa**, cioè che il suo **stato iniziale è anche finale**.
+</Aside>
+
+---
+
+## Operazioni sulle stringhe
+
+### Concatenazione
+
+**Concatenare** due stringhe significa scriverle una dopo l'altra. Se *x* = `ab` e *y* = `ba`, allora *xy* = `abba`.
+
+- La concatenazione **non è commutativa**: *xy* = `abba` ma *yx* = `baab`.
+- ε è l'**elemento neutro**: concatenare ε non cambia nulla, *w*ε = ε*w* = *w*.
+- |*xy*| = |*x*| + |*y*|.
+
+### Potenza
+
+*w*ⁿ significa *w* ripetuta *n* volte: `ab`³ = `ababab`, `a`⁴ = `aaaa`, e per convenzione *w*⁰ = ε.
+
+### Prefisso, suffisso, sottostringa
+
+Data *w* = `abba`:
+
+- un **prefisso** è un pezzo iniziale: ε, `a`, `ab`, `abb`, `abba`;
+- un **suffisso** è un pezzo finale: ε, `a`, `ba`, `bba`, `abba`;
+- una **sottostringa** è un pezzo di simboli **consecutivi** preso da qualunque punto: `bb`, `bba`, `ab`, … (ma **non** `aa`, perché le due `a` non sono vicine).
+
+Questi tre concetti sono fondamentali: moltissimi esercizi chiedono automi che riconoscono stringhe che **iniziano con** (prefisso), **finiscono con** (suffisso) o **contengono** (sottostringa) qualcosa.
+
+---
+
+## Σ* : tutte le stringhe possibili
+
+Con **Σ\*** (si legge "sigma star") si indica l'insieme di **tutte** le stringhe che si possono formare con l'alfabeto Σ, **compresa ε**.
+
+Con Σ = &#123;a, b&#125;:
+
+> Σ\* = &#123; ε, a, b, aa, ab, ba, bb, aaa, aab, aba, abb, baa, … &#125;
+
+Σ\* è un insieme **infinito**, anche se Σ è finito, perché non c'è un limite alla lunghezza delle stringhe. Le stringhe si elencano di solito in **ordine canonico**: prima per lunghezza, e a parità di lunghezza in ordine alfabetico.
+
+Quante sono le stringhe di lunghezza *n*? Se l'alfabeto ha *k* simboli, sono **kⁿ**. Con l'alfabeto binario ci sono 2³ = 8 stringhe di lunghezza 3: `000`, `001`, `010`, `011`, `100`, `101`, `110`, `111`.
+
+Con **Σ⁺** si indica Σ\* senza la stringa vuota.
+
+---
+
+## Linguaggio
+
+Un **linguaggio** su Σ è un **qualsiasi insieme di stringhe** su Σ (cioè un sottoinsieme di Σ\*). Può essere finito o infinito.
+
+Esempi con Σ = &#123;a, b&#125;:
+
+| Linguaggio | Descrizione a parole | Alcune stringhe che ci stanno |
+| :-- | :-- | :-- |
+| L₁ = &#123; ab, ba &#125; | un linguaggio finito, con due sole stringhe | `ab`, `ba` |
+| L₂ | le stringhe che **iniziano con** `a` | `a`, `ab`, `abbb`, `aaba` |
+| L₃ | le stringhe che **finiscono con** `bb` | `bb`, `abb`, `babb` |
+| L₄ | le stringhe con un **numero pari** di `a` | ε, `b`, `aa`, `abab`, `bbb` |
+| L₅ | le stringhe che **contengono** `aba` | `aba`, `aaba`, `babab` |
+| L₆ = ∅ | il linguaggio **vuoto**: nessuna stringa | (nessuna) |
+| L₇ = &#123; ε &#125; | contiene solo la stringa vuota | ε |
+
+<Aside type="caution" title="∅ e &#123;ε&#125; sono diversi">
+Il linguaggio vuoto **∅** non contiene nessuna stringa. Il linguaggio **&#123;ε&#125;** contiene una stringa (quella vuota). È come la differenza tra una scatola vuota e una scatola che contiene un foglio bianco.
+</Aside>
+
+### Il legame con gli automi
+
+Ecco l'idea centrale di tutta la teoria: **ogni automa riconoscitore definisce un linguaggio**, cioè l'insieme di tutte le stringhe che accetta. Si dice che l'automa **riconosce** (o **accetta**) quel linguaggio.
+
+Progettare un automa vuol dire quindi: *dato un linguaggio descritto a parole, costruire una macchina che risponde "sì" a tutte e sole le stringhe del linguaggio*.
+
+- "**tutte**": nessuna stringa del linguaggio deve essere rifiutata;
+- "**sole**": nessuna stringa fuori dal linguaggio deve essere accettata.
+
+Per controllare un automa bisogna quindi sempre provare **sia** stringhe che devono essere accettate **sia** stringhe che devono essere rifiutate, e tra queste non va mai dimenticata la stringa vuota ε.
+
+---
+
+## Operazioni sui linguaggi
+
+Visto che i linguaggi sono insiemi, si possono combinare con le solite operazioni insiemistiche e con qualcosa in più.
+
+| Operazione | Simbolo | Significato |
+| :-- | :-- | :-- |
+| Unione | L₁ ∪ L₂ | le stringhe che stanno in L₁ **oppure** in L₂ |
+| Intersezione | L₁ ∩ L₂ | le stringhe che stanno in L₁ **e** in L₂ |
+| Complemento | L̄ | le stringhe di Σ\* che **non** stanno in L |
+| Concatenazione | L₁L₂ | una stringa di L₁ seguita da una stringa di L₂ |
+| Stella di Kleene | L\* | zero o più stringhe di L concatenate tra loro |
+
+Esempio di stella: se L = &#123; `ab` &#125; allora L\* = &#123; ε, `ab`, `abab`, `ababab`, … &#125;.
+
+Queste operazioni sono alla base delle **espressioni regolari**, che studieremo nel capitolo 6.
+
+---
+
+## Riepilogo dei simboli
+
+| Simbolo | Significato |
+| :-- | :-- |
+| Σ | alfabeto (insieme finito di simboli) |
+| *w*, *x*, *y* | stringhe |
+| \|*w*\| | lunghezza della stringa *w* |
+| ε oppure λ | stringa vuota |
+| Σ\* | tutte le stringhe su Σ (compresa ε) |
+| Σ⁺ | tutte le stringhe su Σ tranne ε |
+| L | un linguaggio (insieme di stringhe) |
+| ∅ | linguaggio vuoto |
+| L(*A*) | il linguaggio riconosciuto dall'automa *A* |

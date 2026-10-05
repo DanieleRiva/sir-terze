@@ -1,0 +1,187 @@
+---
+title: Cos'è un automa a stati finiti
+description: L'idea di stato, di evento e di transizione, spiegata con esempi presi dalla vita di tutti i giorni.
+sidebar:
+  order: 1
+---
+
+import Automa from '~/components/Automa.astro';
+import { Aside } from '@astrojs/starlight/components';
+
+## Pensare "per stati"
+
+Molti oggetti che usiamo ogni giorno si comportano in modo diverso **a seconda della situazione in cui si trovano**.
+
+Premiamo il pulsante di una lampada: se era spenta si accende, se era accesa si spegne. Lo stesso gesto (premere il pulsante) produce due effetti opposti. Il motivo è che la lampada "si ricorda" in che situazione si trova: **accesa** o **spenta**.
+
+Queste situazioni si chiamano **stati**. Un **automa a stati finiti** è un modello matematico molto semplice che descrive un sistema di questo tipo:
+
+- il sistema si trova sempre in **uno** stato, scelto tra un numero **finito** di stati possibili;
+- quando arriva un **evento** (un input), il sistema **cambia stato** seguendo regole precise, chiamate **transizioni**;
+- lo stato attuale riassume tutto ciò che il sistema deve ricordare del passato.
+
+<Automa
+	width={420}
+	height={170}
+	r={36}
+	states={[
+		{ id: 'S', label: 'Spenta', x: 100, y: 85, initial: true },
+		{ id: 'A', label: 'Accesa', x: 320, y: 85 },
+	]}
+	transitions={[
+		{ from: 'S', to: 'A', label: 'premi', bend: 22 },
+		{ from: 'A', to: 'S', label: 'premi', bend: 22 },
+	]}
+	caption="La lampada con un pulsante: due stati e un solo tipo di evento."
+/>
+
+Come si legge il disegno:
+
+- ogni **cerchio** è uno stato;
+- ogni **freccia** tra due stati è una transizione, e la scritta sopra indica l'evento che la fa scattare;
+- la **freccia che non parte da nessuno stato** indica lo **stato iniziale**: la lampada, appena installata, è spenta.
+
+---
+
+## Gli ingredienti di un automa
+
+Qualsiasi automa a stati finiti è costruito con gli stessi quattro ingredienti.
+
+| Ingrediente | Che cos'è | Nell'esempio della lampada |
+| :-- | :-- | :-- |
+| **Stati** | Le situazioni in cui il sistema si può trovare | *Spenta*, *Accesa* |
+| **Input** (o simboli, eventi) | Ciò che arriva dall'esterno e provoca un cambiamento | *premi* |
+| **Transizioni** | Le regole "se sono nello stato X e arriva l'input Y, vado nello stato Z" | da *Spenta* con *premi* vado in *Accesa*, e viceversa |
+| **Stato iniziale** | Lo stato in cui il sistema si trova all'inizio | *Spenta* |
+
+Una transizione si può sempre leggere come una frase del tipo:
+
+> **Se** sono nello stato *Spenta* **e** arriva l'input *premi*, **allora** passo nello stato *Accesa*.
+
+---
+
+## Un esempio classico: il tornello della metropolitana
+
+Il tornello all'ingresso della metropolitana ha due stati:
+
+- **Bloccato**: il braccio non gira;
+- **Sbloccato**: il braccio gira e lascia passare una persona.
+
+Gli eventi possibili sono due: si **inserisce un biglietto** (o una moneta) oppure qualcuno **spinge** il braccio.
+
+<Automa
+	width={480}
+	height={250}
+	r={40}
+	states={[
+		{ id: 'B', label: 'Bloccato', x: 120, y: 145, initial: true },
+		{ id: 'S', label: 'Sbloccato', x: 370, y: 145 },
+	]}
+	transitions={[
+		{ from: 'B', to: 'S', label: 'biglietto', bend: 26 },
+		{ from: 'S', to: 'B', label: 'spinta', bend: 26 },
+		{ from: 'B', to: 'B', label: 'spinta', loop: 'top' },
+		{ from: 'S', to: 'S', label: 'biglietto', loop: 'top' },
+	]}
+	caption="Il tornello: ogni stato ha una freccia uscente per <em>ogni</em> possibile evento."
+/>
+
+Le frecce che partono da uno stato e ci ritornano (gli "anelli") si chiamano **autoanelli** (in inglese *self-loop*): l'evento arriva, ma lo stato non cambia. Se spingiamo un tornello bloccato, rimane bloccato. Se inseriamo un secondo biglietto in un tornello già sbloccato, rimane sbloccato (e abbiamo perso un biglietto!).
+
+Lo stesso automa si può descrivere con una **tabella di transizione**: le righe sono gli stati, le colonne sono gli input, ogni cella dice in quale stato si va.
+
+| Stato attuale | biglietto | spinta |
+| :-- | :-: | :-: |
+| → Bloccato | Sbloccato | Bloccato |
+| Sbloccato | Sbloccato | Bloccato |
+
+La freccia **→** davanti a *Bloccato* indica lo stato iniziale.
+
+<Aside type="tip" title="Diagramma o tabella?">
+Diagramma e tabella contengono **esattamente le stesse informazioni**. Il diagramma è più facile da leggere a colpo d'occhio; la tabella è più comoda quando gli stati sono tanti, quando bisogna controllare di non aver dimenticato nessun caso e quando si deve scrivere il programma che realizza l'automa.
+</Aside>
+
+---
+
+## Perché "a stati finiti"?
+
+Il nome dice una cosa importante: gli stati sono **in numero finito** e fissato in anticipo. Questo significa che l'automa ha una **memoria limitata**: l'unica cosa che "ricorda" è lo stato in cui si trova.
+
+Il tornello non sa *quante* persone sono passate oggi, né chi ha pagato e chi no: sa soltanto se in questo momento è bloccato o sbloccato. Se volessimo contare le persone senza un limite massimo, ci servirebbero infiniti stati (uno per "0 persone", uno per "1 persona", uno per "2 persone", …), e questo un automa a stati finiti **non lo può fare**.
+
+È proprio questo limite a rendere gli automi a stati finiti così utili: sono **semplici**, **prevedibili**, si possono **analizzare a fondo** e si realizzano facilmente sia in hardware (con circuiti logici e flip-flop) sia in software.
+
+<Aside type="note" title="Lo stato riassume il passato">
+Un buon modo di pensare a uno stato è: **"che cosa devo ricordare di tutto quello che è successo finora, per sapere come comportarmi da qui in avanti?"**. Questa domanda è la chiave per progettare gli automi, e la ritroveremo spesso.
+</Aside>
+
+---
+
+## Altri esempi intorno a noi
+
+Una volta imparato a "vedere gli stati", si trovano automi ovunque.
+
+**Il semaforo.** Gli stati sono *Verde*, *Giallo* e *Rosso*; l'evento è lo scadere di un timer.
+
+<Automa
+	width={520}
+	height={210}
+	r={32}
+	states={[
+		{ id: 'V', label: 'Verde', x: 90, y: 80, initial: true },
+		{ id: 'G', label: 'Giallo', x: 270, y: 80 },
+		{ id: 'R', label: 'Rosso', x: 450, y: 80 },
+	]}
+	transitions={[
+		{ from: 'V', to: 'G', label: 'timer' },
+		{ from: 'G', to: 'R', label: 'timer' },
+		{ from: 'R', to: 'V', label: 'timer', bend: 55 },
+	]}
+	caption="Il semaforo: un ciclo di tre stati."
+/>
+
+**Altri sistemi che si descrivono bene con un automa:**
+
+- la **porta automatica** di un supermercato (*chiusa*, *in apertura*, *aperta*, *in chiusura*);
+- il **distributore di bevande**, che deve ricordare quanto credito abbiamo già inserito;
+- la **lavatrice** (*carico acqua*, *lavaggio*, *risciacquo*, *centrifuga*);
+- la **combinazione di un lucchetto** o il **PIN** del telefono, che deve ricordare quante cifre giuste abbiamo già digitato;
+- i **personaggi dei videogiochi** (*pattuglia*, *insegue*, *attacca*, *fugge*);
+- i **protocolli di rete**, come TCP, che passano per stati come *LISTEN*, *ESTABLISHED*, *CLOSED*.
+
+Vedremo molti di questi esempi nel dettaglio nei capitoli successivi.
+
+---
+
+## Due grandi famiglie di automi
+
+Gli automi a stati finiti si usano principalmente in due modi.
+
+**1. Automi riconoscitori (o accettori).** Leggono una sequenza di simboli e alla fine rispondono soltanto **sì** o **no**: la sequenza è accettata oppure rifiutata. Servono a stabilire se un dato è "valido": un PIN corretto, un indirizzo email scritto bene, un numero binario pari. Sono gli automi che studieremo nei capitoli 2, 3 e 4. Per capire quando rispondono "sì" aggiungeremo un quinto ingrediente: gli **stati finali** (o di accettazione).
+
+**2. Automi trasduttori (macchine di Mealy e di Moore).** Mentre leggono gli input **producono delle uscite**: accendono una luce, erogano una bibita, inviano un messaggio. Il semaforo e il distributore di bevande sono trasduttori. Li studieremo nel capitolo 5.
+
+---
+
+## Un pizzico di storia
+
+- **1943** · Warren McCulloch e Walter Pitts descrivono i neuroni come piccole "macchine" con un numero finito di stati: è il primo antenato degli automi.
+- **1951–1956** · Stephen Kleene dimostra che gli automi a stati finiti riconoscono esattamente i linguaggi descritti dalle **espressioni regolari**.
+- **1955–1956** · George Mealy ed Edward Moore definiscono gli automi con uscita, pensando ai **circuiti sequenziali** dei calcolatori.
+- **1959** · Michael Rabin e Dana Scott introducono gli **automi non deterministici** e dimostrano che sono equivalenti a quelli deterministici (vinceranno il premio Turing per questo).
+- **Oggi** · Gli automi sono dappertutto: nei compilatori, nei protocolli di rete, nei controllori industriali (PLC), nei videogiochi, nelle espressioni regolari dei linguaggi di programmazione.
+
+---
+
+## Riepilogo
+
+- Un **automa a stati finiti** descrive un sistema che si trova sempre in uno tra un numero **finito** di **stati**.
+- Gli **input** fanno scattare le **transizioni** da uno stato all'altro.
+- Si parte sempre da uno **stato iniziale**.
+- Un automa si rappresenta con un **diagramma degli stati** (cerchi e frecce) oppure con una **tabella di transizione**.
+- L'unica memoria dell'automa è **lo stato attuale**.
+- Gli automi **riconoscitori** rispondono sì/no; gli automi **trasduttori** producono uscite.
+
+<Aside type="caution" title="Per il docente: un'attività per iniziare">
+Prima di qualsiasi formalismo funziona molto bene un'attività "unplugged": si disegna alla lavagna il tornello, un alunno fa l'automa (tiene in mano un cartello con lo stato attuale) e i compagni gli "inviano" eventi a voce. Poi si chiede alla classe di inventare e disegnare un automa per un oggetto di uso quotidiano (ascensore, microonde, telecomando, lucchetto). In 20 minuti gli alunni hanno già interiorizzato stati, eventi, transizioni e stato iniziale.
+</Aside>

@@ -1,0 +1,262 @@
+---
+title: NFA, conversione e minimizzazione
+description: Esercizi su automi non deterministici, ε-chiusura, costruzione per sottoinsiemi e minimizzazione, con soluzioni passo passo.
+sidebar:
+  order: 3
+---
+
+import Automa from '~/components/Automa.astro';
+
+Esercizi sui capitoli [Non determinismo](/appunti-sir-terza/lezioni/03-nfa/01-automi-non-deterministici/) e [Minimizzazione](/appunti-sir-terza/lezioni/04-minimizzazione/01-minimizzare-un-dfa/). Gli esercizi 1, 2, 3 e 6 usano lo stesso automa: conviene farli in ordine.
+
+---
+
+### Esercizio 1 · Un NFA per "contiene `abb`"
+
+Σ = &#123;a, b&#125;. Costruire un **NFA** (il più semplice possibile) che accetta le stringhe che contengono `abb`.
+
+<details>
+<summary>Soluzione</summary>
+
+<Automa
+	states={[
+		{ id: 'q0', x: 80, y: 100, initial: true },
+		{ id: 'q1', x: 220, y: 100 },
+		{ id: 'q2', x: 360, y: 100 },
+		{ id: 'q3', x: 500, y: 100, final: true },
+	]}
+	transitions={[
+		{ from: 'q0', to: 'q0', label: 'a, b' },
+		{ from: 'q0', to: 'q1', label: 'a' },
+		{ from: 'q1', to: 'q2', label: 'b' },
+		{ from: 'q2', to: 'q3', label: 'b' },
+		{ from: 'q3', to: 'q3', label: 'a, b' },
+	]}
+	simula="aabba"
+/>
+
+"Aspetta in q0 quanto vuoi; quando arriva la `a` giusta, leggi `abb`; poi accetta qualunque cosa."
+
+</details>
+
+---
+
+### Esercizio 2 · Simulazione con gli insiemi
+
+Simulare l'NFA dell'esercizio 1 sulla stringa `aabba`, scrivendo l'insieme degli stati attivi dopo ogni simbolo. La stringa è accettata?
+
+<details>
+<summary>Soluzione</summary>
+
+| Dopo | Stati attivi |
+| :-- | :-- |
+| inizio | &#123;q₀&#125; |
+| `a` | &#123;q₀, q₁&#125; |
+| `a` | &#123;q₀, q₁&#125; |
+| `b` | &#123;q₀, q₂&#125; |
+| `b` | &#123;q₀, q₃&#125; |
+| `a` | &#123;q₀, q₁, q₃&#125; |
+
+L'insieme finale contiene q₃, che è finale: **accettata**.
+
+</details>
+
+---
+
+### Esercizio 3 · Costruzione per sottoinsiemi
+
+Trasformare l'NFA dell'esercizio 1 in un DFA con la costruzione per sottoinsiemi. Quanti stati ha il DFA?
+
+<details>
+<summary>Soluzione</summary>
+
+| Nome | Insieme | con `a` | con `b` | Finale? |
+| :-: | :-- | :-: | :-: | :-: |
+| → A | &#123;q₀&#125; | B | A | |
+| B | &#123;q₀, q₁&#125; | B | C | |
+| C | &#123;q₀, q₂&#125; | B | D | |
+| D | &#123;q₀, q₃&#125; | E | D | ✓ |
+| E | &#123;q₀, q₁, q₃&#125; | E | G | ✓ |
+| G | &#123;q₀, q₂, q₃&#125; | E | D | ✓ |
+
+Calcolo di una riga, per esempio G = &#123;q₀, q₂, q₃&#125; con `b`: q₀ → &#123;q₀&#125;, q₂ → &#123;q₃&#125;, q₃ → &#123;q₃&#125;; unione &#123;q₀, q₃&#125; = D.
+
+Il DFA ha **6 stati**, di cui 3 finali (quelli che contengono q₃).
+
+</details>
+
+---
+
+### Esercizio 4 · ε-chiusura
+
+Dato l'ε-NFA qui sotto, calcolare ECLOSE di ciascuno stato e l'insieme degli stati attivi dopo aver letto `a`.
+
+<Automa
+	r={20}
+	states={[
+		{ id: '1', x: 70, y: 110, initial: true },
+		{ id: '2', x: 210, y: 50 },
+		{ id: '3', x: 350, y: 110 },
+		{ id: '4', x: 210, y: 200, final: true },
+	]}
+	transitions={[
+		{ from: '1', to: '2', label: 'ε' },
+		{ from: '2', to: '3', label: 'ε' },
+		{ from: '1', to: '4', label: 'a' },
+		{ from: '3', to: '4', label: 'b' },
+		{ from: '4', to: '1', label: 'ε' },
+	]}
+/>
+
+<details>
+<summary>Soluzione</summary>
+
+- ECLOSE(1) = &#123;1, 2, 3&#125; (1 → 2 con ε, poi 2 → 3 con ε)
+- ECLOSE(2) = &#123;2, 3&#125;
+- ECLOSE(3) = &#123;3&#125;
+- ECLOSE(4) = &#123;4, 1, 2, 3&#125; (4 → 1, poi 1 → 2 → 3)
+
+Simulazione: all'inizio gli stati attivi sono ECLOSE(1) = &#123;1, 2, 3&#125;. Con `a`: solo 1 ha una transizione con `a`, verso 4. Poi ε-chiusura: ECLOSE(4) = **&#123;1, 2, 3, 4&#125;**, che contiene lo stato finale 4.
+
+</details>
+
+---
+
+### Esercizio 5 · Il penultimo simbolo è `1`
+
+Σ = &#123;0, 1&#125;. Costruire un NFA per le stringhe il cui **penultimo** simbolo è `1`, poi trasformarlo in DFA.
+
+<details>
+<summary>Soluzione</summary>
+
+NFA:
+
+<Automa
+	states={[
+		{ id: 'q0', x: 80, y: 100, initial: true },
+		{ id: 'q1', x: 230, y: 100 },
+		{ id: 'q2', x: 380, y: 100, final: true },
+	]}
+	transitions={[
+		{ from: 'q0', to: 'q0', label: '0, 1' },
+		{ from: 'q0', to: 'q1', label: '1' },
+		{ from: 'q1', to: 'q2', label: '0, 1' },
+	]}
+	simula="0110"
+/>
+
+DFA (costruzione per sottoinsiemi):
+
+| Insieme | con `0` | con `1` | Finale? |
+| :-- | :-- | :-- | :-: |
+| → &#123;q₀&#125; | &#123;q₀&#125; | &#123;q₀, q₁&#125; | |
+| &#123;q₀, q₁&#125; | &#123;q₀, q₂&#125; | &#123;q₀, q₁, q₂&#125; | |
+| &#123;q₀, q₂&#125; | &#123;q₀&#125; | &#123;q₀, q₁&#125; | ✓ |
+| &#123;q₀, q₁, q₂&#125; | &#123;q₀, q₂&#125; | &#123;q₀, q₁, q₂&#125; | ✓ |
+
+4 stati: corrispondono agli **ultimi due simboli letti** (00, 01, 10, 11), e sono finali quelli in cui il penultimo è `1`.
+
+</details>
+
+---
+
+### Esercizio 6 · Minimizzazione
+
+Minimizzare il DFA a 6 stati ottenuto nell'esercizio 3.
+
+<details>
+<summary>Soluzione</summary>
+
+Tutti gli stati sono raggiungibili.
+
+**Giro 0:** non finali &#123;A, B, C&#125;, finali &#123;D, E, G&#125;.
+
+**Giro 1:**
+- &#123;A, B, C&#125; con `a` vanno tutti in B (non finali); con `b`: A → A (non finale), B → C (non finale), C → D (finale). Si divide: &#123;A, B&#125; e &#123;C&#125;.
+- &#123;D, E, G&#125;: con `a` vanno tutti in E, con `b` vanno in D, G, D: tutti finali. Non si divide.
+
+**Giro 2:**
+- &#123;A, B&#125; con `b`: A → A (gruppo &#123;A, B&#125;), B → C (gruppo &#123;C&#125;). Si divide: &#123;A&#125;, &#123;B&#125;.
+- &#123;D, E, G&#125;: ancora tutti nello stesso gruppo. Non si divide.
+
+**Giro 3:** nessuna divisione. Fine.
+
+DFA minimo: **4 stati** A, B, C, e lo stato DEG che riunisce i tre finali.
+
+<Automa
+	r={24}
+	states={[
+		{ id: 'A', x: 80, y: 100, initial: true },
+		{ id: 'B', x: 220, y: 100 },
+		{ id: 'C', x: 360, y: 100 },
+		{ id: 'DEG', x: 500, y: 100, final: true },
+	]}
+	transitions={[
+		{ from: 'A', to: 'A', label: 'b' },
+		{ from: 'A', to: 'B', label: 'a' },
+		{ from: 'B', to: 'B', label: 'a' },
+		{ from: 'B', to: 'C', label: 'b' },
+		{ from: 'C', to: 'B', label: 'a' },
+		{ from: 'C', to: 'DEG', label: 'b' },
+		{ from: 'DEG', to: 'DEG', label: 'a, b' },
+	]}
+	simula="babba"
+/>
+
+È esattamente il DFA che si progetterebbe a mano per "contiene `abb`" con il metodo dei [sei passi](/appunti-sir-terza/lezioni/02-dfa/03-progettare-un-dfa/).
+
+</details>
+
+---
+
+### Esercizio 7 · Stati equivalenti
+
+Nel DFA della tabella, quali stati sono equivalenti? Disegnare il DFA minimo e descrivere a parole il linguaggio.
+
+| δ | 0 | 1 |
+| :-- | :-: | :-: |
+| → A | B | C |
+| B | A | D |
+| C | D | A |
+| \* D | D | D |
+
+<details>
+<summary>Soluzione</summary>
+
+**Giro 0:** &#123;A, B, C&#125; e &#123;D&#125;.
+
+**Giro 1:** per ogni stato di &#123;A, B, C&#125; guardiamo in quale gruppo porta ciascun simbolo (N = non finali, F = finali):
+
+| Stato | con `0` | con `1` |
+| :-: | :-: | :-: |
+| A | B (N) | C (N) |
+| B | A (N) | D (F) |
+| C | D (F) | A (N) |
+
+I tre stati hanno tre comportamenti diversi: il gruppo si divide in &#123;A&#125;, &#123;B&#125;, &#123;C&#125;.
+
+**Nessuno stato è equivalente**: il DFA è già minimo.
+
+Linguaggio: partendo da A, le coppie `00` e `11` riportano in A, mentre le coppie `01` e `10` portano in D, da cui non si esce più. Quindi una stringa è accettata se, **dividendola in coppie di simboli a partire dall'inizio, almeno una coppia è formata da due simboli diversi**. Per esempio: `0010` è accettata (coppie `00`, `10`); `010` è accettata (la prima coppia è `01`); `1100` è rifiutata (coppie `11`, `00`).
+
+<Automa
+	r={22}
+	states={[
+		{ id: 'A', x: 80, y: 130, initial: true },
+		{ id: 'B', x: 260, y: 20 },
+		{ id: 'C', x: 260, y: 240 },
+		{ id: 'D', x: 440, y: 130, final: true },
+	]}
+	transitions={[
+		{ from: 'A', to: 'B', label: '0' },
+		{ from: 'B', to: 'A', label: '0' },
+		{ from: 'A', to: 'C', label: '1' },
+		{ from: 'C', to: 'A', label: '1' },
+		{ from: 'B', to: 'D', label: '1' },
+		{ from: 'C', to: 'D', label: '0' },
+		{ from: 'D', to: 'D', label: '0, 1', loop: 'right' },
+	]}
+	simula="1100"
+/>
+
+</details>

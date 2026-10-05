@@ -1,0 +1,144 @@
+---
+title: Minimizzare e confrontare automi
+description: Aggiungere lo stato pozzo, minimizzare un DFA con l'albero delle partizioni di JFLAP e verificare se due automi sono equivalenti con Compare Equivalence.
+sidebar:
+  order: 6
+---
+
+import JflapFinestra from '~/components/JflapFinestra.astro';
+import Automa from '~/components/Automa.astro';
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+## Completare un DFA: Add Trap State to DFA
+
+Molti procedimenti (minimizzazione, complemento) richiedono un DFA **completo**. JFLAP aggiunge lo stato pozzo con **Convert → Add Trap State to DFA**.
+
+<Steps>
+
+1. Aprire un DFA parziale (per esempio quello delle stringhe che **iniziano con `a`**: q0 —a→ q1, anello `a`, `b` su q1).
+2. **Convert → Add Trap State to DFA**. JFLAP chiede di **creare lo stato pozzo**: lo si crea con lo strumento degli stati, cliccando in un punto vuoto.
+3. Si aggiungono le transizioni mancanti verso il pozzo con lo strumento delle transizioni: JFLAP **controlla** che il simbolo inserito sia davvero uno di quelli mancanti e segnala gli errori.
+4. In alternativa, il pulsante **Do All** aggiunge automaticamente tutte le transizioni mancanti (compresi gli anelli sul pozzo). Il DFA completo si apre in una nuova finestra.
+
+</Steps>
+
+Se il DFA è già completo, JFLAP avvisa che non c'è nulla da aggiungere.
+
+<Aside type="tip" title="Complemento in due mosse">
+Per ottenere l'automa del **complemento** di un linguaggio: prima **Add Trap State to DFA**, poi con l'Attribute Editor si invertono a mano gli stati finali e non finali (clic destro → *Final* su ogni stato). È un ottimo esercizio per verificare di aver capito perché serve il pozzo (vedi [Stato pozzo e automi completi](/appunti-sir-terza/lezioni/02-dfa/02-stato-pozzo-e-completezza/)).
+</Aside>
+
+---
+
+## Minimizzare: Minimize DFA
+
+Con un DFA aperto si sceglie **Convert → Minimize DFA**. Il procedimento di JFLAP segue esattamente l'algoritmo delle partizioni del [capitolo 4](/appunti-sir-terza/lezioni/04-minimizzazione/01-minimizzare-un-dfa/), ma lo rappresenta come un **albero**.
+
+<Aside type="caution" title="Prima di cominciare">
+- L'automa deve essere un **DFA**: se ci sono stati non deterministici, prima si usa **Convert to DFA**.
+- Conviene che il DFA sia **completo**: se mancano transizioni JFLAP può chiedere di aggiungere lo stato pozzo.
+- Conviene eliminare prima gli **stati irraggiungibili** con il Deleter: non fanno parte del linguaggio e complicano l'albero.
+</Aside>
+
+### Fase 1 · L'albero delle partizioni
+
+A sinistra compare il DFA, a destra l'**albero degli stati**:
+
+- la **radice** contiene tutti gli stati;
+- i suoi due figli sono il gruppo degli stati **finali** (*Final*) e quello dei **non finali** (*Nonfinal*): è la partizione iniziale.
+
+<JflapFinestra toolbar={false} schede={['Editor', 'Minimize']} schedaAttiva={1} caption="L'albero delle partizioni per il DFA «gonfiato» del capitolo 4 (riproduzione schematica): radice con tutti gli stati, poi i gruppi dei finali e dei non finali.">
+	<div style="display:flex;flex-direction:column;align-items:center;gap:0;padding:1rem 0 1.25rem;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#111;">
+		<div style="border:1px solid #444;background:#f4f4f4;padding:.3rem .8rem;border-radius:4px;">0, 1, 2, 3, 4</div>
+		<div style="width:1px;height:14px;background:#444"></div>
+		<div style="width:220px;height:1px;background:#444"></div>
+		<div style="display:flex;gap:120px;">
+			<div style="display:flex;flex-direction:column;align-items:center;">
+				<div style="width:1px;height:14px;background:#444"></div>
+				<div style="border:1px solid #444;background:#fff;padding:.3rem .8rem;border-radius:4px;"><b>Final</b><br/>2, 3</div>
+			</div>
+			<div style="display:flex;flex-direction:column;align-items:center;">
+				<div style="width:1px;height:14px;background:#444"></div>
+				<div style="border:1px solid #444;background:#fff;padding:.3rem .8rem;border-radius:4px;"><b>Nonfinal</b><br/>0, 1, 4</div>
+			</div>
+		</div>
+	</div>
+</JflapFinestra>
+
+Ora bisogna **dividere i nodi** finché non è più possibile. Per ogni nodo (gruppo) si può:
+
+| Pulsante | Cosa fa |
+| :-- | :-- |
+| **Set Terminal** | si sceglie un simbolo e si dividono **a mano** gli stati del nodo selezionato secondo il gruppo in cui li porta quel simbolo; JFLAP controlla la divisione con **Check Node** |
+| **Auto Partition** | JFLAP divide automaticamente il nodo selezionato |
+| **Complete Subtree** | JFLAP completa tutte le divisioni sotto il nodo selezionato |
+| **Check Node** | verifica che la divisione fatta a mano sia corretta |
+| **Finish** | quando l'albero è completo, crea gli stati del DFA minimo (uno per ogni foglia) |
+
+Le **foglie** dell'albero finale sono i gruppi di stati equivalenti: ognuna diventerà uno stato del DFA minimo.
+
+### Fase 2 · Le transizioni del DFA minimo
+
+Dopo **Finish**, a destra compaiono gli stati del DFA minimo (ognuno con l'elenco degli stati originali che riunisce). Mancano le transizioni:
+
+- si possono disegnare **a mano** con lo strumento delle transizioni: JFLAP rifiuta quelle che non corrispondono al DFA originale;
+- **Hint** ne aggiunge una;
+- **Complete** le aggiunge tutte.
+
+Infine **Done?** verifica il risultato e apre il **DFA minimo in una nuova finestra**.
+
+<Aside type="note" title="Gli stati del DFA originale sono numerati">
+Come nella conversione NFA → DFA, JFLAP indica gli stati con il loro **numero** (lo stato q3 è `3`). Per seguire il procedimento a mano conviene dare agli stati i nomi standard q0, q1, … oppure tenere accanto una tabella di corrispondenza.
+</Aside>
+
+### Esempio da provare
+
+Costruire in JFLAP il DFA "gonfiato" del [capitolo 4](/appunti-sir-terza/lezioni/04-minimizzazione/01-minimizzare-un-dfa/#esempio-1--un-dfa-gonfiato) (senza lo stato irraggiungibile F) e minimizzarlo. Il risultato deve avere **2 stati** e riconoscere le stringhe che finiscono con `1`.
+
+Poi provare con il DFA a 7 stati ottenuto dall'ε-NFA dei multipli di 2 o 3: il risultato deve avere **6 stati**, e l'albero richiederà più livelli di divisione (sono i "giri" dell'algoritmo).
+
+---
+
+## Confrontare due automi: Compare Equivalence
+
+Questa funzione risponde alla domanda: **"questi due automi riconoscono lo stesso linguaggio?"**. È lo strumento più potente per verificare un esercizio.
+
+<Steps>
+
+1. Aprire **entrambi** gli automi in JFLAP (ognuno nella sua finestra). Per esempio: il DFA "finisce con `01`" progettato a mano e il DFA ottenuto convertendo l'NFA.
+2. In una delle due finestre scegliere **Test → Compare Equivalence**.
+3. Nel menu a tendina scegliere l'**altro** automa e confermare.
+4. JFLAP risponde con un messaggio: gli automi **sono** equivalenti oppure **non** lo sono.
+
+</Steps>
+
+<Aside type="tip" title="Per il docente: correzione rapida degli esercizi">
+Con **Compare Equivalence** il controllo di un esercizio di progettazione diventa immediato: si apre la soluzione del docente, si apre il file dell'alunno e si confrontano. Se sono equivalenti, l'automa dell'alunno è **certamente corretto**, anche se è disegnato in modo diverso o ha più stati. Se non lo sono, si usa **Multiple Run** con le stringhe di prova per trovare l'errore e discuterlo con l'alunno.
+
+Lo stesso strumento si può dare agli alunni (con la soluzione "nascosta" in un file) come **autoverifica** durante il laboratorio.
+</Aside>
+
+Il confronto funziona anche tra automi di tipo diverso purché siano automi a stati finiti: un NFA con λ-transizioni si può confrontare con un DFA.
+
+---
+
+## Combinare automi: Combine Automata
+
+**Convert → Combine Automata** copia nella finestra corrente un **altro automa aperto**, scelto da un elenco. Il risultato si apre in una nuova finestra con i due automi affiancati:
+
+- resta **un solo stato iniziale**: quello dell'automa da cui si è scelto il comando;
+- gli **stati finali** di entrambi restano finali.
+
+A questo punto si possono aggiungere stati e λ-transizioni per collegarli. È il modo più rapido per realizzare in laboratorio l'**unione** o la **concatenazione** di due linguaggi con le costruzioni viste nella lezione sulle [ε-transizioni](/appunti-sir-terza/lezioni/03-nfa/02-epsilon-transizioni/#a-cosa-servono-davvero).
+
+### Esercizio: unione di due linguaggi
+
+<Steps>
+
+1. Costruire e salvare un DFA per "numero pari di `a`" e uno per "finisce con `b`" (alfabeto &#123;a, b&#125;).
+2. Dal primo, **Convert → Combine Automata** e scegliere il secondo.
+3. Nella nuova finestra: creare un nuovo stato, renderlo **iniziale** e collegarlo con due **λ-transizioni** ai due vecchi stati iniziali (togliendo a quello rimasto il segno di iniziale).
+4. Collaudare con **Multiple Run**: devono essere accettate le stringhe con un numero pari di `a` **oppure** che finiscono con `b`.
+5. **Convert to DFA**, poi **Minimize DFA**: quanti stati ha il risultato? Confrontarlo con l'automa prodotto dell'[esempio 4 del capitolo 2](/appunti-sir-terza/lezioni/02-dfa/03-progettare-un-dfa/#esempio-4--due-condizioni-insieme) con finali PX, PY, DY.
+
+</Steps>

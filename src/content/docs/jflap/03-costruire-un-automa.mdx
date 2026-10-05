@@ -1,0 +1,167 @@
+---
+title: Costruire un automa passo passo
+description: Tutorial guidato per disegnare in JFLAP il DFA delle stringhe binarie che finiscono con 01 - stati, stato iniziale e finale, transizioni, anelli, salvataggio.
+sidebar:
+  order: 3
+---
+
+import JflapFinestra from '~/components/JflapFinestra.astro';
+import Automa from '~/components/Automa.astro';
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+In questo tutorial costruiamo in JFLAP il DFA delle **stringhe binarie che finiscono con `01`**, progettato nel [capitolo 2](/appunti-sir-terza/lezioni/02-dfa/03-progettare-un-dfa/). Ecco la tabella che dobbiamo realizzare:
+
+| δ | 0 | 1 |
+| :-- | :-: | :-: |
+| → q₀ | q₁ | q₀ |
+| q₁ | q₁ | q₂ |
+| \* q₂ | q₁ | q₀ |
+
+<Aside type="tip">
+Prima di accendere il computer, il diagramma va **progettato su carta**. JFLAP serve a disegnarlo in bella e a collaudarlo, non a "provare a caso" finché funziona.
+</Aside>
+
+---
+
+## 1 · Creare il nuovo automa
+
+Avviamo JFLAP e nella finestra principale clicchiamo **Finite Automaton**. Si apre un editor vuoto, intitolato *(untitled1)*.
+
+---
+
+## 2 · Creare gli stati
+
+<Steps>
+
+1. Selezioniamo lo strumento **State Creator** (il cerchio giallo con la *q*).
+2. Clicchiamo **tre volte** in tre punti diversi dell'area bianca, da sinistra verso destra. Compaiono **q0**, **q1** e **q2**.
+
+</Steps>
+
+<JflapFinestra strumento="stato" altezza={150} caption="Dopo tre clic con lo <strong>State Creator</strong>: tre stati, numerati automaticamente.">
+	<Automa
+		jflap
+		r={20}
+		states={[
+			{ id: 'q0', x: 80, y: 70 },
+			{ id: 'q1', x: 230, y: 70 },
+			{ id: 'q2', x: 380, y: 70 },
+		]}
+	/>
+</JflapFinestra>
+
+<Aside type="caution" title="La numerazione">
+JFLAP dà agli stati il primo numero libero. Se si cancellano e si ricreano stati, i numeri possono non seguire più l'ordine del disegno (per esempio q0, q2, q1 da sinistra a destra). Non è un errore, ma per ordine si può rinominare lo stato con il clic destro → **Set Name**.
+</Aside>
+
+---
+
+## 3 · Stato iniziale e stato finale
+
+<Steps>
+
+1. Selezioniamo lo strumento **Attribute Editor** (la freccia).
+2. Clic **destro** su **q0** → spuntiamo **Initial**. Accanto a q0 compare il triangolo bianco.
+3. Clic **destro** su **q2** → spuntiamo **Final**. q2 diventa un doppio cerchio.
+
+</Steps>
+
+<JflapFinestra strumento="attributi" altezza={150} caption="q0 è iniziale (triangolo), q2 è finale (doppio cerchio).">
+	<Automa
+		jflap
+		r={20}
+		states={[
+			{ id: 'q0', x: 80, y: 70, initial: true },
+			{ id: 'q1', x: 230, y: 70 },
+			{ id: 'q2', x: 380, y: 70, final: true },
+		]}
+	/>
+</JflapFinestra>
+
+---
+
+## 4 · Creare le transizioni
+
+Le transizioni da creare sono sei, una per ogni cella della tabella.
+
+<Steps>
+
+1. Selezioniamo lo strumento **Transition Creator** (la freccia curva).
+2. **Transizione tra due stati diversi.** Premiamo il tasto del mouse su **q0**, teniamolo premuto, trasciniamo fino a **q1** e rilasciamo. Compare una piccola casella di testo: scriviamo `0` e premiamo **Invio**.
+3. **Anello (transizione verso lo stesso stato).** Clicchiamo su **q0** e rilasciamo **sullo stesso stato**, senza trascinare fuori. Compare l'anello con la casella: scriviamo `1` e premiamo **Invio**.
+4. Allo stesso modo creiamo le altre: q1 →`1`→ q2, l'anello `0` su q1, q2 →`0`→ q1, q2 →`1`→ q0.
+
+</Steps>
+
+<JflapFinestra strumento="transizione" altezza={200} caption="L'automa completo. Quando ci sono due frecce in versi opposti tra gli stessi stati, JFLAP le disegna curve.">
+	<Automa
+		jflap
+		r={20}
+		states={[
+			{ id: 'q0', x: 80, y: 90, initial: true },
+			{ id: 'q1', x: 230, y: 90 },
+			{ id: 'q2', x: 380, y: 90, final: true },
+		]}
+		transitions={[
+			{ from: 'q0', to: 'q0', label: '1' },
+			{ from: 'q0', to: 'q1', label: '0' },
+			{ from: 'q1', to: 'q1', label: '0' },
+			{ from: 'q1', to: 'q2', label: '1' },
+			{ from: 'q2', to: 'q1', label: '0' },
+			{ from: 'q2', to: 'q0', label: '1', bend: 45 },
+		]}
+	/>
+</JflapFinestra>
+
+<Aside type="danger" title="L'errore più frequente: scrivere `0,1`">
+Se tra due stati serve una transizione sia con `0` sia con `1`, **non si scrive `0,1`** nella casella! JFLAP interpreterebbe `0,1` come una transizione che legge **la stringa di tre caratteri** "0", ",", "1". Si devono creare **due transizioni separate** con lo stesso percorso: JFLAP le mostra con le due etichette una sopra l'altra.
+
+Allo stesso modo, scrivere più caratteri (per esempio `ab`) crea una transizione che legge l'intera stringa `ab` in un colpo solo. È permesso negli automi "generalizzati", ma **un DFA ha sempre un solo simbolo per transizione**.
+</Aside>
+
+<Aside type="note" title="Transizioni vuote">
+Se si preme **Invio lasciando la casella vuota**, JFLAP crea una transizione vuota, etichettata **λ** (o ε, a seconda delle preferenze). Serve per gli NFA: in un DFA non deve comparire.
+</Aside>
+
+### Correggere gli errori
+
+- **Etichetta sbagliata**: con l'**Attribute Editor**, doppio clic sulla transizione e si riscrive l'etichetta.
+- **Freccia curva scomoda**: con l'**Attribute Editor** si clicca una volta sulla transizione per selezionarla, poi la si trascina per cambiarne la curvatura.
+- **Transizione o stato di troppo**: con il **Deleter** (il teschio) si clicca sull'etichetta della transizione o sullo stato. Attenzione: cancellando uno stato si cancellano anche **tutte** le sue transizioni.
+- **Ho sbagliato tutto**: il pulsante **Undo** annulla le ultime operazioni.
+
+---
+
+## 5 · Sistemare il disegno
+
+Con l'**Attribute Editor** trasciniamo gli stati in modo che il diagramma sia leggibile: stato iniziale a sinistra, poche linee che si incrociano, etichette ben visibili. Se le frecce curve si sovrappongono, basta spostare un po' gli stati.
+
+Facoltativo ma consigliato: clic destro su ogni stato → **Change Label** e scriviamo cosa ricorda (q0: "inizio/niente", q1: "ultimo è 0", q2: "ultimi sono 01"). Le etichette compaiono sotto gli stati.
+
+---
+
+## 6 · Salvare
+
+**File → Save As…**, scegliamo la cartella e un nome parlante, per esempio `finisce-con-01.jff`. L'estensione **`.jff`** è quella dei file JFLAP.
+
+<Aside type="tip" title="File pronti da scaricare">
+Questo automa (e gli altri esempi della raccolta) si possono scaricare già fatti dalla pagina [File di esempio](/appunti-sir-terza/jflap/09-file-layout-e-problemi/#file-di-esempio-da-scaricare). Si aprono con **File → Open…** dalla finestra principale di JFLAP.
+</Aside>
+
+---
+
+## 7 · Collaudare
+
+Ora che l'automa è disegnato, bisogna verificare che sia giusto. È l'argomento del prossimo capitolo: [Eseguire e collaudare un automa](/appunti-sir-terza/jflap/04-eseguire-e-collaudare/).
+
+---
+
+## Checklist prima di consegnare
+
+- [ ] C'è **uno e un solo** stato iniziale (triangolo).
+- [ ] Gli stati finali sono quelli giusti (doppio cerchio).
+- [ ] Ogni transizione ha **un solo simbolo** (niente `0,1`, niente stringhe di più caratteri, niente λ in un DFA).
+- [ ] Se è richiesto un DFA: da ogni stato esce **al massimo una** freccia per simbolo (si controlla con **Test → Highlight Nondeterminism**: non deve colorarsi niente).
+- [ ] Il diagramma è ordinato e leggibile; gli stati hanno un'etichetta che ne spiega il significato.
+- [ ] L'automa è stato collaudato con **Multiple Run** su stringhe da accettare **e** da rifiutare, compresa la stringa vuota.
+- [ ] Il file è salvato con un nome parlante.

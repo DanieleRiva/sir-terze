@@ -1,0 +1,181 @@
+---
+title: NFA, λ-transizioni e conversione in DFA
+description: Costruire automi non deterministici in JFLAP, evidenziare il non determinismo e le λ-transizioni, e trasformare un NFA in DFA con Convert to DFA.
+sidebar:
+  order: 5
+---
+
+import JflapFinestra from '~/components/JflapFinestra.astro';
+import Automa from '~/components/Automa.astro';
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+In JFLAP non c'è un tipo separato per gli NFA: si usa sempre **Finite Automaton**. Un automa è deterministico o no **a seconda di come lo disegniamo**. JFLAP accetta tranquillamente:
+
+- **più transizioni con lo stesso simbolo** che escono dallo stesso stato;
+- **transizioni mancanti**;
+- **λ-transizioni** (si creano lasciando vuota la casella dell'etichetta e premendo Invio).
+
+---
+
+## Costruire e riconoscere un NFA
+
+Costruiamo l'NFA delle stringhe che **finiscono con `01`** visto nel [capitolo 3](/appunti-sir-terza/lezioni/03-nfa/01-automi-non-deterministici/):
+
+<Steps>
+
+1. Nuovo **Finite Automaton**, tre stati q0 (iniziale), q1, q2 (finale).
+2. Su q0 due anelli: uno con `0` e uno con `1` (due transizioni separate!).
+3. Da q0 a q1 una transizione con `0`.
+4. Da q1 a q2 una transizione con `1`.
+
+</Steps>
+
+Ora scegliamo **Test → Highlight Nondeterminism**: JFLAP colora lo stato **q0**, perché da lì escono due transizioni con lo stesso simbolo `0` (l'anello e la freccia verso q1).
+
+<JflapFinestra strumento="attributi" altezza={170} menuAperto={{ nome: 'Test', voci: ['Compare Equivalence', 'Highlight Nondeterminism', 'Highlight λ-Transitions'], evidenzia: 'Highlight Nondeterminism' }} caption="Con <strong>Highlight Nondeterminism</strong> lo stato q0 viene evidenziato.">
+	<Automa
+		jflap
+		r={20}
+		states={[
+			{ id: 'q0', x: 260, y: 100, initial: true, hl: true },
+			{ id: 'q1', x: 410, y: 100 },
+			{ id: 'q2', x: 560, y: 100, final: true },
+		]}
+		transitions={[
+			{ from: 'q0', to: 'q0', label: '0  1' },
+			{ from: 'q0', to: 'q1', label: '0' },
+			{ from: 'q1', to: 'q2', label: '1' },
+		]}
+	/>
+</JflapFinestra>
+
+<Aside type="tip" title="Un controllo utile anche per i DFA">
+Quando l'esercizio chiede un **DFA**, **Highlight Nondeterminism** è il modo più veloce per accorgersi di aver messo per sbaglio due frecce con lo stesso simbolo (o una λ-transizione). Se non si colora niente, l'automa è deterministico (eventualmente parziale).
+</Aside>
+
+Simulando l'NFA con **Input → Step with Closure…** e la stringa `0101`, il pannello in basso mostra **più configurazioni contemporaneamente**: una per ogni "copia" dell'automa. È il modo migliore per far vedere agli alunni il non determinismo in azione.
+
+---
+
+## Automi con λ-transizioni
+
+Riprendiamo l'ε-NFA dei **multipli di 2 oppure di 3** del [capitolo 3](/appunti-sir-terza/lezioni/03-nfa/02-epsilon-transizioni/). In JFLAP le transizioni vuote si creano lasciando vuota la casella e compaiono con il simbolo **λ**.
+
+<JflapFinestra strumento="transizione" altezza={330} caption="L'ε-NFA in JFLAP: le due frecce che escono dallo stato iniziale sono λ-transizioni.">
+	<Automa
+		jflap
+		r={20}
+		states={[
+			{ id: 'q0', x: 70, y: 170, initial: true },
+			{ id: 'q1', x: 210, y: 70, final: true },
+			{ id: 'q2', x: 370, y: 70 },
+			{ id: 'q3', x: 210, y: 270, final: true },
+			{ id: 'q4', x: 370, y: 220 },
+			{ id: 'q5', x: 370, y: 320 },
+		]}
+		transitions={[
+			{ from: 'q0', to: 'q1', label: 'λ' },
+			{ from: 'q0', to: 'q3', label: 'λ' },
+			{ from: 'q1', to: 'q2', label: 'a' },
+			{ from: 'q2', to: 'q1', label: 'a' },
+			{ from: 'q3', to: 'q4', label: 'a' },
+			{ from: 'q4', to: 'q5', label: 'a' },
+			{ from: 'q5', to: 'q3', label: 'a' },
+		]}
+	/>
+</JflapFinestra>
+
+- **Test → Highlight λ-Transitions** evidenzia le due transizioni vuote.
+- Per simularlo si usa **Input → Step with Closure…**: già all'inizio, prima di leggere qualsiasi simbolo, il pannello mostra le configurazioni in q0, q1 e q3 (la λ-chiusura dello stato iniziale).
+- Con **Multiple Run** si verifica che vengano accettate le stringhe di lunghezza 0, 2, 3, 4, 6, 8, 9… e rifiutate quelle di lunghezza 1, 5, 7…
+
+---
+
+## Convert to DFA
+
+Con un NFA aperto (con o senza λ-transizioni) scegliamo **Convert → Convert to DFA**. JFLAP apre una vista divisa in due:
+
+- a **sinistra** l'NFA di partenza;
+- a **destra** il DFA in costruzione. All'inizio contiene solo lo stato iniziale, che rappresenta la λ-chiusura dello stato iniziale dell'NFA.
+
+Ogni stato del DFA ha sotto un'**etichetta con l'elenco degli stati dell'NFA** che rappresenta, scritti con i soli numeri: per esempio `0,1` significa &#123;q0, q1&#125;.
+
+<JflapFinestra toolbar={false} schede={['Editor', 'Convert to DFA']} schedaAttiva={1} caption="La vista di conversione (riproduzione schematica): l'NFA a sinistra, il DFA in costruzione a destra. Sotto ogni stato del DFA, l'insieme di stati dell'NFA che rappresenta.">
+	<div style="display:grid;grid-template-columns:1fr 1fr;align-items:center;">
+		<Automa
+			jflap
+			r={18}
+			states={[
+				{ id: 'q0', x: 60, y: 90, initial: true },
+				{ id: 'q1', x: 170, y: 90 },
+				{ id: 'q2', x: 280, y: 90, final: true },
+			]}
+			transitions={[
+				{ from: 'q0', to: 'q0', label: '0  1' },
+				{ from: 'q0', to: 'q1', label: '0' },
+				{ from: 'q1', to: 'q2', label: '1' },
+			]}
+		/>
+		<Automa
+			jflap
+			r={22}
+			states={[
+				{ id: 'q0', x: 60, y: 90, initial: true, nota: '0' },
+				{ id: 'q1', x: 190, y: 90, nota: '0,1' },
+			]}
+			transitions={[
+				{ from: 'q0', to: 'q0', label: '1' },
+				{ from: 'q0', to: 'q1', label: '0' },
+			]}
+		/>
+	</div>
+</JflapFinestra>
+
+Ci sono tre modi di procedere, dal più guidato al più automatico.
+
+### 1 · Passo per passo (il più didattico)
+
+<Steps>
+
+1. Si seleziona lo strumento **Expand Group on (T)erminal**.
+2. Si preme il mouse su uno stato del DFA, si trascina in un punto vuoto (o su uno stato esistente) e si rilascia.
+3. JFLAP chiede il **simbolo** (per esempio `0`) e poi l'**insieme di stati dell'NFA** raggiunti, scritto con i numeri separati da virgole (per esempio `0,1`).
+4. JFLAP **controlla** la risposta: se è sbagliata lo segnala; se è giusta crea il nuovo stato (o collega quello esistente) e la transizione.
+
+</Steps>
+
+È l'esercizio perfetto per allenare la costruzione per sottoinsiemi: lo studente fa i calcoli, JFLAP fa da correttore.
+
+### 2 · Uno stato alla volta
+
+Con lo strumento **State Expander** si clicca su uno stato del DFA e JFLAP crea **tutte** le sue transizioni uscenti, con gli eventuali nuovi stati. Utile per controllare un passaggio o per sbloccarsi.
+
+### 3 · Tutto in un colpo
+
+Il pulsante **Complete** costruisce l'intero DFA.
+
+### Terminare
+
+Il pulsante **Done?** verifica che il DFA sia completo. Se mancano stati o transizioni lo dice; se è tutto a posto, apre il **DFA risultante in una nuova finestra**, pronto per essere salvato, collaudato o minimizzato.
+
+<Aside type="note" title="Gli stati finali">
+Come nella teoria, JFLAP rende **finale** ogni stato del DFA che contiene almeno uno stato finale dell'NFA. Nell'esempio, lo stato con etichetta `0,2` sarà finale.
+</Aside>
+
+<Aside type="caution" title="Il DFA prodotto può essere disordinato">
+Con automi più grandi gli stati del DFA vengono posizionati in modo poco leggibile. Si possono spostare a mano con l'Attribute Editor, oppure usare il menu **View → Apply a Specific Layout Algorithm** (per esempio *Circle* o *Tree*).
+</Aside>
+
+---
+
+## Esercizio guidato
+
+<Steps>
+
+1. Costruire in JFLAP l'ε-NFA dei multipli di 2 oppure di 3.
+2. Collaudarlo con **Multiple Run** sulle stringhe da ε a `aaaaaaaaa` (lunghezza 0–9).
+3. Convertirlo con **Convert → Convert to DFA**, prima **a mano** con *Expand Group on Terminal*, controllando i risultati con la tabella del [capitolo 3](/appunti-sir-terza/lezioni/03-nfa/03-da-nfa-a-dfa/#esempio-2--con-le-ε-transizioni).
+4. Collaudare il DFA ottenuto con le stesse stringhe: i risultati devono essere identici.
+5. Quanti stati ha il DFA? Si può fare con meno? → [Prossimo capitolo](/appunti-sir-terza/jflap/06-minimizzare-e-confrontare/).
+
+</Steps>

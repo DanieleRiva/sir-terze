@@ -1,0 +1,147 @@
+---
+title: Macchine di Mealy e di Moore in JFLAP
+description: Creare, eseguire e collaudare macchine di Mealy e di Moore in JFLAP - etichette input;uscita, uscita degli stati, nastro di output.
+sidebar:
+  order: 8
+---
+
+import JflapFinestra from '~/components/JflapFinestra.astro';
+import JflapMultipleRun from '~/components/JflapMultipleRun.astro';
+import Automa from '~/components/Automa.astro';
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+JFLAP ha due tipi dedicati agli automi con uscita, che si scelgono dalla finestra principale: **Mealy Machine** e **Moore Machine**. L'editor è lo stesso degli automi a stati finiti, con alcune differenze.
+
+<Aside type="caution" title="Due regole valide per entrambe">
+- **Non ci sono stati finali**: nel menu del clic destro sullo stato la voce *Final* non è disponibile. Le macchine non accettano o rifiutano: traducono l'input in output.
+- **Devono essere deterministiche**: se da uno stato escono due transizioni con lo stesso input, JFLAP si rifiuta di eseguire la macchina e chiede di eliminare il non determinismo.
+</Aside>
+
+---
+
+## Macchina di Mealy
+
+### Costruzione
+
+Si procede come per un automa a stati finiti; l'unica differenza è nella **creazione delle transizioni**: invece di una casella ne compaiono **due**.
+
+- nella **prima** si scrive il simbolo di **input**;
+- nella **seconda** si scrive il simbolo di **uscita**.
+
+Dopo Invio la transizione mostra l'etichetta **`input;uscita`**, separata da un **punto e virgola** (sui libri si usa la barra: `input/uscita`).
+
+Costruiamo il **rilevatore della sequenza `11`** del [capitolo 5](/appunti-sir-terza/lezioni/05-mealy-moore/03-macchine-di-mealy/):
+
+<Steps>
+
+1. Dalla finestra principale: **Mealy Machine**.
+2. Due stati, q0 (iniziale) e q1.
+3. Transizioni: anello su q0 con `0` e uscita `0`; da q0 a q1 con `1` e uscita `0`; da q1 a q0 con `0` e uscita `0`; anello su q1 con `1` e uscita `1`.
+
+</Steps>
+
+<JflapFinestra titolo="JFLAP : (untitled1)" strumento="transizione" altezza={170} caption="Il rilevatore di <code>11</code> come macchina di Mealy in JFLAP.">
+	<Automa
+		jflap
+		r={20}
+		states={[
+			{ id: 'q0', x: 90, y: 100, initial: true },
+			{ id: 'q1', x: 290, y: 100 },
+		]}
+		transitions={[
+			{ from: 'q0', to: 'q0', label: '0;0' },
+			{ from: 'q0', to: 'q1', label: '1;0' },
+			{ from: 'q1', to: 'q0', label: '0;0' },
+			{ from: 'q1', to: 'q1', label: '1;1' },
+		]}
+	/>
+</JflapFinestra>
+
+<Aside type="tip" title="Uscite più lunghe di un simbolo">
+Nella casella dell'uscita si può scrivere anche **più di un carattere** (per esempio `BR` per "bibita e resto" nel distributore automatico) o lasciarla vuota (nessuna uscita). Comodo per modellare sistemi reali.
+</Aside>
+
+### Esecuzione
+
+Il menu **Input** offre le stesse modalità degli automi a stati finiti, con in più il **nastro di uscita**:
+
+| Voce | Cosa mostra |
+| :-- | :-- |
+| **Input → Step…** | la simulazione passo passo: sotto il nastro di input compare il **nastro di output**, che si allunga a ogni passo |
+| **Input → Fast Run…** | il risultato finale: l'output completo, su un nastro sotto quello di input |
+| **Input → Multiple Run** | la tabella delle stringhe: nella colonna **Result** compare l'**output** prodotto per ogni stringa (non *Accept/Reject*) |
+
+<JflapFinestra toolbar={false} schede={['Editor', 'Multiple Run']} schedaAttiva={1} caption="Multiple Run di una macchina di Mealy: la colonna <em>Result</em> contiene l'output.">
+	<JflapMultipleRun
+		righe={[
+			{ input: '0110111', result: '0010011' },
+			{ input: '1111', result: '0111' },
+			{ input: '1010', result: '0000' },
+		]}
+	/>
+</JflapFinestra>
+
+---
+
+## Macchina di Moore
+
+### Costruzione
+
+Qui l'uscita appartiene agli **stati**:
+
+- quando si **crea uno stato** con lo State Creator, JFLAP apre subito una finestrella che chiede l'**uscita dello stato**: la si scrive e si preme **OK**;
+- l'uscita compare in un **riquadro in alto a destra** dello stato;
+- per **cambiarla**, si clicca sullo stato con l'**Attribute Editor** e si inserisce il nuovo valore nella finestra che compare.
+
+Le **transizioni** hanno un solo simbolo, l'input, come negli automi a stati finiti.
+
+Costruiamo il **rilevatore di `11`** in versione Moore (tre stati):
+
+<Steps>
+
+1. Dalla finestra principale: **Moore Machine**.
+2. Creare q0 (uscita `0`), q1 (uscita `0`), q2 (uscita `1`). Rendere q0 iniziale.
+3. Transizioni: q0 →`0`→ q0, q0 →`1`→ q1, q1 →`0`→ q0, q1 →`1`→ q2, q2 →`1`→ q2, q2 →`0`→ q0.
+
+</Steps>
+
+<JflapFinestra strumento="attributi" altezza={200} caption="Il rilevatore di <code>11</code> come macchina di Moore in JFLAP: l'uscita è nel riquadro in alto a destra di ogni stato.">
+	<Automa
+		jflap
+		r={20}
+		states={[
+			{ id: 'q0', x: 80, y: 110, initial: true, output: '0' },
+			{ id: 'q1', x: 240, y: 110, output: '0' },
+			{ id: 'q2', x: 400, y: 110, output: '1' },
+		]}
+		transitions={[
+			{ from: 'q0', to: 'q0', label: '0', loop: 'left' },
+			{ from: 'q0', to: 'q1', label: '1' },
+			{ from: 'q1', to: 'q0', label: '0' },
+			{ from: 'q1', to: 'q2', label: '1' },
+			{ from: 'q2', to: 'q2', label: '1', loop: 'right' },
+			{ from: 'q2', to: 'q0', label: '0', bend: 50 },
+		]}
+	/>
+</JflapFinestra>
+
+### Esecuzione
+
+Il menu **Input** è lo stesso della macchina di Mealy (**Step…**, **Fast Run…**, **Multiple Run**). Ricordiamo la convenzione: JFLAP produce **subito l'uscita dello stato iniziale**, prima di leggere qualsiasi simbolo. Con l'input `0110111` l'output è quindi `00010011` (8 simboli per 7 input).
+
+<Aside type="note" title="Verificare che Mealy e Moore siano equivalenti">
+**Compare Equivalence** è pensato per gli automi a stati finiti (riconoscitori). Per confrontare una macchina di Mealy e una di Moore si usa **Multiple Run** su entrambe con le stesse stringhe: l'output di Moore deve essere quello di Mealy **con un simbolo in più all'inizio** (l'uscita dello stato iniziale).
+</Aside>
+
+---
+
+## Esercizio guidato: il distributore automatico
+
+<Steps>
+
+1. Costruire in JFLAP la **macchina di Mealy** del distributore a 2 € del [capitolo 5](/appunti-sir-terza/lezioni/05-mealy-moore/03-macchine-di-mealy/#esempio-3--il-distributore-automatico): stati C0 (iniziale) e C1, input `1` e `2`, uscite `-`, `B`, `BR`.
+2. Collaudarla con **Multiple Run** sulle sequenze `11`, `2`, `12`, `1212`, `111`.
+3. Costruire la versione **Moore** dello stesso distributore. Suggerimento: servono gli stati "credito 0", "credito 1", "appena erogata la bibita" e "appena erogati bibita e resto"; da questi ultimi due, la moneta successiva si comporta come da "credito 0".
+4. Confrontare gli output delle due macchine con le stesse sequenze.
+
+</Steps>

@@ -1,0 +1,117 @@
+---
+title: Stato pozzo e automi completi
+description: Cosa succede quando manca una transizione, a cosa serve lo stato pozzo e perché il complemento di un DFA funziona solo se l'automa è completo.
+sidebar:
+  order: 2
+---
+
+import Automa from '~/components/Automa.astro';
+import { Aside } from '@astrojs/starlight/components';
+
+## Quando manca una freccia
+
+Consideriamo il linguaggio delle stringhe su &#123;a, b&#125; che **iniziano con `a`**.
+
+<Automa
+	states={[
+		{ id: 'q0', x: 80, y: 90, initial: true },
+		{ id: 'q1', x: 250, y: 90, final: true },
+	]}
+	transitions={[
+		{ from: 'q0', to: 'q1', label: 'a' },
+		{ from: 'q1', to: 'q1', label: 'a, b' },
+	]}
+	simula="ba"
+	caption="Stringhe che iniziano con <code>a</code>: da q₀ non esce nessuna freccia con <code>b</code>."
+/>
+
+Da q₀ non c'è nessuna transizione con il simbolo `b`. Cosa succede con la stringa `ba`? L'automa legge `b`, non sa dove andare e **si blocca**. Per convenzione, **se l'automa si blocca la stringa è rifiutata** (ed è giusto così: `ba` non inizia con `a`).
+
+Un DFA in cui mancano alcune transizioni si chiama **parziale** (o incompleto). Un DFA in cui ogni stato ha una transizione per **ogni** simbolo si chiama **completo**.
+
+---
+
+## Lo stato pozzo
+
+Per rendere completo un automa parziale si aggiunge uno stato speciale, lo **stato pozzo** (in inglese *trap state* o *dead state*):
+
+- **non è finale**;
+- tutte le transizioni **mancanti** vengono mandate lì;
+- da lì **non si esce più**: per ogni simbolo c'è un anello su se stesso.
+
+Una volta entrati nel pozzo, la stringa è sicuramente rifiutata, qualunque cosa venga dopo. Il nome rende bene l'idea: si cade dentro e non si risale.
+
+<Automa
+	states={[
+		{ id: 'q0', x: 80, y: 80, initial: true },
+		{ id: 'q1', x: 250, y: 80, final: true },
+		{ id: 'qp', label: 'pozzo', x: 80, y: 220, hl: true },
+	]}
+	transitions={[
+		{ from: 'q0', to: 'q1', label: 'a' },
+		{ from: 'q1', to: 'q1', label: 'a, b' },
+		{ from: 'q0', to: 'qp', label: 'b', hl: true },
+		{ from: 'qp', to: 'qp', label: 'a, b', loop: 'right', hl: true },
+	]}
+	r={24}
+	simula="ba"
+	caption="Lo stesso automa reso completo con lo stato pozzo (evidenziato)."
+/>
+
+| δ | a | b |
+| :-- | :-: | :-: |
+| → q₀ | q₁ | pozzo |
+| \* q₁ | q₁ | q₁ |
+| pozzo | pozzo | pozzo |
+
+I due automi sono **equivalenti**: accettano esattamente le stesse stringhe. Quello parziale è più leggibile; quello completo ha la tabella senza buchi.
+
+<Aside type="tip" title="Una convenzione comoda">
+Nei disegni lo stato pozzo spesso **non si disegna**, per non riempire il diagramma di frecce: si sottintende che **ogni transizione mancante porta al pozzo**. Anche JFLAP usa questa convenzione: se da uno stato non esce una transizione per il simbolo letto, la stringa viene rifiutata. Quando però serve l'automa completo (per esempio per fare il complemento o la minimizzazione) il pozzo va disegnato davvero. JFLAP lo aggiunge con **Convert → Add Trap State to DFA**.
+</Aside>
+
+---
+
+## Il complemento di un linguaggio
+
+Il **complemento** di un linguaggio L è l'insieme delle stringhe che **non** stanno in L. Se L sono le stringhe che iniziano con `a`, il complemento sono le stringhe che **non** iniziano con `a`: cioè quelle che iniziano con `b`, **più la stringa vuota**.
+
+Costruire l'automa del complemento con un DFA è facilissimo:
+
+> **si scambiano stati finali e non finali**, lasciando tutto il resto com'è.
+
+Funziona perché, in un DFA completo, ogni stringa finisce in uno e un solo stato: se prima finiva in uno stato finale ora finisce in uno non finale, e viceversa.
+
+<Automa
+	states={[
+		{ id: 'q0', x: 80, y: 80, initial: true, final: true },
+		{ id: 'q1', x: 250, y: 80 },
+		{ id: 'qp', label: 'pozzo', x: 80, y: 220, final: true, hl: true },
+	]}
+	transitions={[
+		{ from: 'q0', to: 'q1', label: 'a' },
+		{ from: 'q1', to: 'q1', label: 'a, b' },
+		{ from: 'q0', to: 'qp', label: 'b' },
+		{ from: 'qp', to: 'qp', label: 'a, b', loop: 'right' },
+	]}
+	r={24}
+	simula="b"
+	caption="Complemento: stringhe che <strong>non</strong> iniziano con <code>a</code>. Il pozzo è diventato finale, q₀ anche (ε ora è accettata)."
+/>
+
+Il vecchio "pozzo" adesso è finale: non è più un pozzo, è diventato un "pozzo dei sì", da cui non si esce e in cui si accetta tutto.
+
+<Aside type="danger" title="Il complemento funziona solo con un DFA completo">
+Se scambiassimo finali e non finali nell'automa **parziale** (quello senza pozzo), con la stringa `ba` l'automa si bloccherebbe ancora e la stringa verrebbe ancora rifiutata. Ma `ba` **non** inizia con `a`, quindi il complemento dovrebbe accettarla!
+
+Le stringhe che "cadono nel buco" della transizione mancante vengono rifiutate **sempre**, prima e dopo lo scambio. Per questo, **prima di complementare bisogna completare l'automa con lo stato pozzo**. Vale lo stesso per gli automi non deterministici: vanno prima trasformati in DFA (capitolo 3).
+</Aside>
+
+---
+
+## Riepilogo
+
+- Un DFA è **completo** se ogni stato ha una transizione per ogni simbolo; altrimenti è **parziale**.
+- Se manca la transizione per il simbolo letto, l'automa si **blocca** e la stringa è **rifiutata**.
+- Lo **stato pozzo** è uno stato non finale, senza uscita, che raccoglie le transizioni mancanti.
+- Per il **complemento** si scambiano stati finali e non finali, ma **solo dopo** aver reso l'automa completo.

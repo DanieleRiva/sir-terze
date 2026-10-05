@@ -1,0 +1,205 @@
+---
+title: Macchine di Mealy e Moore
+description: Esercizi di progettazione e conversione di automi con uscita, con soluzioni simulabili.
+sidebar:
+  order: 4
+---
+
+import Automa from '~/components/Automa.astro';
+
+Esercizi sul capitolo [Automi con uscita](/appunti-sir-terza/lezioni/05-mealy-moore/01-automi-con-uscita/). Alfabeto di input e di uscita &#123;0, 1&#125; dove non indicato diversamente.
+
+---
+
+### Esercizio 1 · Il complementatore (Mealy)
+
+Una macchina di Mealy che, per ogni bit letto, produce il bit **opposto** (`0` → `1`, `1` → `0`). Quanti stati servono?
+
+<details>
+<summary>Soluzione</summary>
+
+**Uno solo**: l'uscita dipende solo dall'input corrente, non c'è niente da ricordare.
+
+<Automa
+	states={[{ id: 'q0', x: 80, y: 80, initial: true }]}
+	transitions={[{ from: 'q0', to: 'q0', label: '0/1, 1/0', loop: 'right' }]}
+	simula="0110"
+/>
+
+Una macchina di Mealy con un solo stato è una semplice **rete combinatoria** (qui, una porta NOT).
+
+</details>
+
+---
+
+### Esercizio 2 · Numero di `1` multiplo di 3 (Moore)
+
+Dopo ogni bit, l'uscita deve essere `1` se il numero di `1` letti fino a quel momento è un multiplo di 3 (zero compreso), altrimenti `0`.
+
+<details>
+<summary>Soluzione</summary>
+
+<Automa
+	r={26}
+	states={[
+		{ id: 'M0', x: 80, y: 80, initial: true, output: '1' },
+		{ id: 'M1', x: 280, y: 80, output: '0' },
+		{ id: 'M2', x: 180, y: 230, output: '0' },
+	]}
+	transitions={[
+		{ from: 'M0', to: 'M0', label: '0' },
+		{ from: 'M1', to: 'M1', label: '0' },
+		{ from: 'M2', to: 'M2', label: '0', loop: 'bottom' },
+		{ from: 'M0', to: 'M1', label: '1' },
+		{ from: 'M1', to: 'M2', label: '1' },
+		{ from: 'M2', to: 'M0', label: '1' },
+	]}
+	simula="1101011"
+/>
+
+Con `1101011`: uscita `1 0 0 0 1 1 0 0` (la prima è quella dello stato iniziale).
+
+</details>
+
+---
+
+### Esercizio 3 · Rilevatore di `101` (Mealy)
+
+Uscita `1` quando gli ultimi tre bit letti sono `101` (le sequenze possono sovrapporsi: con `10101` l'uscita deve valere `1` due volte).
+
+<details>
+<summary>Soluzione</summary>
+
+Stati: S = "nessun progresso", A = "ho appena letto `1`", B = "ho appena letto `10`".
+
+<Automa
+	states={[
+		{ id: 'S', x: 80, y: 100, initial: true },
+		{ id: 'A', x: 250, y: 100 },
+		{ id: 'B', x: 420, y: 100 },
+	]}
+	transitions={[
+		{ from: 'S', to: 'S', label: '0/0' },
+		{ from: 'S', to: 'A', label: '1/0' },
+		{ from: 'A', to: 'A', label: '1/0' },
+		{ from: 'A', to: 'B', label: '0/0' },
+		{ from: 'B', to: 'S', label: '0/0', bend: 50 },
+		{ from: 'B', to: 'A', label: '1/1' },
+	]}
+	simula="10101"
+/>
+
+Il punto delicato è **B con `1`**: si produce `1` e si va in A (non in S), perché quell'`1` può essere l'inizio di un nuovo `101`. Con `10101` l'uscita è `0 0 1 0 1`.
+
+</details>
+
+---
+
+### Esercizio 4 · Da Mealy a Moore
+
+Trasformare la macchina di Mealy dell'esercizio 3 in una macchina di Moore equivalente.
+
+<details>
+<summary>Soluzione</summary>
+
+Uscite delle transizioni **entranti** in ogni stato:
+
+- in S entrano `0/0` (da S) e `0/0` (da B): solo `0` → **S/0**
+- in A entrano `1/0` (da S), `1/0` (da A) e `1/1` (da B): `0` e `1` → **A/0** e **A′/1**
+- in B entra `0/0` (da A): solo `0` → **B/0**
+
+| Stato Moore | Uscita | con `0` | con `1` |
+| :-- | :-: | :-: | :-: |
+| → S | 0 | S | A |
+| A | 0 | B | A |
+| A′ | 1 | B | A |
+| B | 0 | S | A′ |
+
+<Automa
+	r={24}
+	states={[
+		{ id: 'S', x: 80, y: 90, initial: true, output: '0' },
+		{ id: 'A', x: 250, y: 90, output: '0' },
+		{ id: 'B', x: 420, y: 90, output: '0' },
+		{ id: 'A1', label: 'A′', x: 420, y: 260, output: '1' },
+	]}
+	transitions={[
+		{ from: 'S', to: 'S', label: '0' },
+		{ from: 'S', to: 'A', label: '1' },
+		{ from: 'A', to: 'A', label: '1' },
+		{ from: 'A', to: 'B', label: '0' },
+		{ from: 'B', to: 'S', label: '0', bend: 60 },
+		{ from: 'B', to: 'A1', label: '1' },
+		{ from: 'A1', to: 'A', label: '1' },
+		{ from: 'A1', to: 'B', label: '0' },
+	]}
+	simula="10101"
+/>
+
+Con `10101` l'uscita è `0 0 0 1 0 1`: la stessa di Mealy con lo `0` iniziale in più. Da 3 stati si è passati a 4.
+
+</details>
+
+---
+
+### Esercizio 5 · Il distributore in versione Moore
+
+Progettare la macchina di **Moore** equivalente al [distributore a 2 €](/appunti-sir-terza/lezioni/05-mealy-moore/03-macchine-di-mealy/#esempio-3--il-distributore-automatico) (input: monete `1` e `2`; uscite: `–`, `B`, `BR`).
+
+<details>
+<summary>Soluzione</summary>
+
+L'uscita deve dipendere solo dallo stato, quindi servono stati "di erogazione":
+
+| Stato | Uscita | moneta `1` | moneta `2` |
+| :-- | :-: | :-: | :-: |
+| → C0 (credito 0) | – | C1 | E |
+| C1 (credito 1) | – | E | ER |
+| E (erogata bibita) | B | C1 | E |
+| ER (bibita e resto) | BR | C1 | E |
+
+Dagli stati E ed ER la macchina si comporta come da C0 (il credito è tornato a zero).
+
+<Automa
+	r={26}
+	states={[
+		{ id: 'C0', x: 80, y: 90, initial: true, output: '–' },
+		{ id: 'C1', x: 300, y: 90, output: '–' },
+		{ id: 'E', x: 80, y: 280, output: 'B' },
+		{ id: 'ER', x: 300, y: 280, output: 'BR' },
+	]}
+	transitions={[
+		{ from: 'C0', to: 'C1', label: '1' },
+		{ from: 'C0', to: 'E', label: '2' },
+		{ from: 'C1', to: 'E', label: '1', bend: 15 },
+		{ from: 'C1', to: 'ER', label: '2' },
+		{ from: 'E', to: 'C1', label: '1', bend: 15 },
+		{ from: 'E', to: 'E', label: '2', loop: 'bottom' },
+		{ from: 'ER', to: 'C1', label: '1', bend: 25 },
+		{ from: 'ER', to: 'E', label: '2' },
+	]}
+	simula="1212"
+/>
+
+Mealy usava 2 stati, Moore ne usa 4.
+
+</details>
+
+---
+
+### Esercizio 6 · Domande di teoria
+
+1. Perché una macchina di Moore produce un simbolo di uscita in più rispetto a una di Mealy?
+2. In un circuito, quale dei due modelli ha un'uscita che può cambiare tra due colpi di clock? Perché?
+3. Un semaforo deve mostrare un colore appena viene acceso, prima di qualsiasi evento. Quale modello è più naturale?
+4. Perché alle macchine di Mealy e Moore non servono gli stati finali?
+
+<details>
+<summary>Soluzione</summary>
+
+1. Perché produce anche l'uscita dello **stato iniziale**, prima di leggere qualsiasi input.
+2. **Mealy**: la sua uscita dipende direttamente dall'ingresso, quindi cambia appena cambia l'ingresso, senza aspettare il clock.
+3. **Moore**: l'uscita è legata allo stato, e c'è già nello stato iniziale.
+4. Perché il loro compito non è dire sì/no su una stringa, ma **trasformare** una sequenza di input in una sequenza di output.
+
+</details>

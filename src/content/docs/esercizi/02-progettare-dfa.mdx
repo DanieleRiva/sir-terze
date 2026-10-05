@@ -1,0 +1,403 @@
+---
+title: Progettare DFA
+description: Dodici esercizi di progettazione di automi deterministici, dal più facile al più impegnativo, con soluzioni simulabili.
+sidebar:
+  order: 2
+---
+
+import Automa from '~/components/Automa.astro';
+import { Aside } from '@astrojs/starlight/components';
+
+Esercizi sul capitolo [Automi deterministici](/appunti-sir-terza/lezioni/02-dfa/01-definizione-dfa/). Per ognuno: progettare il DFA **su carta** seguendo il [metodo in sei passi](/appunti-sir-terza/lezioni/02-dfa/03-progettare-un-dfa/), poi costruirlo in JFLAP e collaudarlo con **Multiple Run**. Le soluzioni contengono un simulatore per confrontare i risultati.
+
+<Aside type="tip">
+Dove non è indicato diversamente, l'alfabeto è Σ = &#123;a, b&#125;. Le transizioni che portano allo **stato pozzo** sono disegnate esplicitamente solo dove è utile per capire.
+</Aside>
+
+**Legenda della difficoltà:** ⭐ facile · ⭐⭐ media · ⭐⭐⭐ impegnativa
+
+---
+
+### Esercizio 1 ⭐ · Inizia con `ab`
+
+Costruire un DFA **completo** che accetta le stringhe che iniziano con `ab`.
+
+<details>
+<summary>Soluzione</summary>
+
+Cosa ricordare: quanto del prefisso `ab` ho già letto, oppure se ho già sbagliato (pozzo).
+
+<Automa
+	states={[
+		{ id: 'q0', x: 80, y: 80, initial: true },
+		{ id: 'q1', x: 220, y: 80 },
+		{ id: 'q2', x: 360, y: 80, final: true },
+		{ id: 'P', label: 'pozzo', x: 220, y: 220 },
+	]}
+	transitions={[
+		{ from: 'q0', to: 'q1', label: 'a' },
+		{ from: 'q1', to: 'q2', label: 'b' },
+		{ from: 'q2', to: 'q2', label: 'a, b' },
+		{ from: 'q0', to: 'P', label: 'b' },
+		{ from: 'q1', to: 'P', label: 'a' },
+		{ from: 'P', to: 'P', label: 'a, b', loop: 'right' },
+	]}
+	r={24}
+	simula="abba"
+/>
+
+</details>
+
+---
+
+### Esercizio 2 ⭐ · Finisce con `a`
+
+<details>
+<summary>Soluzione</summary>
+
+Basta ricordare l'ultimo simbolo letto.
+
+<Automa
+	states={[
+		{ id: 'q0', x: 80, y: 90, initial: true },
+		{ id: 'q1', x: 260, y: 90, final: true },
+	]}
+	transitions={[
+		{ from: 'q0', to: 'q0', label: 'b' },
+		{ from: 'q0', to: 'q1', label: 'a' },
+		{ from: 'q1', to: 'q1', label: 'a' },
+		{ from: 'q1', to: 'q0', label: 'b' },
+	]}
+	simula="bba"
+/>
+
+q0 = "l'ultimo simbolo non è `a`" (o non ho letto nulla), q1 = "l'ultimo simbolo è `a`".
+
+</details>
+
+---
+
+### Esercizio 3 ⭐ · Lunghezza pari
+
+Le stringhe di lunghezza pari (compresa ε).
+
+<details>
+<summary>Soluzione</summary>
+
+<Automa
+	r={24}
+	states={[
+		{ id: 'P', x: 80, y: 90, initial: true, final: true },
+		{ id: 'D', x: 270, y: 90 },
+	]}
+	transitions={[
+		{ from: 'P', to: 'D', label: 'a, b' },
+		{ from: 'D', to: 'P', label: 'a, b' },
+	]}
+	simula="abab"
+/>
+
+Il simbolo letto non conta: conta solo **quanti** simboli, modulo 2.
+
+</details>
+
+---
+
+### Esercizio 4 ⭐ · Lunghezza multipla di 3
+
+<details>
+<summary>Soluzione</summary>
+
+<Automa
+	r={24}
+	states={[
+		{ id: 'L0', x: 80, y: 80, initial: true, final: true },
+		{ id: 'L1', x: 280, y: 80 },
+		{ id: 'L2', x: 180, y: 220 },
+	]}
+	transitions={[
+		{ from: 'L0', to: 'L1', label: 'a, b' },
+		{ from: 'L1', to: 'L2', label: 'a, b' },
+		{ from: 'L2', to: 'L0', label: 'a, b' },
+	]}
+	simula="aabbab"
+/>
+
+</details>
+
+---
+
+### Esercizio 5 ⭐⭐ · Non contiene `bb`
+
+Le stringhe in cui non compaiono mai due `b` consecutive.
+
+<details>
+<summary>Soluzione</summary>
+
+Trucco utile: si costruisce l'automa che **contiene** `bb` e poi si scambiano finali e non finali (è il complemento). Oppure si ragiona direttamente: devo ricordare se l'ultimo simbolo era `b`, e se ho già visto `bb` (pozzo).
+
+<Automa
+	r={24}
+	states={[
+		{ id: 'A', x: 80, y: 90, initial: true, final: true },
+		{ id: 'B', x: 250, y: 90, final: true },
+		{ id: 'P', label: 'pozzo', x: 420, y: 90 },
+	]}
+	transitions={[
+		{ from: 'A', to: 'A', label: 'a' },
+		{ from: 'A', to: 'B', label: 'b' },
+		{ from: 'B', to: 'A', label: 'a' },
+		{ from: 'B', to: 'P', label: 'b' },
+		{ from: 'P', to: 'P', label: 'a, b' },
+	]}
+	simula="ababb"
+/>
+
+A = "l'ultimo simbolo non è `b`", B = "l'ultimo simbolo è `b`". Entrambi finali: finché non arriva `bb` la stringa va bene.
+
+</details>
+
+---
+
+### Esercizio 6 ⭐⭐ · Esattamente due `a`
+
+<details>
+<summary>Soluzione</summary>
+
+Si contano le `a` fino a 2; dalla terza in poi si finisce nel pozzo.
+
+<Automa
+	r={24}
+	states={[
+		{ id: 'Z0', x: 80, y: 90, initial: true },
+		{ id: 'Z1', x: 220, y: 90 },
+		{ id: 'Z2', x: 360, y: 90, final: true },
+		{ id: 'Z3', label: '3+', x: 500, y: 90 },
+	]}
+	transitions={[
+		{ from: 'Z0', to: 'Z0', label: 'b' },
+		{ from: 'Z0', to: 'Z1', label: 'a' },
+		{ from: 'Z1', to: 'Z1', label: 'b' },
+		{ from: 'Z1', to: 'Z2', label: 'a' },
+		{ from: 'Z2', to: 'Z2', label: 'b' },
+		{ from: 'Z2', to: 'Z3', label: 'a' },
+		{ from: 'Z3', to: 'Z3', label: 'a, b' },
+	]}
+	simula="babab"
+/>
+
+**Variante:** "almeno due `a`" → basta togliere Z3 e mettere su Z2 un anello `a, b`.
+
+</details>
+
+---
+
+### Esercizio 7 ⭐⭐ · Ogni `a` è seguita subito da una `b`
+
+Esempi da accettare: ε, `b`, `ab`, `abbab`. Da rifiutare: `a`, `aab`, `aba`.
+
+<details>
+<summary>Soluzione</summary>
+
+<Automa
+	r={24}
+	states={[
+		{ id: 'OK', x: 80, y: 90, initial: true, final: true },
+		{ id: 'W', x: 250, y: 90 },
+		{ id: 'P', label: 'pozzo', x: 420, y: 90 },
+	]}
+	transitions={[
+		{ from: 'OK', to: 'OK', label: 'b' },
+		{ from: 'OK', to: 'W', label: 'a' },
+		{ from: 'W', to: 'OK', label: 'b' },
+		{ from: 'W', to: 'P', label: 'a' },
+		{ from: 'P', to: 'P', label: 'a, b' },
+	]}
+	simula="abbab"
+/>
+
+OK = "nessun debito", W = "ho letto una `a` e aspetto la `b`". W non è finale: una stringa che finisce con `a` va rifiutata.
+
+</details>
+
+---
+
+### Esercizio 8 ⭐ · Numeri binari pari
+
+Σ = &#123;0, 1&#125;. Accettare i numeri binari pari (cioè che finiscono con `0`).
+
+<details>
+<summary>Soluzione</summary>
+
+<Automa
+	states={[
+		{ id: 'q0', x: 80, y: 90, initial: true },
+		{ id: 'q1', x: 260, y: 90, final: true },
+	]}
+	transitions={[
+		{ from: 'q0', to: 'q0', label: '1' },
+		{ from: 'q0', to: 'q1', label: '0' },
+		{ from: 'q1', to: 'q1', label: '0' },
+		{ from: 'q1', to: 'q0', label: '1' },
+	]}
+	simula="1010"
+/>
+
+È lo stesso schema dell'esercizio 2. Domanda per la discussione: ε va accettata? Con questa soluzione no.
+
+</details>
+
+---
+
+### Esercizio 9 ⭐⭐ · Inizia e finisce con lo stesso simbolo
+
+Accettare le stringhe non vuote che iniziano e finiscono con lo stesso simbolo (`a`, `aba`, `bb`, `babb`…).
+
+<details>
+<summary>Soluzione</summary>
+
+Il primo simbolo "sceglie un ramo" e da lì non si cambia più; nel ramo si ricorda l'ultimo simbolo.
+
+<Automa
+	r={22}
+	states={[
+		{ id: 'q0', x: 70, y: 170, initial: true },
+		{ id: 'A1', x: 220, y: 70, final: true },
+		{ id: 'A2', x: 400, y: 70 },
+		{ id: 'B1', x: 220, y: 270, final: true },
+		{ id: 'B2', x: 400, y: 270 },
+	]}
+	transitions={[
+		{ from: 'q0', to: 'A1', label: 'a' },
+		{ from: 'q0', to: 'B1', label: 'b' },
+		{ from: 'A1', to: 'A1', label: 'a' },
+		{ from: 'A1', to: 'A2', label: 'b' },
+		{ from: 'A2', to: 'A2', label: 'b' },
+		{ from: 'A2', to: 'A1', label: 'a' },
+		{ from: 'B1', to: 'B1', label: 'b', loop: 'bottom' },
+		{ from: 'B1', to: 'B2', label: 'a' },
+		{ from: 'B2', to: 'B2', label: 'a', loop: 'bottom' },
+		{ from: 'B2', to: 'B1', label: 'b' },
+	]}
+	simula="babb"
+/>
+
+A1 = "iniziata con `a`, l'ultimo è `a`"; A2 = "iniziata con `a`, l'ultimo è `b`"; B1 e B2 analoghi.
+
+</details>
+
+---
+
+### Esercizio 10 ⭐⭐ · Contiene `ab` ma non `ba`
+
+Suggerimento: provare a scrivere la forma generale delle stringhe accettate.
+
+<details>
+<summary>Soluzione</summary>
+
+Se una stringa contiene `ab` ma non `ba`, una volta passati dalle `a` alle `b` non si può più tornare alle `a`. Le stringhe sono quindi della forma **a⁺b⁺** (almeno una `a`, poi almeno una `b`).
+
+<Automa
+	r={24}
+	states={[
+		{ id: 'q0', x: 80, y: 90, initial: true },
+		{ id: 'q1', x: 230, y: 90 },
+		{ id: 'q2', x: 380, y: 90, final: true },
+		{ id: 'P', label: 'pozzo', x: 230, y: 230 },
+	]}
+	transitions={[
+		{ from: 'q0', to: 'q1', label: 'a' },
+		{ from: 'q1', to: 'q1', label: 'a' },
+		{ from: 'q1', to: 'q2', label: 'b' },
+		{ from: 'q2', to: 'q2', label: 'b' },
+		{ from: 'q0', to: 'P', label: 'b' },
+		{ from: 'q2', to: 'P', label: 'a' },
+		{ from: 'P', to: 'P', label: 'a, b', loop: 'bottom' },
+	]}
+	simula="aabbb"
+/>
+
+</details>
+
+---
+
+### Esercizio 11 ⭐⭐⭐ · Numeri binari multipli di 5
+
+Σ = &#123;0, 1&#125;, lettura dalla cifra più significativa. Suggerimento: rivedere l'[esempio dei multipli di 3](/appunti-sir-terza/lezioni/02-dfa/03-progettare-un-dfa/#esempio-3--numeri-binari-divisibili-per-3).
+
+<details>
+<summary>Soluzione</summary>
+
+Cinque stati, uno per ogni resto; il nuovo resto è (2·r + c) mod 5.
+
+| δ | 0 | 1 |
+| :-- | :-: | :-: |
+| → \* R0 | R0 | R1 |
+| R1 | R2 | R3 |
+| R2 | R4 | R0 |
+| R3 | R1 | R2 |
+| R4 | R3 | R4 |
+
+<Automa
+	r={22}
+	states={[
+		{ id: 'R0', x: 250, y: 60, initial: 'left', final: true },
+		{ id: 'R1', x: 430, y: 170 },
+		{ id: 'R2', x: 360, y: 350 },
+		{ id: 'R3', x: 140, y: 350 },
+		{ id: 'R4', x: 70, y: 170 },
+	]}
+	transitions={[
+		{ from: 'R0', to: 'R0', label: '0' },
+		{ from: 'R0', to: 'R1', label: '1' },
+		{ from: 'R1', to: 'R2', label: '0' },
+		{ from: 'R1', to: 'R3', label: '1' },
+		{ from: 'R2', to: 'R4', label: '0' },
+		{ from: 'R2', to: 'R0', label: '1' },
+		{ from: 'R3', to: 'R1', label: '0' },
+		{ from: 'R3', to: 'R2', label: '1' },
+		{ from: 'R4', to: 'R3', label: '0' },
+		{ from: 'R4', to: 'R4', label: '1', loop: 'left' },
+	]}
+	simula="1010"
+/>
+
+Prova: `101` (5) ✓, `1010` (10) ✓, `1111` (15) ✓, `110` (6) ✗.
+
+</details>
+
+---
+
+### Esercizio 12 ⭐⭐⭐ · Intersezione con la costruzione prodotto
+
+Accettare le stringhe con un numero **dispari** di `a` **e** un numero **pari** di `b`.
+
+<details>
+<summary>Soluzione</summary>
+
+Due informazioni indipendenti (parità delle `a`, parità delle `b`) → 2 × 2 = 4 stati. Chiamiamo gli stati con due lettere: la prima per le `a`, la seconda per le `b` (P = pari, D = dispari).
+
+<Automa
+	r={24}
+	states={[
+		{ id: 'PP', x: 90, y: 80, initial: true },
+		{ id: 'DP', x: 330, y: 80, final: true },
+		{ id: 'PD', x: 90, y: 270 },
+		{ id: 'DD', x: 330, y: 270 },
+	]}
+	transitions={[
+		{ from: 'PP', to: 'DP', label: 'a' },
+		{ from: 'DP', to: 'PP', label: 'a' },
+		{ from: 'PD', to: 'DD', label: 'a' },
+		{ from: 'DD', to: 'PD', label: 'a' },
+		{ from: 'PP', to: 'PD', label: 'b' },
+		{ from: 'PD', to: 'PP', label: 'b' },
+		{ from: 'DP', to: 'DD', label: 'b' },
+		{ from: 'DD', to: 'DP', label: 'b' },
+	]}
+	simula="abb"
+/>
+
+Le `a` muovono in orizzontale, le `b` in verticale. È finale solo DP (a dispari, b pari). Cambiando gli stati finali si ottengono tutte le altre combinazioni: per esempio "numero pari di `a` **oppure** numero pari di `b`" ha finali PP, DP, PD.
+
+</details>

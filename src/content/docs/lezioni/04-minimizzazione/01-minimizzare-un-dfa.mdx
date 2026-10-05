@@ -1,0 +1,236 @@
+---
+title: Minimizzare un DFA
+description: Stati irraggiungibili, stati equivalenti e l'algoritmo di raffinamento delle partizioni per ottenere il DFA con il minor numero possibile di stati.
+sidebar:
+  order: 1
+---
+
+import Automa from '~/components/Automa.astro';
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+## Perché minimizzare
+
+Lo stesso linguaggio può essere riconosciuto da tanti DFA diversi, alcuni con più stati del necessario. Succede spesso:
+
+- quando si progetta "a mano" e si creano due stati che in realtà ricordano la stessa cosa;
+- quando si ottiene il DFA con la costruzione per sottoinsiemi.
+
+Un automa più piccolo è più facile da leggere, da verificare, da programmare e (in hardware) richiede meno flip-flop. C'è anche un risultato teorico molto elegante:
+
+> Per ogni linguaggio regolare esiste **un unico DFA minimo** (a meno dei nomi degli stati). Qualunque DFA per quel linguaggio, minimizzato, diventa quell'automa.
+
+Questo ci regala anche un metodo per capire se **due automi sono equivalenti**: si minimizzano entrambi e si controlla che vengano uguali. JFLAP fa una verifica di questo tipo con **Test → Compare Equivalence**.
+
+La minimizzazione si fa in **due fasi**: prima si eliminano gli stati irraggiungibili, poi si fondono gli stati equivalenti.
+
+---
+
+## Fase 1 · Eliminare gli stati irraggiungibili
+
+Uno stato è **irraggiungibile** se non esiste nessuna stringa che, partendo dallo stato iniziale, ci porti lì. Questi stati non servono a nulla e si cancellano, insieme alle loro transizioni.
+
+Per trovarli si parte dallo stato iniziale e si "colorano" tutti gli stati che si raggiungono seguendo le frecce. Quelli rimasti senza colore sono irraggiungibili.
+
+---
+
+## Fase 2 · Fondere gli stati equivalenti
+
+### Quando due stati sono equivalenti
+
+Due stati *p* e *q* sono **equivalenti** (o **indistinguibili**) se, qualunque sia la stringa *w* che si legge **da quel momento in poi**, partendo da *p* e partendo da *q* si ottiene **lo stesso esito**: entrambi accettano oppure entrambi rifiutano.
+
+In altre parole, per l'esterno è impossibile capire se l'automa si trova in *p* o in *q*: "ricordano la stessa cosa". Allora si possono fondere in un unico stato.
+
+Due stati sono invece **distinguibili** se esiste almeno una stringa che da uno porta in uno stato finale e dall'altro no. Ad esempio, uno stato finale e uno non finale sono sempre distinguibili (basta la stringa vuota ε).
+
+### L'algoritmo delle partizioni
+
+L'idea è partire da una divisione grossolana degli stati in gruppi e **raffinarla** finché non è più possibile.
+
+<Steps>
+
+1. **Partizione iniziale.** Si dividono gli stati in due gruppi: **finali** e **non finali**. (Sono sicuramente distinguibili tra loro.)
+
+2. **Controllo di ogni gruppo.** Per ogni gruppo e per ogni simbolo, si guarda **in quale gruppo** porta ciascuno stato. Due stati dello stesso gruppo che, con lo stesso simbolo, vanno in **gruppi diversi** sono distinguibili: il gruppo va **diviso**.
+
+3. **Ripetere** il passo 2 con la nuova partizione, finché in un giro completo nessun gruppo viene diviso.
+
+4. **Costruire l'automa minimo.** Ogni gruppo diventa **un solo stato**. Le transizioni si ricavano da un qualsiasi rappresentante del gruppo. Lo stato iniziale è il gruppo che contiene il vecchio stato iniziale; sono finali i gruppi formati da stati finali.
+
+</Steps>
+
+<Aside type="caution">
+L'algoritmo richiede un DFA **completo**: se mancano transizioni, prima si aggiunge lo stato pozzo. In JFLAP: **Convert → Add Trap State to DFA**.
+</Aside>
+
+---
+
+## Esempio 1 · Un DFA "gonfiato"
+
+Σ = &#123;0, 1&#125;. Questo DFA ha 6 stati, ma riconosce un linguaggio molto semplice.
+
+<Automa
+	r={22}
+	states={[
+		{ id: 'A', x: 70, y: 150, initial: true },
+		{ id: 'B', x: 210, y: 60 },
+		{ id: 'C', x: 210, y: 250, final: true },
+		{ id: 'D', x: 380, y: 60, final: true },
+		{ id: 'E', x: 380, y: 250 },
+		{ id: 'F', x: 530, y: 150, hl: true },
+	]}
+	transitions={[
+		{ from: 'A', to: 'B', label: '0' },
+		{ from: 'A', to: 'C', label: '1' },
+		{ from: 'B', to: 'A', label: '0', bend: 14 },
+		{ from: 'B', to: 'D', label: '1' },
+		{ from: 'C', to: 'C', label: '1', loop: 'left' },
+		{ from: 'C', to: 'E', label: '0' },
+		{ from: 'D', to: 'D', label: '1' },
+		{ from: 'D', to: 'E', label: '0' },
+		{ from: 'E', to: 'A', label: '0', bend: -40 },
+		{ from: 'E', to: 'C', label: '1', bend: 22 },
+		{ from: 'F', to: 'F', label: '0' },
+		{ from: 'F', to: 'D', label: '1' },
+	]}
+	caption="Un DFA con 6 stati. Lo stato F (evidenziato) non è raggiungibile da A."
+/>
+
+| δ | 0 | 1 |
+| :-- | :-: | :-: |
+| → A | B | C |
+| B | A | D |
+| \* C | E | C |
+| \* D | E | D |
+| E | A | C |
+| F | F | D |
+
+**Fase 1.** Partendo da A si raggiungono B e C; da B si raggiunge D; da C si raggiunge E. **F non è raggiungibile** (nessuna freccia entra in F, a parte il suo anello): lo eliminiamo.
+
+**Fase 2.**
+
+*Partizione iniziale:* non finali **&#123;A, B, E&#125;**, finali **&#123;C, D&#125;**.
+
+*Controllo del gruppo &#123;A, B, E&#125;:*
+
+| Stato | con `0` va in… | gruppo | con `1` va in… | gruppo |
+| :-: | :-: | :-: | :-: | :-: |
+| A | B | &#123;A,B,E&#125; | C | &#123;C,D&#125; |
+| B | A | &#123;A,B,E&#125; | D | &#123;C,D&#125; |
+| E | A | &#123;A,B,E&#125; | C | &#123;C,D&#125; |
+
+Tutti e tre si comportano allo stesso modo: il gruppo **non si divide**.
+
+*Controllo del gruppo &#123;C, D&#125;:* C con `0` → E (non finali), con `1` → C (finali); D con `0` → E (non finali), con `1` → D (finali). Stesso comportamento: **non si divide**.
+
+Nessun gruppo è stato diviso: abbiamo finito. L'automa minimo ha **due stati**:
+
+<Automa
+	r={28}
+	states={[
+		{ id: 'N', label: 'ABE', x: 90, y: 90, initial: true },
+		{ id: 'Y', label: 'CD', x: 300, y: 90, final: true },
+	]}
+	transitions={[
+		{ from: 'N', to: 'N', label: '0' },
+		{ from: 'N', to: 'Y', label: '1' },
+		{ from: 'Y', to: 'N', label: '0' },
+		{ from: 'Y', to: 'Y', label: '1' },
+	]}
+	simula="0101"
+	caption="Il DFA minimo: accetta le stringhe binarie che <strong>finiscono con 1</strong>."
+/>
+
+Con il DFA minimo il linguaggio diventa evidente: sono le stringhe che **finiscono con `1`**. Il DFA di partenza, con i suoi 6 stati, lo nascondeva bene!
+
+---
+
+## Esempio 2 · Più giri di raffinamento
+
+Riprendiamo il DFA a 7 stati ottenuto dalla costruzione per sottoinsiemi (multipli di 2 oppure di 3, alfabeto &#123;a&#125;):
+
+| δ | a |
+| :-- | :-: |
+| → \* A | B |
+| B | C |
+| \* C | D |
+| \* D | E |
+| \* E | G |
+| G | H |
+| \* H | B |
+
+Tutti gli stati sono raggiungibili. Per comodità, dopo ogni giro indichiamo con un numero romano il gruppo di destinazione.
+
+**Giro 0.** Finali I = &#123;A, C, D, E, H&#125;, non finali II = &#123;B, G&#125;.
+
+**Giro 1.** Dove porta `a`?
+
+- Gruppo I: A→B (II), C→D (I), D→E (I), E→G (II), H→B (II). Si divide in &#123;A, E, H&#125; (vanno in II) e &#123;C, D&#125; (vanno in I).
+- Gruppo II: B→C (I), G→H (I). Non si divide.
+
+Nuova partizione: **&#123;A, E, H&#125;, &#123;C, D&#125;, &#123;B, G&#125;**.
+
+**Giro 2.**
+
+- &#123;A, E, H&#125;: A→B, E→G, H→B, tutti nel gruppo &#123;B, G&#125;. Non si divide.
+- &#123;C, D&#125;: C→D (gruppo &#123;C, D&#125;), D→E (gruppo &#123;A, E, H&#125;). Si divide: &#123;C&#125;, &#123;D&#125;.
+- &#123;B, G&#125;: B→C (gruppo &#123;C, D&#125;), G→H (gruppo &#123;A, E, H&#125;). Si divide: &#123;B&#125;, &#123;G&#125;.
+
+Nuova partizione: **&#123;A, E, H&#125;, &#123;C&#125;, &#123;D&#125;, &#123;B&#125;, &#123;G&#125;**.
+
+**Giro 3.**
+
+- &#123;A, E, H&#125;: A→B (&#123;B&#125;), E→G (&#123;G&#125;), H→B (&#123;B&#125;). Si divide: &#123;A, H&#125; e &#123;E&#125;.
+
+Nuova partizione: **&#123;A, H&#125;, &#123;E&#125;, &#123;C&#125;, &#123;D&#125;, &#123;B&#125;, &#123;G&#125;**.
+
+**Giro 4.** &#123;A, H&#125;: A→B, H→B: stesso gruppo. Nessuna divisione: **fine**.
+
+A e H si fondono, tutti gli altri restano da soli: il DFA minimo ha **6 stati**.
+
+<Automa
+	r={24}
+	states={[
+		{ id: 'AH', x: 90, y: 70, initial: true, final: true },
+		{ id: 'B', x: 250, y: 70 },
+		{ id: 'C', x: 410, y: 70, final: true },
+		{ id: 'D', x: 410, y: 220, final: true },
+		{ id: 'E', x: 250, y: 220, final: true },
+		{ id: 'G', x: 90, y: 220 },
+	]}
+	transitions={[
+		{ from: 'AH', to: 'B', label: 'a' },
+		{ from: 'B', to: 'C', label: 'a' },
+		{ from: 'C', to: 'D', label: 'a' },
+		{ from: 'D', to: 'E', label: 'a' },
+		{ from: 'E', to: 'G', label: 'a' },
+		{ from: 'G', to: 'AH', label: 'a' },
+	]}
+	simula="aaaaa"
+	caption="DFA minimo: un contatore modulo 6. Sono finali le lunghezze 0, 2, 3, 4 (mod 6); non finali 1 e 5."
+/>
+
+Il risultato ha un significato chiaro: per sapere se *n* è multiplo di 2 o di 3 basta conoscere *n* **modulo 6**. Gli stati corrispondono ai resti 0 (AH), 1 (B), 2 (C), 3 (D), 4 (E), 5 (G).
+
+---
+
+## Un metodo alternativo: la tabella delle coppie
+
+Nei libri si trova spesso anche il **metodo della tabella** (o *table-filling*): si disegna una tabella triangolare con una casella per ogni **coppia** di stati e si "marcano" le coppie distinguibili.
+
+1. Si marcano tutte le coppie (finale, non finale).
+2. Si marca una coppia (*p*, *q*) se esiste un simbolo che porta *p* e *q* in una coppia già marcata.
+3. Si ripete finché non si marca più nulla.
+4. Le coppie rimaste **non marcate** sono stati equivalenti.
+
+Il risultato è identico a quello delle partizioni. Il metodo delle partizioni è di solito più veloce a mano; quello della tabella è più "meccanico" e meno soggetto a sviste. JFLAP usa una versione ad **albero** del metodo delle partizioni: ogni nodo dell'albero è un gruppo, che viene diviso nei suoi figli.
+
+---
+
+## Riepilogo
+
+- Prima si eliminano gli stati **irraggiungibili**, poi si fondono quelli **equivalenti**.
+- Due stati sono equivalenti se nessuna stringa riesce a distinguerli.
+- Algoritmo: si parte da &#123;finali&#125; e &#123;non finali&#125; e si **dividono** i gruppi finché ci sono stati dello stesso gruppo che vanno in gruppi diversi con lo stesso simbolo.
+- Il DFA minimo è **unico**: serve anche a verificare se due automi sono equivalenti.
+- In JFLAP: **Convert → Minimize DFA** (dettagli nel capitolo [Minimizzare e confrontare automi](/appunti-sir-terza/jflap/06-minimizzare-e-confrontare/)).

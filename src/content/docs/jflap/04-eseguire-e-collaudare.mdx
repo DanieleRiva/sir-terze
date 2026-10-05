@@ -1,0 +1,189 @@
+---
+title: Eseguire e collaudare un automa
+description: Simulazione passo passo, Fast Run e Multiple Run in JFLAP; come leggere i risultati e come scegliere le stringhe di prova per un collaudo serio.
+sidebar:
+  order: 4
+---
+
+import JflapFinestra from '~/components/JflapFinestra.astro';
+import JflapSimulazione from '~/components/JflapSimulazione.astro';
+import JflapMultipleRun from '~/components/JflapMultipleRun.astro';
+import Automa from '~/components/Automa.astro';
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Un automa disegnato non è finito finché non è **collaudato**. JFLAP offre tre modi di eseguirlo, tutti nel menu **Input**: la simulazione passo passo, l'esecuzione veloce e l'esecuzione multipla.
+
+Usiamo come esempio il DFA delle stringhe che **finiscono con `01`** costruito nel tutorial precedente.
+
+---
+
+## Simulazione passo passo
+
+È lo strumento più **didattico**: fa vedere l'automa "al lavoro", un simbolo alla volta, proprio come facciamo a mano alla lavagna.
+
+<Steps>
+
+1. Menu **Input → Step with Closure…** (oppure **Step by State…**).
+2. Nella finestra che compare scriviamo la stringa, per esempio `1101`, e premiamo **OK**.
+3. Si apre una nuova scheda: in alto l'automa, in basso il **pannello di simulazione** con una o più **configurazioni**.
+4. Premiamo **Step** per avanzare di un simbolo. Lo stato attivo viene evidenziato nel diagramma.
+5. Quando la stringa è finita, la configurazione si colora di **verde** se la stringa è accettata, di **rosso** se è rifiutata.
+
+</Steps>
+
+Ogni **configurazione** è un riquadro che mostra lo **stato attuale** e la **stringa di input**: la parte già letta è **grigia**, quella ancora da leggere è **nera**.
+
+<JflapFinestra strumento={null} toolbar={false} schede={['Editor', 'Simulate']} schedaAttiva={1} caption="Simulazione di <code>1101</code> dopo tre passi: siamo in q1, letti <code>110</code>, resta <code>1</code>.">
+	<Automa
+		jflap
+		r={20}
+		states={[
+			{ id: 'q0', x: 80, y: 90, initial: true },
+			{ id: 'q1', x: 230, y: 90, hl: true },
+			{ id: 'q2', x: 380, y: 90, final: true },
+		]}
+		transitions={[
+			{ from: 'q0', to: 'q0', label: '1' },
+			{ from: 'q0', to: 'q1', label: '0' },
+			{ from: 'q1', to: 'q1', label: '0' },
+			{ from: 'q1', to: 'q2', label: '1' },
+			{ from: 'q2', to: 'q1', label: '0' },
+			{ from: 'q2', to: 'q0', label: '1', bend: 45 },
+		]}
+	/>
+	<JflapSimulazione slot="sotto" configs={[{ stato: 'q1', letto: '110', resto: '1', selezionata: true }]} />
+</JflapFinestra>
+
+Dopo un altro **Step** la configurazione passa in q2, tutta la stringa è grigia e il riquadro diventa verde:
+
+<JflapFinestra strumento={null} toolbar={false} schede={['Editor', 'Simulate']} schedaAttiva={1} caption="Fine della simulazione: configurazione verde, stringa accettata.">
+	<JflapSimulazione slot="sotto" configs={[{ stato: 'q2', letto: '1101', resto: '', esito: 'accept' }]} />
+</JflapFinestra>
+
+### I pulsanti del pannello
+
+| Pulsante | Cosa fa |
+| :-- | :-- |
+| **Step** | avanza di un passo **tutte** le configurazioni attive |
+| **Reset** | riporta la simulazione all'inizio |
+| **Freeze** | "congela" la configurazione selezionata: ai prossimi Step non avanzerà |
+| **Thaw** | "scongela" una configurazione congelata |
+| **Trace** | mostra la **storia** della configurazione selezionata: tutti gli stati attraversati, passo per passo |
+| **Remove** | elimina la configurazione selezionata |
+
+Una configurazione si **seleziona** cliccandoci sopra.
+
+### Step with Closure o Step by State?
+
+La differenza si vede solo negli automi con **λ-transizioni**:
+
+- **Step with Closure** a ogni passo legge un simbolo e poi segue **automaticamente** tutte le λ-transizioni (applica la λ-chiusura, come facciamo nella simulazione con gli insiemi);
+- **Step by State** tratta anche ogni λ-transizione come un passo a sé: è più lento, ma fa vedere ogni singolo movimento.
+
+Per i DFA le due modalità sono identiche. Per gli NFA consigliamo **Step with Closure**.
+
+### Con un NFA: tante configurazioni
+
+Con un automa **non deterministico** il pannello mostra **più configurazioni contemporaneamente**: è la versione "visiva" delle copie dell'automa che si moltiplicano a ogni bivio. Le configurazioni che non hanno più transizioni da seguire diventano rosse; basta che **una** arrivi in fondo in uno stato finale (verde) perché la stringa sia accettata.
+
+<JflapFinestra strumento={null} toolbar={false} schede={['Editor', 'Simulate']} schedaAttiva={1} caption="NFA «finisce con 01» con l'input <code>0101</code>, dopo due passi: due configurazioni attive, una in q0 e una in q2 (riproduzione schematica del pannello).">
+	<JflapSimulazione
+		slot="sotto"
+		configs={[
+			{ stato: 'q0', letto: '01', resto: '01' },
+			{ stato: 'q2', letto: '01', resto: '01' },
+		]}
+	/>
+</JflapFinestra>
+
+---
+
+## Esecuzione veloce: Fast Run
+
+Quando non serve vedere i passaggi intermedi:
+
+<Steps>
+
+1. Menu **Input → Fast Run…**
+2. Scriviamo la stringa e premiamo **OK**.
+3. JFLAP risponde subito: se la stringa è **accettata** mostra il **percorso** che ha portato allo stato finale (la sequenza di configurazioni); se è **rifiutata** lo dice con un messaggio.
+
+</Steps>
+
+Con un NFA possono esistere più percorsi che accettano: JFLAP mostra il primo che trova e permette di continuare a cercarne altri.
+
+<Aside type="caution" title="La stringa vuota">
+Per provare la stringa vuota con Step o Fast Run si lascia **vuota** la casella e si preme **OK**. Non si scrive "ε" o "λ": verrebbero letti come caratteri!
+</Aside>
+
+---
+
+## Esecuzione multipla: Multiple Run
+
+È lo strumento più **utile per il collaudo**: si scrivono tante stringhe in una tabella e si eseguono tutte insieme.
+
+<Steps>
+
+1. Menu **Input → Multiple Run**. Si apre una nuova scheda con una tabella a due colonne: **Input** e **Result**.
+2. Clicchiamo sulla prima cella della colonna *Input* e scriviamo una stringa; con **Invio** (o con un clic) passiamo alla riga successiva.
+3. Per inserire la **stringa vuota** usiamo il pulsante **Enter Lambda**.
+4. Premiamo **Run Inputs**: nella colonna *Result* compare **Accept** o **Reject** per ogni stringa.
+5. Per vedere il percorso seguito da una stringa, selezioniamo la riga e premiamo **View Trace**.
+
+</Steps>
+
+<JflapFinestra strumento={null} toolbar={false} schede={['Editor', 'Multiple Run']} schedaAttiva={1} caption="Multiple Run del DFA «finisce con 01»: tutte le risposte sono quelle attese.">
+	<JflapMultipleRun
+		righe={[
+			{ input: '01', result: 'Accept' },
+			{ input: '1101', result: 'Accept' },
+			{ input: '0101', result: 'Accept' },
+			{ input: '001', result: 'Accept' },
+			{ input: '', result: 'Reject' },
+			{ input: '0', result: 'Reject' },
+			{ input: '10', result: 'Reject' },
+			{ input: '011', result: 'Reject' },
+			{ input: '0110', result: 'Reject' },
+		]}
+	/>
+</JflapFinestra>
+
+| Pulsante | Cosa fa |
+| :-- | :-- |
+| **Load Inputs** | carica le stringhe da un **file di testo** (una stringa per riga) |
+| **Run Inputs** | esegue l'automa su tutte le stringhe della tabella |
+| **Clear** | svuota la tabella |
+| **Enter Lambda** | inserisce la stringa vuota |
+| **View Trace** | mostra il percorso per la riga selezionata |
+
+<Aside type="tip" title="Per il docente: un file di prova per tutta la classe">
+Con **Load Inputs** si possono preparare in anticipo dei file `.txt` con le stringhe di collaudo di ogni esercizio, da distribuire agli alunni (o da usare in correzione). Basta un file di testo con una stringa per riga. Un esempio è scaricabile dalla pagina [File di esempio](/appunti-sir-terza/jflap/09-file-layout-e-problemi/#file-di-esempio-da-scaricare).
+</Aside>
+
+---
+
+## Come scegliere le stringhe di prova
+
+Un collaudo fatto bene non prova stringhe a caso. Ecco una strategia da insegnare agli alunni.
+
+<Steps>
+
+1. **La stringa vuota ε.** Sempre. Scopre subito uno stato iniziale finale per sbaglio (o dimenticato).
+
+2. **Le stringhe di lunghezza 1**, una per ogni simbolo dell'alfabeto.
+
+3. **Esempi "tipici"** del linguaggio, che devono essere accettati.
+
+4. **Esempi "quasi giusti"**, che devono essere rifiutati: le stringhe che differiscono da una giusta per un solo simbolo. Per "finisce con `01`": `00`, `11`, `011`, `010`.
+
+5. **Una stringa per ogni stato**: stringhe che fanno terminare l'automa in ciascuno degli stati, per controllare che ogni stato sia finale o non finale come deve.
+
+6. **Una stringa per ogni transizione**: l'insieme delle prove deve far percorrere **ogni freccia** almeno una volta. Una transizione mai usata nei test potrebbe essere sbagliata senza che ce ne accorgiamo.
+
+7. **Stringhe lunghe**, per controllare che l'automa "non si perda" dopo molti simboli e che i cicli funzionino.
+
+</Steps>
+
+<Aside type="note" title="Collaudare non è dimostrare">
+Anche cento stringhe giuste non **dimostrano** che l'automa sia corretto: provano solo che funziona su quelle cento. Per avere la certezza bisogna confrontarlo con un automa sicuramente corretto, cosa che JFLAP fa con **Test → Compare Equivalence** (vedi [Minimizzare e confrontare automi](/appunti-sir-terza/jflap/06-minimizzare-e-confrontare/)), oppure ragionare sul significato di ogni stato.
+</Aside>

@@ -1,0 +1,185 @@
+---
+title: Da NFA a DFA - la costruzione per sottoinsiemi
+description: L'algoritmo che trasforma qualunque NFA (anche con ε-transizioni) in un DFA equivalente, spiegato passo per passo con due esempi completi.
+sidebar:
+  order: 3
+---
+
+import Automa from '~/components/Automa.astro';
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+## L'idea
+
+Nella lezione sugli NFA abbiamo visto che si possono simulare tenendo traccia dell'**insieme degli stati attivi**. La costruzione per sottoinsiemi (*subset construction*) trasforma questa osservazione in un algoritmo:
+
+> **Ogni stato del DFA corrisponde a un insieme di stati dell'NFA.**
+
+Il DFA ottenuto fa, in un colpo solo, quello che l'NFA fa con tutte le sue copie in parallelo.
+
+---
+
+## L'algoritmo
+
+<Steps>
+
+1. **Stato iniziale del DFA.** È l'insieme che contiene lo stato iniziale dell'NFA, più la sua ε-chiusura se ci sono ε-transizioni.
+
+2. **Espandere uno stato alla volta.** Si prende uno stato del DFA non ancora espanso, cioè un insieme *S* di stati dell'NFA. Per ogni simbolo *a* dell'alfabeto si calcola il nuovo insieme: **tutti gli stati raggiungibili con `a` da almeno uno stato di *S***, e poi la loro ε-chiusura.
+
+3. **Aggiungere i nuovi insiemi.** Se l'insieme ottenuto non esiste ancora come stato del DFA, lo si aggiunge alla lista degli stati da espandere. Si disegna la transizione *S* —a→ nuovo insieme.
+
+4. **Ripetere** il passo 2 finché tutti gli stati del DFA sono stati espansi. Il procedimento termina sempre, perché i possibili sottoinsiemi sono in numero finito.
+
+5. **Stati finali.** È finale ogni stato del DFA (cioè ogni insieme) che contiene **almeno uno** stato finale dell'NFA.
+
+</Steps>
+
+<Aside type="note" title="E se l'insieme è vuoto?">
+Se da un insieme *S*, con un certo simbolo, non si raggiunge nessuno stato, si ottiene l'insieme vuoto **∅**. Anche ∅ è uno stato del DFA: è lo **stato pozzo** (non è finale e con ogni simbolo torna in sé stesso). Spesso, come convenzione, lo si lascia sottinteso.
+</Aside>
+
+---
+
+## Esempio 1 · Finisce con `01`
+
+Partiamo dall'NFA della lezione precedente.
+
+<Automa
+	states={[
+		{ id: 'q0', x: 80, y: 100, initial: true },
+		{ id: 'q1', x: 230, y: 100 },
+		{ id: 'q2', x: 380, y: 100, final: true },
+	]}
+	transitions={[
+		{ from: 'q0', to: 'q0', label: '0, 1' },
+		{ from: 'q0', to: 'q1', label: '0' },
+		{ from: 'q1', to: 'q2', label: '1' },
+	]}
+	caption="L'NFA di partenza."
+/>
+
+Costruiamo la tabella del DFA una riga alla volta. Per ogni riga, nella colonna del simbolo scriviamo l'unione degli stati raggiungibili da **ciascun** elemento dell'insieme.
+
+| Stato DFA | con `0` | con `1` |
+| :-- | :-- | :-- |
+| → &#123;q₀&#125; | δ(q₀,0) = &#123;q₀, q₁&#125; | δ(q₀,1) = &#123;q₀&#125; |
+| &#123;q₀, q₁&#125; | &#123;q₀, q₁&#125; ∪ ∅ = &#123;q₀, q₁&#125; | &#123;q₀&#125; ∪ &#123;q₂&#125; = &#123;q₀, q₂&#125; |
+| \* &#123;q₀, q₂&#125; | &#123;q₀, q₁&#125; ∪ ∅ = &#123;q₀, q₁&#125; | &#123;q₀&#125; ∪ ∅ = &#123;q₀&#125; |
+
+Ordine in cui sono nati gli stati: si parte da &#123;q₀&#125;; la sua riga produce &#123;q₀, q₁&#125; (nuovo); la riga di &#123;q₀, q₁&#125; produce &#123;q₀, q₂&#125; (nuovo); la riga di &#123;q₀, q₂&#125; non produce niente di nuovo. Fine.
+
+L'unico insieme che contiene q₂ (finale nell'NFA) è &#123;q₀, q₂&#125;, che diventa lo stato finale del DFA.
+
+<Automa
+	r={32}
+	states={[
+		{ id: 'A', label: '{q0}', x: 90, y: 110, initial: true },
+		{ id: 'B', label: '{q0,q1}', x: 280, y: 110 },
+		{ id: 'C', label: '{q0,q2}', x: 470, y: 110, final: true },
+	]}
+	transitions={[
+		{ from: 'A', to: 'A', label: '1' },
+		{ from: 'A', to: 'B', label: '0' },
+		{ from: 'B', to: 'B', label: '0' },
+		{ from: 'B', to: 'C', label: '1' },
+		{ from: 'C', to: 'B', label: '0' },
+		{ from: 'C', to: 'A', label: '1', bend: 55 },
+	]}
+	simula="0101"
+	caption="Il DFA ottenuto. Ha la stessa forma del DFA che avevamo progettato «a mano» nel capitolo 2!"
+/>
+
+<Aside type="tip" title="Lo avevamo già trovato">
+Confrontiamo con il DFA dell'[esempio 1 del capitolo 2](/appunti-sir-terza/lezioni/02-dfa/03-progettare-un-dfa/#esempio-1--stringhe-binarie-che-finiscono-con-01): è identico, basta rinominare &#123;q₀&#125; → q₀, &#123;q₀, q₁&#125; → q₁, &#123;q₀, q₂&#125; → q₂. La costruzione per sottoinsiemi ha "ragionato" al posto nostro.
+</Aside>
+
+---
+
+## Esempio 2 · Con le ε-transizioni
+
+Riprendiamo l'ε-NFA dei **multipli di 2 oppure di 3** (alfabeto &#123;a&#125;).
+
+<Automa
+	states={[
+		{ id: 's', x: 70, y: 170, initial: true },
+		{ id: 'p0', x: 210, y: 70, final: true },
+		{ id: 'p1', x: 370, y: 70 },
+		{ id: 'r0', x: 210, y: 280, final: true },
+		{ id: 'r1', x: 370, y: 230 },
+		{ id: 'r2', x: 370, y: 340 },
+	]}
+	transitions={[
+		{ from: 's', to: 'p0', label: 'ε' },
+		{ from: 's', to: 'r0', label: 'ε' },
+		{ from: 'p0', to: 'p1', label: 'a' },
+		{ from: 'p1', to: 'p0', label: 'a' },
+		{ from: 'r0', to: 'r1', label: 'a' },
+		{ from: 'r1', to: 'r2', label: 'a' },
+		{ from: 'r2', to: 'r0', label: 'a' },
+	]}
+	caption="L'ε-NFA di partenza."
+/>
+
+Questa volta lo stato iniziale del DFA è la **ε-chiusura** di s: &#123;s, p₀, r₀&#125;. Diamo un nome breve a ogni insieme man mano che compare.
+
+| Nome | Insieme di stati NFA | con `a` | Finale? |
+| :-: | :-- | :-: | :-: |
+| → A | &#123; s, p₀, r₀ &#125; | B | sì (contiene p₀, r₀) |
+| B | &#123; p₁, r₁ &#125; | C | no |
+| C | &#123; p₀, r₂ &#125; | D | sì (p₀) |
+| D | &#123; p₁, r₀ &#125; | E | sì (r₀) |
+| E | &#123; p₀, r₁ &#125; | G | sì (p₀) |
+| G | &#123; p₁, r₂ &#125; | H | no |
+| H | &#123; p₀, r₀ &#125; | B | sì |
+
+Calcolo della prima riga, per esempio: da s con `a` non si va da nessuna parte, da p₀ con `a` si va in p₁, da r₀ con `a` si va in r₁. Totale &#123;p₁, r₁&#125;, la cui ε-chiusura è sé stessa.
+
+Da H = &#123;p₀, r₀&#125; con `a` si torna a &#123;p₁, r₁&#125; = B, che esiste già: il procedimento si chiude.
+
+<Automa
+	states={[
+		{ id: 'A', x: 70, y: 60, initial: true, final: true },
+		{ id: 'B', x: 230, y: 60 },
+		{ id: 'C', x: 380, y: 60, final: true },
+		{ id: 'D', x: 460, y: 180, final: true },
+		{ id: 'E', x: 380, y: 300, final: true },
+		{ id: 'G', x: 230, y: 300 },
+		{ id: 'H', x: 150, y: 180, final: true },
+	]}
+	transitions={[
+		{ from: 'A', to: 'B', label: 'a' },
+		{ from: 'B', to: 'C', label: 'a' },
+		{ from: 'C', to: 'D', label: 'a' },
+		{ from: 'D', to: 'E', label: 'a' },
+		{ from: 'E', to: 'G', label: 'a' },
+		{ from: 'G', to: 'H', label: 'a' },
+		{ from: 'H', to: 'B', label: 'a' },
+	]}
+	simula="aaaa"
+	caption="Il DFA ottenuto: 7 stati. Si nota che A e H «si comportano allo stesso modo»: nel prossimo capitolo vedremo come accorgersene in modo sistematico e fonderli."
+/>
+
+---
+
+## Quanto può crescere il DFA?
+
+Se l'NFA ha *n* stati, i sottoinsiemi possibili sono **2ⁿ**: questo è il numero massimo di stati del DFA. Per fortuna, nella pratica, quasi sempre si genera solo una piccola parte di questi sottoinsiemi, perché si costruiscono soltanto quelli **raggiungibili** dallo stato iniziale (come abbiamo fatto noi).
+
+Ci sono però linguaggi in cui l'esplosione avviene davvero: l'esempio classico è "l'*n*-esimo simbolo dalla fine è `a`", visto nella lezione sugli NFA.
+
+---
+
+## Il procedimento in JFLAP
+
+JFLAP esegue questa costruzione con **Convert → Convert to DFA**: si può far fare tutto al programma (pulsante **Complete**) oppure costruire il DFA un passo alla volta, con JFLAP che controlla ogni nostra scelta. Negli stati del DFA risultante JFLAP scrive l'elenco degli stati dell'NFA che rappresentano (per esempio `0,1` per &#123;q₀, q₁&#125;). I dettagli sono nel capitolo [NFA e conversione in JFLAP](/appunti-sir-terza/jflap/05-nfa-e-conversione/).
+
+---
+
+## Riepilogo
+
+- Ogni stato del DFA è un **insieme** di stati dell'NFA.
+- Lo stato iniziale è la **ε-chiusura** dello stato iniziale dell'NFA.
+- La transizione da un insieme *S* con il simbolo *a* va nell'insieme di tutti gli stati raggiungibili con *a* da qualche elemento di *S* (poi ε-chiusura).
+- Sono finali gli insiemi che contengono **almeno uno** stato finale dell'NFA.
+- L'insieme vuoto, se compare, è lo **stato pozzo**.
+- Nel caso peggiore il DFA ha **2ⁿ** stati; di solito molti meno.

@@ -1,0 +1,746 @@
+---
+/**
+ * Disegna il diagramma degli stati di un automa come SVG inline.
+ * I colori seguono il tema del sito (chiaro/scuro).
+ *
+ * Con `simula` sotto il diagramma compare un piccolo simulatore:
+ * si scrive una stringa e si segue l'automa passo per passo.
+ * Etichette delle transizioni: simboli separati da virgola ("a, b"),
+ * "ε" per le ε-transizioni, "a/1" per le macchine di Mealy.
+ */
+export interface Stato {
+	id: string;
+	x: number;
+	y: number;
+	/** Testo mostrato nel cerchio (default: id). "q0" diventa q₀ */
+	label?: string;
+	/** Stato iniziale; la stringa indica da che lato arriva la freccia */
+	initial?: boolean | 'left' | 'right' | 'top' | 'bottom';
+	final?: boolean;
+	/** Uscita associata allo stato (macchine di Moore) */
+	output?: string;
+	/** Nota scritta sotto lo stato (come le "label" di JFLAP) */
+	nota?: string;
+	/** Evidenzia lo stato con il colore di accento */
+	hl?: boolean;
+	/** Disegna lo stato sbiadito */
+	dim?: boolean;
+}
+
+export interface Transizione {
+	from: string;
+	to: string;
+	label: string;
+	/** Curvatura dell'arco (px). Positivo = a sinistra del verso di percorrenza */
+	bend?: number;
+	/** Lato dell'anello per le transizioni da uno stato a se stesso */
+	loop?: 'top' | 'bottom' | 'left' | 'right';
+	hl?: boolean;
+	dim?: boolean;
+}
+
+interface Props {
+	states: Stato[];
+	transitions?: Transizione[];
+	/** Ignorati: l'area del disegno viene calcolata dal contenuto */
+	width?: number;
+	height?: number;
+	/** Fattore di ingrandimento del disegno (default 1) */
+	scala?: number;
+	caption?: string;
+	r?: number;
+	/** Abilita il simulatore. Se è una stringa, è l'input proposto */
+	simula?: boolean | string;
+	/** Stile "finestra JFLAP": stati gialli e triangolo iniziale */
+	jflap?: boolean;
+	title?: string;
+}
+
+const {
+	states,
+	transitions = [],
+	scala = 1,
+	caption,
+	r: R = 22,
+	simula = false,
+	jflap = false,
+	title,
+} = Astro.props;
+
+type P = { x: number; y: number };
+const add = (a: P, b: P): P => ({ x: a.x + b.x, y: a.y + b.y });
+const sub = (a: P, b: P): P => ({ x: a.x - b.x, y: a.y - b.y });
+const mul = (a: P, k: number): P => ({ x: a.x * k, y: a.y * k });
+const len = (a: P) => Math.hypot(a.x, a.y) || 1;
+const norm = (a: P) => mul(a, 1 / len(a));
+const f = (n: number) => n.toFixed(1);
+const pt = (p: P) => `${f(p.x)},${f(p.y)}`;
+
+const byId = new Map(states.map((s) => [s.id, s]));
+
+const ARROW_L = 10;
+const ARROW_W = 5;
+function arrowHead(tip: P, dir: P) {
+	const back = sub(tip, mul(dir, ARROW_L));
+	const perp = { x: -dir.y, y: dir.x };
+	return `${pt(tip)} ${pt(add(back, mul(perp, ARROW_W)))} ${pt(sub(back, mul(perp, ARROW_W)))}`;
+}
+
+const CHAR_W = 8.4;
+const TEXT_H = 15;
+/** Posiziona un'etichetta accanto a `anchor`, spostata verso `n` quanto basta per non toccare la linea */
+function labelAt(anchor: P, n: P, text: string): P {
+	const w = text.length * CHAR_W;
+	const d = 5 + (Math.abs(n.x) * w) / 2 + (Math.abs(n.y) * TEXT_H) / 2;
+	return add(anchor, mul(n, d));
+}
+
+const dirVec: Record<string, P> = {
+	left: { x: -1, y: 0 },
+	right: { x: 1, y: 0 },
+	top: { x: 0, y: -1 },
+	bottom: { x: 0, y: 1 },
+};
+
+/* ---------- transizioni ---------- */
+const edges = transitions.map((t, i) => {
+	const A = byId.get(t.from);
+	const B = byId.get(t.to);
+	if (!A || !B) throw new Error(`Automa: stato inesistente in ${t.from} → ${t.to}`);
+
+	if (A === B) {
+		const deg = { top: -90, right: 0, bottom: 90, left: 180 }[t.loop ?? 'top'];
+		const a = (deg * Math.PI) / 180;
+		const c = { x: A.x, y: A.y };
+		const on = (ang: number, dist: number) => add(c, { x: Math.cos(ang) * dist, y: Math.sin(ang) * dist });
+		// anello a goccia di dimensione costante, qualunque sia il raggio dello stato
+		const o = { x: Math.cos(a), y: Math.sin(a) };
+		const tg = { x: -Math.sin(a), y: Math.cos(a) };
+		const sp = Math.asin(Math.min(0.9, 12 / R));
+		const p1 = on(a - sp, R);
+		const tip = on(a + sp, R);
+		const c1 = add(p1, sub(mul(o, 44), mul(tg, 15)));
+		const c2 = add(tip, add(mul(o, 44), mul(tg, 15)));
+		const dir = norm(sub(tip, c2));
+		const end = sub(tip, mul(dir, ARROW_L - 3));
+		const apex = add(add(mul(p1, 0.125), mul(c1, 0.375)), add(mul(c2, 0.375), mul(tip, 0.125)));
+		return {
+			i,
+			t,
+			d: `M ${pt(p1)} C ${pt(c1)} ${pt(c2)} ${pt(end)}`,
+			head: arrowHead(tip, dir),
+			lab: labelAt(apex, { x: Math.cos(a), y: Math.sin(a) }, t.label),
+		};
+	}
+
+	const reverse = transitions.some((o) => o.from === t.to && o.to === t.from);
+	const bend = t.bend ?? (reverse ? 20 : 0);
+	const u = norm(sub(B, A));
+	const n = { x: u.y, y: -u.x };
+
+	if (bend === 0) {
+		const start = add(A, mul(u, R));
+		const tip = sub(B, mul(u, R));
+		const end = sub(tip, mul(u, ARROW_L - 3));
+		const mid = mul(add(start, tip), 0.5);
+		return { i, t, d: `M ${pt(start)} L ${pt(end)}`, head: arrowHead(tip, u), lab: labelAt(mid, n, t.label) };
+	}
+
+	const M = mul(add(A, B), 0.5);
+	const C = add(M, mul(n, 2 * bend));
+	const start = add(A, mul(norm(sub(C, A)), R));
+	const tip = add(B, mul(norm(sub(C, B)), R));
+	const dir = norm(sub(tip, C));
+	const end = sub(tip, mul(dir, ARROW_L - 3));
+	const apex = add(add(mul(start, 0.25), mul(C, 0.5)), mul(tip, 0.25));
+	return {
+		i,
+		t,
+		d: `M ${pt(start)} Q ${pt(C)} ${pt(end)}`,
+		head: arrowHead(tip, dir),
+		lab: labelAt(apex, mul(n, Math.sign(bend)), t.label),
+	};
+});
+
+/* ---------- frecce iniziali ---------- */
+const initials = states
+	.filter((s) => s.initial)
+	.map((s) => {
+		const v = dirVec[typeof s.initial === 'string' ? s.initial : 'left'];
+		const c = { x: s.x, y: s.y };
+		if (jflap) {
+			const tip = add(c, mul(v, R));
+			const back = add(c, mul(v, R + 18));
+			const perp = { x: -v.y, y: v.x };
+			return { tri: `${pt(tip)} ${pt(add(back, mul(perp, 12)))} ${pt(sub(back, mul(perp, 12)))}` };
+		}
+		const start = add(c, mul(v, R + 32));
+		const tip = add(c, mul(v, R));
+		const d = mul(v, -1);
+		return { d: `M ${pt(start)} L ${pt(sub(tip, mul(d, ARROW_L - 3)))}`, head: arrowHead(tip, d) };
+	});
+
+/* ---------- etichette degli stati ---------- */
+function stateText(s: Stato) {
+	const text = s.label ?? s.id;
+	const m = jflap ? null : /^([A-Za-z]+)(\d+)$/.exec(text);
+	const size = Math.max(9, Math.min(15, (2 * R - 8) / (text.length * 0.62)));
+	return { text, m, size, math: !!m && !jflap };
+}
+
+/* ---------- area occupata: il viewBox si adatta al contenuto ---------- */
+let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+const grow = (x: number, y: number, rx = 0, ry = rx) => {
+	minX = Math.min(minX, x - rx);
+	maxX = Math.max(maxX, x + rx);
+	minY = Math.min(minY, y - ry);
+	maxY = Math.max(maxY, y + ry);
+};
+states.forEach((s) => {
+	grow(s.x, s.y, R + 2);
+	if (s.output !== undefined && jflap) grow(s.x + R * 0.45 + s.output.length * 8 + 12, s.y - R - 12, 1);
+	if (s.nota) grow(s.x, s.y + R + 14, (s.nota.length * 7.2) / 2 + 6, 11);
+});
+// le etichette stanno sempre "fuori" dalle curve: bastano loro a delimitare gli archi
+edges.forEach((e) => grow(e.lab.x, e.lab.y, (e.t.label.length * CHAR_W) / 2 + 3, TEXT_H / 2 + 3));
+initials.forEach((ini) => {
+	(ini.d ?? '').match(/-?\d+(\.\d+)?,-?\d+(\.\d+)?/g)?.forEach((c) => {
+		const [x, y] = c.split(',').map(Number);
+		grow(x, y, 2);
+	});
+	(ini.tri ?? '').split(' ').filter(Boolean).forEach((c) => {
+		const [x, y] = c.split(',').map(Number);
+		grow(x, y, 2);
+	});
+});
+const PAD = 8;
+const vb = { x: minX - PAD, y: minY - PAD, w: maxX - minX + 2 * PAD, h: maxY - minY + 2 * PAD };
+
+const model = simula
+	? JSON.stringify({
+			states: states.map((s) => ({ id: s.id, initial: !!s.initial, final: !!s.final, output: s.output ?? null })),
+			transitions: transitions.map((t) => ({ from: t.from, to: t.to, label: t.label })),
+		})
+	: null;
+const inputIniziale = typeof simula === 'string' ? simula : '';
+const isTransducer = states.some((s) => s.output !== undefined) || transitions.some((t) => t.label.includes('/'));
+---
+
+<figure class:list={['automa not-content', { 'automa--jflap': jflap }]}>
+	<div class="automa-scroll">
+		<svg
+			viewBox={`${f(vb.x)} ${f(vb.y)} ${f(vb.w)} ${f(vb.h)}`}
+			width={f(vb.w * scala)}
+			style={`width:100%;max-width:${f(vb.w * scala)}px;min-width:${f(Math.min(vb.w * scala, Math.max(vb.w * scala * 0.6, 260)))}px`}
+			role="img"
+			aria-label={title ?? caption ?? 'Diagramma degli stati'}
+		>
+			<g class="automa-iniziali">
+				{
+					initials.map((ini) =>
+						ini.tri ? (
+							<polygon class="automa-tri" points={ini.tri} />
+						) : (
+							<g>
+								<path d={ini.d} />
+								<polygon points={ini.head} />
+							</g>
+						),
+					)
+				}
+			</g>
+			<g class="automa-transizioni">
+				{
+					edges.map((e) => (
+						<g class:list={['automa-tr', { 'is-hl': e.t.hl, 'is-dim': e.t.dim }]} data-t={e.i}>
+							<path d={e.d} />
+							<polygon points={e.head} />
+							<text x={f(e.lab.x)} y={f(e.lab.y)}>
+								{e.t.label}
+							</text>
+						</g>
+					))
+				}
+			</g>
+			<g class="automa-stati">
+				{
+					states.map((s) => {
+						const st = stateText(s);
+						const ty = s.output !== undefined && !jflap ? s.y - 6 : s.y;
+						return (
+							<g class:list={['automa-st', { 'is-hl': s.hl, 'is-dim': s.dim }]} data-id={s.id}>
+								<circle cx={s.x} cy={s.y} r={R} />
+								{s.final && <circle class="automa-final" cx={s.x} cy={s.y} r={R - 4.5} />}
+								<text x={s.x} y={ty} class:list={{ 'is-math': st.math }} style={`font-size:${st.size}px`}>
+									{st.m ? (
+										<>
+											{st.m[1]}
+											<tspan class="automa-sub" dy="4">
+												{st.m[2]}
+											</tspan>
+										</>
+									) : (
+										st.text
+									)}
+								</text>
+								{s.nota && (
+									<g class="automa-nota">
+										<rect x={f(s.x - (s.nota.length * 7.2) / 2 - 5)} y={f(s.y + R + 5)} width={f(s.nota.length * 7.2 + 10)} height="19" rx="3" />
+										<text x={s.x} y={f(s.y + R + 14.5)}>{s.nota}</text>
+									</g>
+								)}
+								{s.output !== undefined && !jflap && (
+									<text class="automa-out" x={s.x} y={s.y + 11}>
+										{s.output}
+									</text>
+								)}
+								{s.output !== undefined && jflap && (
+									<g class="automa-out-jflap">
+										<rect x={f(s.x + R * 0.45)} y={f(s.y - R - 10)} width={f(s.output.length * 8 + 10)} height="18" />
+										<text x={f(s.x + R * 0.45 + (s.output.length * 8 + 10) / 2)} y={f(s.y - R - 1)}>{s.output}</text>
+									</g>
+								)}
+							</g>
+						);
+					})
+				}
+			</g>
+		</svg>
+	</div>
+	{
+		model && (
+			<div class="automa-sim" data-automa-sim data-model={model} data-transducer={isTransducer ? '1' : '0'}>
+				<div class="automa-sim-row">
+					<label>
+						Stringa da provare:
+						<input type="text" value={inputIniziale} spellcheck="false" autocomplete="off" />
+					</label>
+					<div class="automa-sim-btns">
+						<button type="button" data-act="step">Passo ▶</button>
+						<button type="button" data-act="run">Tutta ⏭</button>
+						<button type="button" data-act="reset">Ricomincia ↺</button>
+					</div>
+				</div>
+				<div class="automa-sim-tape" aria-live="polite" />
+				<div class="automa-sim-status" aria-live="polite" />
+			</div>
+		)
+	}
+	{caption && <figcaption set:html={caption} />}
+</figure>
+
+<script>
+	type Modello = {
+		states: { id: string; initial: boolean; final: boolean; output: string | null }[];
+		transitions: { from: string; to: string; label: string }[];
+	};
+	type Arco = { t: number; from: string; to: string; sym: string; out: string | null };
+
+	const EPS = new Set(['ε', 'λ']);
+
+	function initSim(box: HTMLElement) {
+		const figure = box.closest('figure')!;
+		const model: Modello = JSON.parse(box.dataset.model!);
+		const transducer = box.dataset.transducer === '1';
+		const input = box.querySelector('input')!;
+		const tape = box.querySelector<HTMLElement>('.automa-sim-tape')!;
+		const status = box.querySelector<HTMLElement>('.automa-sim-status')!;
+
+		const archi: Arco[] = [];
+		model.transitions.forEach((tr, t) => {
+			for (const tok of tr.label.split(',').map((s) => s.trim()).filter(Boolean)) {
+				const [inp, out] = tok.split('/').map((s) => s.trim());
+				archi.push({ t, from: tr.from, to: tr.to, sym: EPS.has(inp) ? '' : inp, out: out ?? null });
+			}
+		});
+		const stato = new Map(model.states.map((s) => [s.id, s]));
+
+		const chiusura = (insieme: Set<string>) => {
+			const res = new Set(insieme);
+			const pila = [...insieme];
+			while (pila.length) {
+				const s = pila.pop()!;
+				for (const a of archi) {
+					if (a.from === s && a.sym === '' && !res.has(a.to)) {
+						res.add(a.to);
+						pila.push(a.to);
+					}
+				}
+			}
+			return res;
+		};
+
+		let attivi = new Set<string>();
+		let usati: number[] = [];
+		let pos = 0;
+		let uscita: string[] = [];
+		let bloccato = false;
+
+		const reset = () => {
+			const iniz = model.states.filter((s) => s.initial).map((s) => s.id);
+			attivi = chiusura(new Set(iniz));
+			usati = [];
+			pos = 0;
+			bloccato = false;
+			uscita = [];
+			const o0 = attivi.size === 1 ? stato.get([...attivi][0])?.output : null;
+			if (o0) uscita.push(o0);
+			render();
+		};
+
+		const passo = () => {
+			const w = input.value;
+			if (pos >= w.length || bloccato) return;
+			const c = w[pos];
+			const prossimi = new Set<string>();
+			usati = [];
+			let out = '';
+			for (const a of archi) {
+				if (attivi.has(a.from) && a.sym === c) {
+					prossimi.add(a.to);
+					usati.push(a.t);
+					if (a.out !== null) out = a.out;
+				}
+			}
+			pos++;
+			attivi = chiusura(prossimi);
+			if (attivi.size === 0) bloccato = true;
+			else if (attivi.size === 1) {
+				const o = stato.get([...attivi][0])?.output;
+				const o2 = o ?? out;
+				if (o2 !== null) uscita.push(o2);
+			}
+			render();
+		};
+
+		const nomi = (s: Set<string>) => [...s].join(', ');
+
+		function render() {
+			const w = input.value;
+			figure.querySelectorAll('.automa-st').forEach((g) => {
+				g.classList.toggle('is-attivo', attivi.has((g as HTMLElement).dataset.id!));
+			});
+			figure.querySelectorAll('.automa-tr').forEach((g) => {
+				g.classList.toggle('is-attivo', usati.includes(Number((g as HTMLElement).dataset.t)));
+			});
+
+			tape.replaceChildren(
+				...[...w].map((ch, i) => {
+					const span = document.createElement('span');
+					span.textContent = ch;
+					if (i < pos) span.className = 'letto';
+					else if (i === pos && !bloccato) span.className = 'testina';
+					return span;
+				}),
+			);
+			if (w.length === 0) {
+				const span = document.createElement('span');
+				span.className = 'vuota';
+				span.textContent = 'ε (stringa vuota)';
+				tape.append(span);
+			}
+
+			const finito = pos >= w.length || bloccato;
+			let msg = '';
+			if (bloccato) {
+				msg = `Dal simbolo «${w[pos - 1]}» non esiste nessuna transizione: l'automa si blocca.`;
+				msg += transducer ? '' : ' <strong class="no">✗ Stringa RIFIUTATA</strong>';
+			} else {
+				msg = `Simboli letti: <strong>${pos}</strong> di ${w.length} · Stato attuale: <strong>${nomi(attivi)}</strong>`;
+				if (finito) {
+					if (transducer) msg += ' · <strong class="si">Fine</strong>';
+					else {
+						const ok = [...attivi].some((s) => stato.get(s)?.final);
+						msg += ok
+							? ' · <strong class="si">✓ Stringa ACCETTATA</strong>'
+							: ' · <strong class="no">✗ Stringa RIFIUTATA</strong> (lo stato attuale non è finale)';
+					}
+				}
+			}
+			if (transducer) msg += `<br>Uscita prodotta: <code>${uscita.join(' ') || '(nessuna)'}</code>`;
+			status.innerHTML = msg;
+		}
+
+		box.querySelector('[data-act="step"]')!.addEventListener('click', passo);
+		box.querySelector('[data-act="run"]')!.addEventListener('click', () => {
+			while (pos < input.value.length && !bloccato) passo();
+		});
+		box.querySelector('[data-act="reset"]')!.addEventListener('click', reset);
+		input.addEventListener('input', reset);
+		input.addEventListener('keydown', (e) => {
+			if (e.key === 'Enter') {
+				e.preventDefault();
+				passo();
+			}
+		});
+		reset();
+	}
+
+	document.querySelectorAll<HTMLElement>('[data-automa-sim]').forEach(initSim);
+</script>
+
+<style is:global>
+	.automa {
+		margin: 1.75rem 0 !important;
+		color: var(--sl-color-white);
+	}
+	.automa-scroll {
+		overflow-x: auto;
+		display: flex;
+		justify-content: center;
+		padding: 0.5rem;
+		border: 1px solid var(--sl-color-hairline);
+		border-radius: 0.75rem;
+		background: var(--sl-color-bg);
+	}
+	.automa svg {
+		height: auto;
+		display: block;
+		overflow: visible;
+	}
+	.automa svg text {
+		text-anchor: middle;
+		dominant-baseline: central;
+		fill: currentColor;
+	}
+	.automa-iniziali path,
+	.automa-tr path {
+		fill: none;
+		stroke: currentColor;
+		stroke-width: 1.6;
+	}
+	.automa-iniziali polygon,
+	.automa-tr polygon {
+		fill: currentColor;
+	}
+	.automa-tr text {
+		font-family: var(--sl-font-mono, monospace);
+		font-size: 14px;
+		paint-order: stroke;
+		stroke: var(--sl-color-bg);
+		stroke-width: 5px;
+		stroke-linejoin: round;
+	}
+	.automa-st circle {
+		fill: var(--sl-color-bg);
+		stroke: currentColor;
+		stroke-width: 1.8;
+	}
+	.automa-st circle.automa-final {
+		fill: none;
+	}
+	.automa-st text {
+		font-family: var(--sl-font, sans-serif);
+		font-weight: 600;
+	}
+	.automa-st text.is-math {
+		font-family: 'Cambria Math', 'STIX Two Math', 'Times New Roman', serif;
+		font-style: italic;
+		font-weight: 500;
+		font-size: 17px !important;
+	}
+	.automa-sub {
+		font-size: 0.72em;
+		font-style: normal;
+	}
+	.automa-out {
+		font-family: var(--sl-font-mono, monospace);
+		font-size: 12px;
+		font-weight: 700;
+		fill: var(--sl-color-text-accent) !important;
+	}
+
+	.automa-nota rect {
+		fill: var(--sl-color-bg);
+		stroke: currentColor;
+		stroke-width: 0.8;
+		opacity: 0.9;
+	}
+	.automa-st .automa-nota text {
+		font-family: var(--sl-font-mono, monospace);
+		font-size: 12px;
+		font-weight: 400;
+		font-style: normal;
+	}
+	.automa--jflap .automa-st .automa-nota text {
+		font-family: Arial, Helvetica, sans-serif;
+	}
+	.automa--jflap .automa-nota rect {
+		fill: #fff;
+		stroke: #000;
+	}
+	.automa-st.is-hl .automa-nota rect,
+	.automa-st.is-attivo .automa-nota rect {
+		fill: var(--sl-color-bg);
+		stroke: currentColor;
+		stroke-width: 0.8;
+	}
+
+	/* evidenziati */
+	.automa-st.is-hl circle,
+	.automa-st.is-attivo circle {
+		fill: var(--sl-color-accent-low);
+		stroke: var(--sl-color-accent);
+		stroke-width: 2.6;
+	}
+	.automa-tr.is-hl,
+	.automa-tr.is-attivo {
+		color: var(--sl-color-accent);
+	}
+	.automa-tr.is-hl path,
+	.automa-tr.is-attivo path {
+		stroke-width: 2.6;
+	}
+	.automa-tr.is-attivo text,
+	.automa-tr.is-hl text {
+		font-weight: 700;
+	}
+	.automa-st.is-dim,
+	.automa-tr.is-dim {
+		opacity: 0.3;
+	}
+	.automa-st,
+	.automa-tr {
+		transition: opacity 0.2s;
+	}
+
+	/* stile JFLAP */
+	.automa--jflap .automa-scroll {
+		border: none;
+		border-radius: 0;
+		padding: 0;
+	}
+	.automa--jflap .automa-st circle {
+		fill: #ffff9a;
+		stroke: #000;
+		stroke-width: 1.2;
+	}
+	.automa--jflap .automa-st circle.automa-final {
+		fill: none;
+	}
+	.automa--jflap .automa-st text {
+		font-family: Arial, Helvetica, sans-serif;
+		font-weight: 400;
+		fill: #000;
+	}
+	.automa--jflap .automa-out-jflap rect {
+		fill: #fff;
+		stroke: #000;
+		stroke-width: 1;
+	}
+	.automa--jflap .automa-st .automa-out-jflap text {
+		font-size: 12px;
+	}
+	.automa--jflap .automa-tri {
+		fill: #fff;
+		stroke: #000;
+		stroke-width: 1.2;
+	}
+	.automa--jflap .automa-tr text {
+		font-family: Arial, Helvetica, sans-serif;
+		font-size: 14px;
+	}
+
+	.automa figcaption {
+		margin-top: 0.6rem;
+		text-align: center;
+		font-size: var(--sl-text-sm);
+		color: var(--sl-color-gray-2);
+		line-height: 1.5;
+	}
+
+	/* simulatore */
+	.automa-sim {
+		margin-top: 0.6rem;
+		padding: 0.85rem 1rem;
+		border-radius: 0.75rem;
+		background: var(--sl-color-accent-low);
+		color: var(--sl-color-white);
+		font-size: var(--sl-text-sm);
+	}
+	.automa-sim-row {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.6rem;
+		align-items: center;
+		justify-content: space-between;
+	}
+	.automa-sim label {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem;
+		align-items: center;
+		font-weight: 600;
+	}
+	.automa-sim input {
+		font-family: var(--sl-font-mono, monospace);
+		font-size: 1rem;
+		padding: 0.3rem 0.55rem;
+		border-radius: 0.4rem;
+		border: 1px solid var(--sl-color-gray-4);
+		background: var(--sl-color-bg);
+		color: var(--sl-color-white);
+		width: 12rem;
+		max-width: 100%;
+	}
+	.automa-sim-btns {
+		display: flex;
+		gap: 0.4rem;
+		flex-wrap: wrap;
+	}
+	.automa-sim button {
+		cursor: pointer;
+		font: inherit;
+		font-weight: 600;
+		padding: 0.3rem 0.7rem;
+		border-radius: 0.4rem;
+		border: 1px solid var(--sl-color-accent);
+		background: var(--sl-color-bg);
+		color: var(--sl-color-white);
+	}
+	.automa-sim button:hover {
+		background: var(--sl-color-accent);
+		color: var(--sl-color-black);
+	}
+	.automa-sim-tape {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 3px;
+		margin: 0.75rem 0 0.5rem;
+		font-family: var(--sl-font-mono, monospace);
+		font-size: 1.05rem;
+	}
+	.automa-sim-tape span {
+		min-width: 1.9rem;
+		padding: 0.15rem 0.35rem;
+		text-align: center;
+		border: 1px solid var(--sl-color-gray-4);
+		border-radius: 0.3rem;
+		background: var(--sl-color-bg);
+	}
+	.automa-sim-tape span.letto {
+		opacity: 0.4;
+		text-decoration: line-through;
+	}
+	.automa-sim-tape span.testina {
+		border: 2px solid var(--sl-color-accent);
+		font-weight: 700;
+		box-shadow: 0 3px 0 var(--sl-color-accent);
+	}
+	.automa-sim-tape span.vuota {
+		font-style: italic;
+		opacity: 0.7;
+	}
+	.automa-sim-status .si {
+		color: #16a34a;
+	}
+	.automa-sim-status .no {
+		color: #dc2626;
+	}
+	:root[data-theme='dark'] .automa-sim-status .si {
+		color: #4ade80;
+	}
+	:root[data-theme='dark'] .automa-sim-status .no {
+		color: #f87171;
+	}
+</style>

@@ -1,0 +1,141 @@
+---
+title: File, preferenze e problemi comuni
+description: Il formato dei file .jff, gli esempi pronti da scaricare, le preferenze di JFLAP e le soluzioni ai problemi più frequenti in laboratorio.
+sidebar:
+  order: 9
+---
+
+import { Aside, FileTree } from '@astrojs/starlight/components';
+
+## File di esempio da scaricare
+
+Tutti gli automi principali di questa raccolta sono disponibili come file JFLAP, pronti da aprire con **File → Open…**. Si possono usare per le dimostrazioni in classe, come punto di partenza degli esercizi o come soluzioni da confrontare con **Compare Equivalence**.
+
+📦 **[Scarica tutti gli esempi (zip)](/appunti-sir-terza/jflap/esempi-jflap.zip)**
+
+| File | Contenuto | Capitolo |
+| :-- | :-- | :-- |
+| [01-almeno-una-a.jff](/appunti-sir-terza/jflap/01-almeno-una-a.jff) | DFA: almeno una `a` | [DFA](/appunti-sir-terza/lezioni/02-dfa/01-definizione-dfa/) |
+| [02-pari-a.jff](/appunti-sir-terza/jflap/02-pari-a.jff) | DFA: numero pari di `a` | [DFA](/appunti-sir-terza/lezioni/02-dfa/01-definizione-dfa/) |
+| [03-finisce-con-01.jff](/appunti-sir-terza/jflap/03-finisce-con-01.jff) | DFA: finisce con `01` | [Progettare un DFA](/appunti-sir-terza/lezioni/02-dfa/03-progettare-un-dfa/) |
+| [04-contiene-aba.jff](/appunti-sir-terza/jflap/04-contiene-aba.jff) | DFA: contiene `aba` | [Progettare un DFA](/appunti-sir-terza/lezioni/02-dfa/03-progettare-un-dfa/) |
+| [05-multipli-di-3.jff](/appunti-sir-terza/jflap/05-multipli-di-3.jff) | DFA: binari multipli di 3 | [Progettare un DFA](/appunti-sir-terza/lezioni/02-dfa/03-progettare-un-dfa/) |
+| [06-inizia-con-a-parziale.jff](/appunti-sir-terza/jflap/06-inizia-con-a-parziale.jff) | DFA parziale, da completare con il pozzo | [Stato pozzo](/appunti-sir-terza/lezioni/02-dfa/02-stato-pozzo-e-completezza/) |
+| [07-nfa-finisce-con-01.jff](/appunti-sir-terza/jflap/07-nfa-finisce-con-01.jff) | NFA: finisce con `01` | [NFA](/appunti-sir-terza/lezioni/03-nfa/01-automi-non-deterministici/) |
+| [08-enfa-multipli-2-o-3.jff](/appunti-sir-terza/jflap/08-enfa-multipli-2-o-3.jff) | ε-NFA: lunghezza multipla di 2 o di 3 | [ε-transizioni](/appunti-sir-terza/lezioni/03-nfa/02-epsilon-transizioni/) |
+| [09-dfa-da-minimizzare.jff](/appunti-sir-terza/jflap/09-dfa-da-minimizzare.jff) | DFA a 6 stati da minimizzare (con uno stato irraggiungibile) | [Minimizzazione](/appunti-sir-terza/lezioni/04-minimizzazione/01-minimizzare-un-dfa/) |
+| [10-mealy-rilevatore-11.jff](/appunti-sir-terza/jflap/10-mealy-rilevatore-11.jff) | Mealy: rilevatore di `11` | [Mealy](/appunti-sir-terza/lezioni/05-mealy-moore/03-macchine-di-mealy/) |
+| [11-moore-rilevatore-11.jff](/appunti-sir-terza/jflap/11-moore-rilevatore-11.jff) | Moore: rilevatore di `11` | [Moore](/appunti-sir-terza/lezioni/05-mealy-moore/02-macchine-di-moore/) |
+| [12-mealy-distributore.jff](/appunti-sir-terza/jflap/12-mealy-distributore.jff) | Mealy: distributore a 2 € | [Mealy](/appunti-sir-terza/lezioni/05-mealy-moore/03-macchine-di-mealy/) |
+| [13-moore-semaforo.jff](/appunti-sir-terza/jflap/13-moore-semaforo.jff) | Moore: semaforo con chiamata pedonale | [Moore](/appunti-sir-terza/lezioni/05-mealy-moore/02-macchine-di-moore/) |
+| [prove-finisce-con-01.txt](/appunti-sir-terza/jflap/prove-finisce-con-01.txt) | stringhe di prova per **Multiple Run → Load Inputs** | [Collaudo](/appunti-sir-terza/jflap/04-eseguire-e-collaudare/) |
+
+<Aside type="note">
+Il browser potrebbe aprire i file `.jff` come testo invece di scaricarli: in quel caso si usa il tasto destro sul link → **Salva link con nome…**, oppure si scarica direttamente lo zip.
+</Aside>
+
+---
+
+## Il formato `.jff`
+
+I file di JFLAP sono semplici file di testo in formato **XML**. Aprendone uno con un editor (Blocco note, VS Code) si vede la struttura dell'automa: è un bel collegamento con la **definizione formale** come quintupla.
+
+```xml
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><structure>
+	<type>fa</type>                       <!-- fa, mealy, moore, pda, turing... -->
+	<automaton>
+		<state id="0" name="q0">            <!-- un elemento di Q -->
+			<x>160.0</x>
+			<y>185.0</y>
+			<initial/>                        <!-- q0 è lo stato iniziale -->
+		</state>
+		<state id="1" name="q1">
+			<x>360.0</x>
+			<y>185.0</y>
+			<final/>                          <!-- q1 appartiene a F -->
+		</state>
+		<transition>                        <!-- δ(q0, a) = q1 -->
+			<from>0</from>
+			<to>1</to>
+			<read>a</read>                    <!-- <read/> vuoto = λ-transizione -->
+		</transition>
+	</automaton>
+</structure>
+```
+
+- Ogni `<state>` ha un numero (`id`), un nome, la posizione nel disegno e, se serve, i marcatori `<initial/>` e `<final/>`.
+- Ogni `<transition>` collega due stati tramite il loro `id` e indica il simbolo letto. Nelle macchine di **Mealy** c'è anche `<transout>` (l'uscita); nelle macchine di **Moore** ogni stato ha un `<output>`.
+- L'**alfabeto** non è scritto da nessuna parte: JFLAP lo ricava dai simboli usati nelle transizioni.
+
+<Aside type="tip" title="Un'idea per il docente">
+Siccome il formato è testuale, si possono **generare** automi con un programma (per esempio in Python), oppure scrivere uno script che controlla i file consegnati dagli alunni (numero di stati, presenza dello stato iniziale…). È anche un ottimo esercizio di collegamento con XML per le classi che lo studiano.
+</Aside>
+
+### Organizzare i file
+
+Una struttura di cartelle consigliata per gli alunni:
+
+<FileTree>
+- JFLAP/
+  - JFLAP7.1.jar
+  - jflapPreferences.xml
+  - 01-dfa/
+    - es01-almeno-una-a.jff
+    - es02-pari-a.jff
+  - 02-nfa/
+    - es05-nfa-finisce-con-01.jff
+    - es05-convertito-dfa.jff
+  - 03-mealy-moore/
+  - prove/
+    - prove-es03.txt
+</FileTree>
+
+---
+
+## Preferenze
+
+Le preferenze si impostano dalla **finestra principale** di JFLAP, menu **Preferences**:
+
+| Preferenza | Cosa cambia |
+| :-- | :-- |
+| **Set the Empty String Character** | il simbolo della stringa vuota: **λ** (predefinito) oppure **ε** |
+| **Set Undo Amount** | quante operazioni si possono annullare (predefinito 50) |
+| **Turing Machine Preferences** | opzioni per le macchine di Turing (non servono per gli automi a stati finiti) |
+
+Le preferenze vengono salvate nel file **`jflapPreferences.xml`**, nella stessa cartella del programma.
+
+---
+
+## Il menu View: rimettere ordine
+
+Dopo una conversione gli automi prodotti da JFLAP possono essere difficili da leggere. Nel menu **View** dell'editor:
+
+- **Save Current Graph Layout** / **Restore Saved Graph Layout**: salva la disposizione attuale e la ripristina (utile prima di sperimentare);
+- **Move Vertices**: rifletti il grafo rispetto a una linea, ruotalo, allargalo per riempire la finestra;
+- **Apply a Specific Layout Algorithm**: dispone automaticamente gli stati in cerchio (*Circle*), a due cerchi, a spirale, ad albero (*Tree*), con l'algoritmo *GEM* o a caso;
+- **Apply a Random Layout Algorithm**: ne sceglie uno a caso.
+
+Per gli automi "in fila" (come i rilevatori di sequenza) il layout ad **albero** dà spesso buoni risultati; per i cicli (contatori modulo *n*) il layout **circolare**.
+
+---
+
+## Problemi frequenti e soluzioni
+
+| Problema | Causa probabile | Soluzione |
+| :-- | :-- | :-- |
+| Il doppio clic su `JFLAP7.1.jar` non fa nulla o apre WinRAR | Java non installato o i file `.jar` non sono associati a Java | Installare Java; tasto destro → *Apri con* → Java; oppure `java -jar JFLAP7.1.jar` dal terminale |
+| La finestra è minuscola e illeggibile | schermo ad alta risoluzione su Windows | Proprietà di `javaw.exe` → Compatibilità → impostazioni DPI → *Sistema* |
+| Non riesco a creare una transizione | non è selezionato il **Transition Creator**, oppure il trascinamento è partito fuori dallo stato | selezionare lo strumento giusto e iniziare il trascinamento **dentro** il cerchio |
+| L'automa accetta stringhe che non dovrebbe | stato iniziale anche finale per sbaglio; transizione verso lo stato sbagliato | **Multiple Run** con la stringa vuota e con stringhe "quasi giuste"; **View Trace** sulla riga sbagliata |
+| L'automa rifiuta stringhe che dovrebbe accettare | transizione mancante (l'automa si blocca); stato finale non marcato | **Step with Closure** e osservare dove si ferma la configurazione |
+| "Highlight Nondeterminism" colora stati in un esercizio sui DFA | due transizioni con lo stesso simbolo dallo stesso stato, oppure una λ-transizione | trovare la freccia doppia (spesso è un'etichetta scritta male) |
+| Una transizione "0,1" non funziona | JFLAP la interpreta come la stringa `0,1` | cancellarla e creare due transizioni separate |
+| La stringa vuota non viene provata | si è scritto "λ" o "ε" nella casella | lasciare la casella **vuota**; in Multiple Run usare **Enter Lambda** |
+| Un'espressione regolare dà risultati strani | ci sono **spazi** nell'espressione | togliere tutti gli spazi |
+| Minimize DFA o Add Trap State non funzionano | l'automa non è deterministico | prima **Convert to DFA** |
+| La macchina di Mealy/Moore non parte | ci sono stati non deterministici | controllare che da ogni stato esca al massimo una transizione per simbolo |
+| Il file non si apre su un altro computer | versione diversa di JFLAP o file corrotto | usare la stessa versione (7.1) su tutte le postazioni |
+
+<Aside type="caution" title="Salvare spesso">
+JFLAP è un programma stabile ma "vecchio stile": non ha il salvataggio automatico. Abituare gli alunni a salvare (**File → Save**) dopo ogni passaggio importante, e prima di lanciare una conversione.
+</Aside>
