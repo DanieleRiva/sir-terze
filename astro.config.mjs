@@ -4,7 +4,7 @@ import starlightThemeNova from 'starlight-theme-nova';
 
 export default defineConfig({
 	site: 'https://danieleriva.github.io',
-	base: '/appunti-sir-terza',
+	base: '/sir-terze',
 
 	integrations: [
 		starlight({

@@ -22,11 +22,11 @@ Sei schede di laboratorio, una per ogni blocco di teoria. Ognuna è pensata per 
 
 **Obiettivi:** conoscere l'editor di JFLAP; costruire, simulare e collaudare un DFA.
 
-**Prerequisiti:** [DFA](/appunti-sir-terza/lezioni/02-dfa/01-definizione-dfa/), [tutorial JFLAP](/appunti-sir-terza/jflap/03-costruire-un-automa/).
+**Prerequisiti:** [DFA](/sir-terze/lezioni/02-dfa/01-definizione-dfa/), [tutorial JFLAP](/sir-terze/jflap/03-costruire-un-automa/).
 
 1. Seguire il tutorial e costruire il DFA "finisce con `01`". Salvarlo come `es01.jff`.
 2. Simularlo con **Step with Closure** sulle stringhe `0101` e `0110`, scrivendo sul quaderno la sequenza degli stati.
-3. Caricare con **Multiple Run → Load Inputs** il file [prove-finisce-con-01.txt](/appunti-sir-terza/jflap/prove-finisce-con-01.txt) e aggiungere la stringa vuota con **Enter Lambda**. Tutti i risultati sono corretti?
+3. Caricare con **Multiple Run → Load Inputs** il file [prove-finisce-con-01.txt](/sir-terze/jflap/prove-finisce-con-01.txt) e aggiungere la stringa vuota con **Enter Lambda**. Tutti i risultati sono corretti?
 4. Costruire e collaudare i DFA per "numero pari di `a`" (`es02.jff`) e "almeno una `a`" (`es03.jff`).
 5. **Sfida:** modificare `es02.jff` in modo che accetti le stringhe con un numero **dispari** di `a`. Quante modifiche servono?
 
@@ -38,7 +38,7 @@ Sei schede di laboratorio, una per ogni blocco di teoria. Ognuna è pensata per 
 
 **Obiettivi:** applicare il metodo dei sei passi; verificare un automa con Compare Equivalence.
 
-**Prerequisiti:** [Come si progetta un DFA](/appunti-sir-terza/lezioni/02-dfa/03-progettare-un-dfa/).
+**Prerequisiti:** [Come si progetta un DFA](/sir-terze/lezioni/02-dfa/03-progettare-un-dfa/).
 
 Per ognuno dei linguaggi seguenti: tabella su carta → automa in JFLAP → collaudo con Multiple Run (almeno 8 stringhe, metà da accettare e metà da rifiutare, compresa ε).
 
@@ -57,7 +57,7 @@ Al termine il docente distribuisce i file delle soluzioni: aprirli e usare **Tes
 
 **Obiettivi:** costruire NFA e ε-NFA; osservare le configurazioni multiple; usare Convert to DFA.
 
-**Prerequisiti:** [capitolo 3](/appunti-sir-terza/lezioni/03-nfa/01-automi-non-deterministici/), [NFA in JFLAP](/appunti-sir-terza/jflap/05-nfa-e-conversione/).
+**Prerequisiti:** [capitolo 3](/sir-terze/lezioni/03-nfa/01-automi-non-deterministici/), [NFA in JFLAP](/sir-terze/jflap/05-nfa-e-conversione/).
 
 1. Costruire l'NFA "contiene `abb`" (4 stati). Verificare con **Highlight Nondeterminism** quali stati sono non deterministici.
 2. Simularlo con **Step with Closure** su `aabba`: quante configurazioni ci sono dopo ogni passo? Confrontare con la simulazione con gli insiemi fatta a mano.
@@ -73,12 +73,12 @@ Al termine il docente distribuisce i file delle soluzioni: aprirli e usare **Tes
 
 **Obiettivi:** minimizzare un DFA; costruire unioni con Combine Automata; complemento.
 
-**Prerequisiti:** [capitolo 4](/appunti-sir-terza/lezioni/04-minimizzazione/01-minimizzare-un-dfa/), [Minimizzare in JFLAP](/appunti-sir-terza/jflap/06-minimizzare-e-confrontare/).
+**Prerequisiti:** [capitolo 4](/sir-terze/lezioni/04-minimizzazione/01-minimizzare-un-dfa/), [Minimizzare in JFLAP](/sir-terze/jflap/06-minimizzare-e-confrontare/).
 
-1. Aprire [09-dfa-da-minimizzare.jff](/appunti-sir-terza/jflap/09-dfa-da-minimizzare.jff). Individuare lo stato irraggiungibile e cancellarlo.
+1. Aprire [09-dfa-da-minimizzare.jff](/sir-terze/jflap/09-dfa-da-minimizzare.jff). Individuare lo stato irraggiungibile e cancellarlo.
 2. Minimizzare l'automa a mano (partizioni sul quaderno), poi con **Convert → Minimize DFA** usando **Set Terminal** e **Check Node**. I gruppi coincidono?
 3. Minimizzare il DFA a 6 stati ottenuto nella scheda 3 (contiene `abb`).
-4. Aprire [06-inizia-con-a-parziale.jff](/appunti-sir-terza/jflap/06-inizia-con-a-parziale.jff), completarlo con **Add Trap State to DFA** e costruire il complemento. Verificare con Multiple Run che `ba` e ε siano accettate.
+4. Aprire [06-inizia-con-a-parziale.jff](/sir-terze/jflap/06-inizia-con-a-parziale.jff), completarlo con **Add Trap State to DFA** e costruire il complemento. Verificare con Multiple Run che `ba` e ε siano accettate.
 5. Con **Combine Automata** costruire l'unione di "numero pari di `a`" e "finisce con `b`", convertirla in DFA e minimizzarla. Quanti stati restano?
 
 **Consegna:** i file `.jff` dei punti 2, 3, 4, 5 e la risposta alla domanda del punto 5.
@@ -89,7 +89,7 @@ Al termine il docente distribuisce i file delle soluzioni: aprirli e usare **Tes
 
 **Obiettivi:** passare da espressioni regolari ad automi e viceversa.
 
-**Prerequisiti:** [capitolo 6](/appunti-sir-terza/lezioni/06-espressioni-regolari/01-espressioni-regolari/), [Espressioni regolari in JFLAP](/appunti-sir-terza/jflap/07-espressioni-regolari-e-grammatiche/).
+**Prerequisiti:** [capitolo 6](/sir-terze/lezioni/06-espressioni-regolari/01-espressioni-regolari/), [Espressioni regolari in JFLAP](/sir-terze/jflap/07-espressioni-regolari-e-grammatiche/).
 
 1. Scrivere in JFLAP l'espressione `(a+b)*b` (senza spazi!), convertirla in NFA, poi in DFA, poi minimizzarla. Quanti stati ha il risultato?
 2. Partendo dal DFA "numero pari di `a`", ricavare l'espressione regolare con **Convert FA to RE**. Confrontarla con `(b+ab*a)*`: sono uguali? Descrivono lo stesso linguaggio? (Suggerimento: convertire entrambe in automa e usare Compare Equivalence.)
@@ -103,7 +103,7 @@ Al termine il docente distribuisce i file delle soluzioni: aprirli e usare **Tes
 
 **Obiettivi:** costruire e simulare macchine di Mealy e Moore.
 
-**Prerequisiti:** [capitolo 5](/appunti-sir-terza/lezioni/05-mealy-moore/01-automi-con-uscita/), [Mealy e Moore in JFLAP](/appunti-sir-terza/jflap/08-mealy-e-moore/).
+**Prerequisiti:** [capitolo 5](/sir-terze/lezioni/05-mealy-moore/01-automi-con-uscita/), [Mealy e Moore in JFLAP](/sir-terze/jflap/08-mealy-e-moore/).
 
 1. Costruire il rilevatore di `11` sia come **Mealy** sia come **Moore**. Con **Multiple Run** confrontare gli output sulle stringhe `0110111`, `1111`, `1010`, `0`.
 2. Costruire il rilevatore di `101` come macchina di Mealy. Provarlo su `10101` e `1001`.

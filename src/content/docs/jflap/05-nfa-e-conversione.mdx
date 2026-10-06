@@ -19,7 +19,7 @@ In JFLAP non c'è un tipo separato per gli NFA: si usa sempre **Finite Automaton
 
 ## Costruire e riconoscere un NFA
 
-Costruiamo l'NFA delle stringhe che **finiscono con `01`** visto nel [capitolo 3](/appunti-sir-terza/lezioni/03-nfa/01-automi-non-deterministici/):
+Costruiamo l'NFA delle stringhe che **finiscono con `01`** visto nel [capitolo 3](/sir-terze/lezioni/03-nfa/01-automi-non-deterministici/):
 
 <Steps>
 
@@ -59,7 +59,7 @@ Simulando l'NFA con **Input → Step with Closure…** e la stringa `0101`, il p
 
 ## Automi con λ-transizioni
 
-Riprendiamo l'ε-NFA dei **multipli di 2 oppure di 3** del [capitolo 3](/appunti-sir-terza/lezioni/03-nfa/02-epsilon-transizioni/). In JFLAP le transizioni vuote si creano lasciando vuota la casella e compaiono con il simbolo **λ**.
+Riprendiamo l'ε-NFA dei **multipli di 2 oppure di 3** del [capitolo 3](/sir-terze/lezioni/03-nfa/02-epsilon-transizioni/). In JFLAP le transizioni vuote si creano lasciando vuota la casella e compaiono con il simbolo **λ**.
 
 <JflapFinestra strumento="transizione" altezza={330} caption="L'ε-NFA in JFLAP: le due frecce che escono dallo stato iniziale sono λ-transizioni.">
 	<Automa
@@ -174,8 +174,8 @@ Con automi più grandi gli stati del DFA vengono posizionati in modo poco leggib
 
 1. Costruire in JFLAP l'ε-NFA dei multipli di 2 oppure di 3.
 2. Collaudarlo con **Multiple Run** sulle stringhe da ε a `aaaaaaaaa` (lunghezza 0–9).
-3. Convertirlo con **Convert → Convert to DFA**, prima **a mano** con *Expand Group on Terminal*, controllando i risultati con la tabella del [capitolo 3](/appunti-sir-terza/lezioni/03-nfa/03-da-nfa-a-dfa/#esempio-2--con-le-ε-transizioni).
+3. Convertirlo con **Convert → Convert to DFA**, prima **a mano** con *Expand Group on Terminal*, controllando i risultati con la tabella del [capitolo 3](/sir-terze/lezioni/03-nfa/03-da-nfa-a-dfa/#esempio-2--con-le-ε-transizioni).
 4. Collaudare il DFA ottenuto con le stesse stringhe: i risultati devono essere identici.
-5. Quanti stati ha il DFA? Si può fare con meno? → [Prossimo capitolo](/appunti-sir-terza/jflap/06-minimizzare-e-confrontare/).
+5. Quanti stati ha il DFA? Si può fare con meno? → [Prossimo capitolo](/sir-terze/jflap/06-minimizzare-e-confrontare/).
 
 </Steps>

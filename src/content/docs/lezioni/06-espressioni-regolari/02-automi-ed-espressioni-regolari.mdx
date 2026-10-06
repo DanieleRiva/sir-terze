@@ -19,8 +19,8 @@ Questi linguaggi si chiamano **linguaggi regolari**. Il quadro completo delle tr
 | Da | A | Come | Dove |
 | :-- | :-- | :-- | :-- |
 | Espressione regolare | ε-NFA | costruzione di Thompson | questa lezione |
-| ε-NFA / NFA | DFA | costruzione per sottoinsiemi | [capitolo 3](/appunti-sir-terza/lezioni/03-nfa/03-da-nfa-a-dfa/) |
-| DFA | DFA minimo | raffinamento delle partizioni | [capitolo 4](/appunti-sir-terza/lezioni/04-minimizzazione/01-minimizzare-un-dfa/) |
+| ε-NFA / NFA | DFA | costruzione per sottoinsiemi | [capitolo 3](/sir-terze/lezioni/03-nfa/03-da-nfa-a-dfa/) |
+| DFA | DFA minimo | raffinamento delle partizioni | [capitolo 4](/sir-terze/lezioni/04-minimizzazione/01-minimizzare-un-dfa/) |
 | Automa | Espressione regolare | eliminazione degli stati | questa lezione |
 
 JFLAP sa fare **tutte** queste trasformazioni, passo per passo.
@@ -176,7 +176,7 @@ Uno stato iniziale e finale con un anello etichettato R riconosce **R\***. Quind
 Si legge: "una sequenza di blocchi, dove ogni blocco è una `b` oppure una coppia di `a` con in mezzo delle `b`". È un'altra espressione per lo stesso linguaggio di `b*(ab*ab*)*` vista nella lezione precedente: l'espressione regolare di un linguaggio **non è unica**.
 
 <Aside type="note" title="In JFLAP">
-La trasformazione si fa con **Convert → Convert FA to RE**. JFLAP guida attraverso tutte le fasi: crea l'unico stato finale, aggiunge le frecce mancanti con etichetta ∅, e poi chiede di cliccare sugli stati da eliminare con lo strumento **State Collapser**. Alla fine il pulsante **Export** apre l'espressione regolare in una nuova finestra. Vedi [Espressioni regolari e grammatiche in JFLAP](/appunti-sir-terza/jflap/07-espressioni-regolari-e-grammatiche/).
+La trasformazione si fa con **Convert → Convert FA to RE**. JFLAP guida attraverso tutte le fasi: crea l'unico stato finale, aggiunge le frecce mancanti con etichetta ∅, e poi chiede di cliccare sugli stati da eliminare con lo strumento **State Collapser**. Alla fine il pulsante **Export** apre l'espressione regolare in una nuova finestra. Vedi [Espressioni regolari e grammatiche in JFLAP](/sir-terze/jflap/07-espressioni-regolari-e-grammatiche/).
 </Aside>
 
 ---
