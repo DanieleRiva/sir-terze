@@ -73,14 +73,14 @@ Un distributore vende un solo prodotto a **1,50 €**. Accetta monete da **0,50 
 
 ## Progetto 3 · Il semaforo pedonale intelligente
 
-Si parte dal [semaforo con chiamata pedonale](/appunti-sir-terza/lezioni/05-mealy-moore/02-macchine-di-moore/#esempio-3--il-semaforo-con-chiamata-pedonale) e lo si rende realistico:
+Si parte dal [semaforo con chiamata pedonale](/sir-terze/lezioni/05-mealy-moore/02-macchine-di-moore/#esempio-3--il-semaforo-con-chiamata-pedonale) e lo si rende realistico:
 
 1. aggiungere le **luci per i pedoni** (rosso/verde), che devono essere coerenti con quelle delle auto;
 2. il verde per le auto deve durare **almeno 20 secondi** anche se il pedone preme subito il pulsante (servono due stati di "verde": prima e dopo il tempo minimo);
 3. se il pedone preme il pulsante mentre il verde minimo non è ancora finito, la chiamata va **ricordata**;
 4. di notte il semaforo passa al **giallo lampeggiante** (input `notte` e `giorno`).
 
-**Fasi.** Elenco degli stati e degli eventi; macchina di **Moore** in JFLAP (uscita = combinazione di luci accese, per esempio `VR` = verde auto e rosso pedoni); simulazione di scenari; implementazione su **Arduino** (o sul simulatore Tinkercad Circuits) con lo [schema a eventi](/appunti-sir-terza/lezioni/07-applicazioni/01-implementare-un-automa/#schema-3--macchina-a-stati-a-eventi-arduino) e `millis()`.
+**Fasi.** Elenco degli stati e degli eventi; macchina di **Moore** in JFLAP (uscita = combinazione di luci accese, per esempio `VR` = verde auto e rosso pedoni); simulazione di scenari; implementazione su **Arduino** (o sul simulatore Tinkercad Circuits) con lo [schema a eventi](/sir-terze/lezioni/07-applicazioni/01-implementare-un-automa/#schema-3--macchina-a-stati-a-eventi-arduino) e `millis()`.
 
 ---
 
@@ -94,7 +94,7 @@ Progettare un DFA che legge **una parola** e dice di che tipo è:
 - **operatore**: uno tra `+ - * / =`;
 - altrimenti: **errore**.
 
-**Fasi.** In JFLAP usare un alfabeto ridotto e rappresentativo, per esempio `l` (una lettera qualsiasi), `c` (una cifra qualsiasi), `_`, `.`, `+`. Il DFA ha più stati finali, uno per tipo di parola. Poi implementarlo in **Python** con lo schema a [tabella di transizione](/appunti-sir-terza/lezioni/07-applicazioni/01-implementare-un-automa/#schema-2--tabella-di-transizione), facendo restituire alla funzione il **tipo** della parola invece di vero/falso. Infine scrivere un programma che legge una riga di codice, la divide in parole e stampa il tipo di ciascuna.
+**Fasi.** In JFLAP usare un alfabeto ridotto e rappresentativo, per esempio `l` (una lettera qualsiasi), `c` (una cifra qualsiasi), `_`, `.`, `+`. Il DFA ha più stati finali, uno per tipo di parola. Poi implementarlo in **Python** con lo schema a [tabella di transizione](/sir-terze/lezioni/07-applicazioni/01-implementare-un-automa/#schema-2--tabella-di-transizione), facendo restituire alla funzione il **tipo** della parola invece di vero/falso. Infine scrivere un programma che legge una riga di codice, la divide in parole e stampa il tipo di ciascuna.
 
 ---
 
@@ -134,7 +134,7 @@ Il **mittente** funziona così:
 2. Progettare la macchina del **destinatario** (stati *Aspetto 0* e *Aspetto 1*; input: `pkt0`, `pkt1`; output: consegna i dati all'applicazione e invia l'ACK). Cosa deve fare se riceve di nuovo un pacchetto già ricevuto (perché il suo ACK era andato perso)?
 3. Costruire entrambe le macchine in JFLAP come **macchine di Mealy**, usando simboli brevi (`d`, `t`, `0`, `1`…) e spiegandoli nella relazione.
 4. Scrivere degli **scenari** (sequenze di eventi) con perdita di un pacchetto e perdita di un ACK, e simularli.
-5. **Approfondimento:** confrontare con la [macchina a stati di TCP](/appunti-sir-terza/lezioni/07-applicazioni/02-automi-nel-mondo-reale/#le-reti-la-macchina-a-stati-di-tcp).
+5. **Approfondimento:** confrontare con la [macchina a stati di TCP](/sir-terze/lezioni/07-applicazioni/02-automi-nel-mondo-reale/#le-reti-la-macchina-a-stati-di-tcp).
 
 ---
 

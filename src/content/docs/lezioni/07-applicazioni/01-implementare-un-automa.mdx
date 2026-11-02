@@ -183,7 +183,7 @@ def accetta_nfa(stringa: str) -> bool:
 
 Nei sistemi embedded l'input non è una stringa già pronta, ma una sequenza di **eventi** che arrivano nel tempo: un pulsante premuto, un timer scaduto, un sensore che supera una soglia. Il programma gira in un ciclo infinito (`loop()`) e, ad ogni giro, controlla se è arrivato un evento che fa scattare una transizione.
 
-Realizziamo il **semaforo con chiamata pedonale** del [capitolo sulle macchine di Moore](/appunti-sir-terza/lezioni/05-mealy-moore/02-macchine-di-moore/#esempio-3--il-semaforo-con-chiamata-pedonale): stati *Verde*, *Giallo*, *Rosso*; eventi *p* (pulsante) e *t* (timer scaduto).
+Realizziamo il **semaforo con chiamata pedonale** del [capitolo sulle macchine di Moore](/sir-terze/lezioni/05-mealy-moore/02-macchine-di-moore/#esempio-3--il-semaforo-con-chiamata-pedonale): stati *Verde*, *Giallo*, *Rosso*; eventi *p* (pulsante) e *t* (timer scaduto).
 
 ```cpp
 enum Stato { VERDE, GIALLO, ROSSO };

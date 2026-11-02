@@ -40,6 +40,6 @@ import Automa from '~/components/Automa.astro';
 
 ```bash
 pnpm install
-pnpm dev      # anteprima su http://localhost:4321/appunti-sir-terza
+pnpm dev      # anteprima su http://localhost:4321/sir-terze
 pnpm build    # sito statico in dist/
 ```

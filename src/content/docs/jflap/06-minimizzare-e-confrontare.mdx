@@ -25,14 +25,14 @@ Molti procedimenti (minimizzazione, complemento) richiedono un DFA **completo**.
 Se il DFA è già completo, JFLAP avvisa che non c'è nulla da aggiungere.
 
 <Aside type="tip" title="Complemento in due mosse">
-Per ottenere l'automa del **complemento** di un linguaggio: prima **Add Trap State to DFA**, poi con l'Attribute Editor si invertono a mano gli stati finali e non finali (clic destro → *Final* su ogni stato). È un ottimo esercizio per verificare di aver capito perché serve il pozzo (vedi [Stato pozzo e automi completi](/appunti-sir-terza/lezioni/02-dfa/02-stato-pozzo-e-completezza/)).
+Per ottenere l'automa del **complemento** di un linguaggio: prima **Add Trap State to DFA**, poi con l'Attribute Editor si invertono a mano gli stati finali e non finali (clic destro → *Final* su ogni stato). È un ottimo esercizio per verificare di aver capito perché serve il pozzo (vedi [Stato pozzo e automi completi](/sir-terze/lezioni/02-dfa/02-stato-pozzo-e-completezza/)).
 </Aside>
 
 ---
 
 ## Minimizzare: Minimize DFA
 
-Con un DFA aperto si sceglie **Convert → Minimize DFA**. Il procedimento di JFLAP segue esattamente l'algoritmo delle partizioni del [capitolo 4](/appunti-sir-terza/lezioni/04-minimizzazione/01-minimizzare-un-dfa/), ma lo rappresenta come un **albero**.
+Con un DFA aperto si sceglie **Convert → Minimize DFA**. Il procedimento di JFLAP segue esattamente l'algoritmo delle partizioni del [capitolo 4](/sir-terze/lezioni/04-minimizzazione/01-minimizzare-un-dfa/), ma lo rappresenta come un **albero**.
 
 <Aside type="caution" title="Prima di cominciare">
 - L'automa deve essere un **DFA**: se ci sono stati non deterministici, prima si usa **Convert to DFA**.
@@ -93,7 +93,7 @@ Come nella conversione NFA → DFA, JFLAP indica gli stati con il loro **numero*
 
 ### Esempio da provare
 
-Costruire in JFLAP il DFA "gonfiato" del [capitolo 4](/appunti-sir-terza/lezioni/04-minimizzazione/01-minimizzare-un-dfa/#esempio-1--un-dfa-gonfiato) (senza lo stato irraggiungibile F) e minimizzarlo. Il risultato deve avere **2 stati** e riconoscere le stringhe che finiscono con `1`.
+Costruire in JFLAP il DFA "gonfiato" del [capitolo 4](/sir-terze/lezioni/04-minimizzazione/01-minimizzare-un-dfa/#esempio-1--un-dfa-gonfiato) (senza lo stato irraggiungibile F) e minimizzarlo. Il risultato deve avere **2 stati** e riconoscere le stringhe che finiscono con `1`.
 
 Poi provare con il DFA a 7 stati ottenuto dall'ε-NFA dei multipli di 2 o 3: il risultato deve avere **6 stati**, e l'albero richiederà più livelli di divisione (sono i "giri" dell'algoritmo).
 
@@ -129,7 +129,7 @@ Il confronto funziona anche tra automi di tipo diverso purché siano automi a st
 - resta **un solo stato iniziale**: quello dell'automa da cui si è scelto il comando;
 - gli **stati finali** di entrambi restano finali.
 
-A questo punto si possono aggiungere stati e λ-transizioni per collegarli. È il modo più rapido per realizzare in laboratorio l'**unione** o la **concatenazione** di due linguaggi con le costruzioni viste nella lezione sulle [ε-transizioni](/appunti-sir-terza/lezioni/03-nfa/02-epsilon-transizioni/#a-cosa-servono-davvero).
+A questo punto si possono aggiungere stati e λ-transizioni per collegarli. È il modo più rapido per realizzare in laboratorio l'**unione** o la **concatenazione** di due linguaggi con le costruzioni viste nella lezione sulle [ε-transizioni](/sir-terze/lezioni/03-nfa/02-epsilon-transizioni/#a-cosa-servono-davvero).
 
 ### Esercizio: unione di due linguaggi
 
@@ -139,6 +139,6 @@ A questo punto si possono aggiungere stati e λ-transizioni per collegarli. È i
 2. Dal primo, **Convert → Combine Automata** e scegliere il secondo.
 3. Nella nuova finestra: creare un nuovo stato, renderlo **iniziale** e collegarlo con due **λ-transizioni** ai due vecchi stati iniziali (togliendo a quello rimasto il segno di iniziale).
 4. Collaudare con **Multiple Run**: devono essere accettate le stringhe con un numero pari di `a` **oppure** che finiscono con `b`.
-5. **Convert to DFA**, poi **Minimize DFA**: quanti stati ha il risultato? Confrontarlo con l'automa prodotto dell'[esempio 4 del capitolo 2](/appunti-sir-terza/lezioni/02-dfa/03-progettare-un-dfa/#esempio-4--due-condizioni-insieme) con finali PX, PY, DY.
+5. **Convert to DFA**, poi **Minimize DFA**: quanti stati ha il risultato? Confrontarlo con l'automa prodotto dell'[esempio 4 del capitolo 2](/sir-terze/lezioni/02-dfa/03-progettare-un-dfa/#esempio-4--due-condizioni-insieme) con finali PX, PY, DY.
 
 </Steps>
