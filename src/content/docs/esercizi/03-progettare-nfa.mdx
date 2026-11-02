@@ -1,0 +1,575 @@
+---
+title: Progettare NFA
+description: Dodici esercizi di progettazione di automi non deterministici, dal più facile al più impegnativo, con soluzioni spiegate e simulabili.
+sidebar:
+  order: 3
+---
+
+import Automa from '~/components/Automa.astro';
+import { Aside } from '@astrojs/starlight/components';
+
+Esercizi sul capitolo [Non determinismo](/appunti-sir-terza/lezioni/03-nfa/01-automi-non-deterministici/). Per ognuno: progettare l'NFA **su carta** a partire dal testo, poi costruirlo in JFLAP e collaudarlo con **Multiple Run**. Le soluzioni spiegano il ragionamento e contengono un simulatore per confrontare i risultati.
+
+<Aside type="tip" title="Come si pensa un NFA">
+Dove non è indicato diversamente, l'alfabeto è Σ = &#123;a, b&#125;. Rispetto a un DFA il modo di ragionare cambia:
+
+- si descrive solo il **percorso fortunato**, quello che porta ad accettare; le copie che sbagliano strada muoiono senza fare danni;
+- le parti "qualunque" della stringa si leggono con un **anello** `a, b`;
+- dove serve, l'automa **scommette**: "questo simbolo è quello giusto";
+- le **ε-transizioni** servono a collegare pezzi di automa già pronti.
+</Aside>
+
+**Legenda della difficoltà:** ⭐ facile · ⭐⭐ media · ⭐⭐⭐ impegnativa
+
+---
+
+### Esercizio 1 ⭐ · Finisce con `ab`
+
+Costruire un NFA che accetta le stringhe che finiscono con `ab`.
+
+<details>
+<summary>Soluzione</summary>
+
+**Idea.** La stringa è fatta di due parti: qualcosa di qualunque, poi `ab`. L'automa non sa quando la stringa finirà, quindi scommette: "questa `a` è la penultima lettera".
+
+<Automa
+	states={[
+		{ id: 'q0', x: 80, y: 100, initial: true },
+		{ id: 'q1', x: 230, y: 100 },
+		{ id: 'q2', x: 380, y: 100, final: true },
+	]}
+	transitions={[
+		{ from: 'q0', to: 'q0', label: 'a, b' },
+		{ from: 'q0', to: 'q1', label: 'a' },
+		{ from: 'q1', to: 'q2', label: 'b' },
+	]}
+	simula="aab"
+/>
+
+- **L'anello su q₀** legge la parte iniziale, lunga quanto serve.
+- **q₀ → q₁ con `a`** è la scommessa. È il punto non deterministico: con `a` da q₀ ci sono due frecce.
+- **q₁ → q₂ con `b`** completa la sequenza.
+- **q₂ non ha frecce uscenti.** Se dopo `ab` arriva un altro simbolo, la copia in q₂ muore: giusto, perché la stringa non è finita lì.
+
+**Collaudo con gli stati attivi.**
+
+| Stringa | Stati attivi dopo ogni simbolo | Esito |
+| :-- | :-- | :-: |
+| `aab` | &#123;q₀, q₁&#125; · &#123;q₀, q₁&#125; · &#123;q₀, q₂&#125; | accettata |
+| `aba` | &#123;q₀, q₁&#125; · &#123;q₀, q₂&#125; · &#123;q₀, q₁&#125; | rifiutata |
+
+**Errore tipico.** Mettere un anello `a, b` anche su q₂. L'automa accetterebbe `aba`, perché riconoscerebbe "contiene `ab`" invece di "finisce con `ab`".
+
+</details>
+
+---
+
+### Esercizio 2 ⭐ · Contiene `aa`
+
+Costruire un NFA che accetta le stringhe che contengono due `a` consecutive.
+
+<details>
+<summary>Soluzione</summary>
+
+**Idea.** Qui la stringa ha tre parti: qualcosa di qualunque, poi `aa`, poi qualcos'altro di qualunque. Ogni parte diventa un pezzo dell'automa.
+
+<Automa
+	states={[
+		{ id: 'q0', x: 80, y: 100, initial: true },
+		{ id: 'q1', x: 230, y: 100 },
+		{ id: 'q2', x: 380, y: 100, final: true },
+	]}
+	transitions={[
+		{ from: 'q0', to: 'q0', label: 'a, b' },
+		{ from: 'q0', to: 'q1', label: 'a' },
+		{ from: 'q1', to: 'q2', label: 'a' },
+		{ from: 'q2', to: 'q2', label: 'a, b' },
+	]}
+	simula="baab"
+/>
+
+- **L'anello su q₀** legge ciò che viene prima di `aa`.
+- **q₀ → q₁ → q₂** legge `aa`.
+- **L'anello su q₂** legge ciò che viene dopo: una volta trovata la sequenza, la stringa è accettata qualunque cosa segua.
+- **Da q₁ non esce nessuna freccia con `b`.** Se dopo la prima `a` arriva una `b`, il tentativo è fallito e la copia muore. Nel frattempo una copia è rimasta in q₀ e potrà riprovare.
+
+**Collaudo con gli stati attivi.**
+
+| Stringa | Stati attivi dopo ogni simbolo | Esito |
+| :-- | :-- | :-: |
+| `baab` | &#123;q₀&#125; · &#123;q₀, q₁&#125; · &#123;q₀, q₁, q₂&#125; · &#123;q₀, q₂&#125; | accettata |
+| `abab` | &#123;q₀, q₁&#125; · &#123;q₀&#125; · &#123;q₀, q₁&#125; · &#123;q₀&#125; | rifiutata |
+
+**Confronto con l'esercizio 1.** La differenza tra "finisce con" e "contiene" è tutta nell'anello sullo stato finale: con "contiene" c'è, con "finisce con" no.
+
+</details>
+
+---
+
+### Esercizio 3 ⭐ · Inizia con `a` e finisce con `b`
+
+Da accettare: `ab`, `aab`, `abab`. Da rifiutare: ε, `a`, `b`, `ba`, `aba`.
+
+<details>
+<summary>Soluzione</summary>
+
+**Idea.** Il primo simbolo è obbligatorio, quindi su q₀ **non** ci deve essere un anello. Dopo la prima `a` si può leggere qualunque cosa, e l'ultima `b` si riconosce con una scommessa.
+
+<Automa
+	states={[
+		{ id: 'q0', x: 80, y: 100, initial: true },
+		{ id: 'q1', x: 230, y: 100 },
+		{ id: 'q2', x: 380, y: 100, final: true },
+	]}
+	transitions={[
+		{ from: 'q0', to: 'q1', label: 'a' },
+		{ from: 'q1', to: 'q1', label: 'a, b' },
+		{ from: 'q1', to: 'q2', label: 'b' },
+	]}
+	simula="abab"
+/>
+
+- **q₀ → q₁ con `a`** controlla il primo simbolo. Da q₀ non esce nessuna freccia con `b`: una stringa che inizia con `b` muore subito.
+- **L'anello su q₁** legge la parte centrale.
+- **q₁ → q₂ con `b`** è la scommessa: "questa `b` è l'ultimo simbolo". Se non lo è, la copia in q₂ muore, ma quella rimasta in q₁ continua.
+
+**Collaudo con gli stati attivi.**
+
+| Stringa | Stati attivi dopo ogni simbolo | Esito |
+| :-- | :-- | :-: |
+| `abab` | &#123;q₁&#125; · &#123;q₁, q₂&#125; · &#123;q₁&#125; · &#123;q₁, q₂&#125; | accettata |
+| `aba` | &#123;q₁&#125; · &#123;q₁, q₂&#125; · &#123;q₁&#125; | rifiutata |
+| `ba` | ∅ dopo il primo simbolo: tutte le copie muoiono | rifiutata |
+
+**Perché non basta un solo stato dopo q₀.** La stringa `a` inizia con `a` ma non finisce con `b`. Se q₁ fosse finale, verrebbe accettata per errore: servono due stati distinti, q₁ per la parte centrale e q₂ per la `b` finale.
+
+</details>
+
+---
+
+### Esercizio 4 ⭐ · Contiene `abb`
+
+Costruire un NFA, il più semplice possibile, che accetta le stringhe che contengono `abb`.
+
+<details>
+<summary>Soluzione</summary>
+
+**Idea.** Stesso schema dell'esercizio 2: parte qualunque, sequenza, parte qualunque. La sequenza ha tre simboli, quindi servono tre frecce in fila.
+
+<Automa
+	states={[
+		{ id: 'q0', x: 80, y: 100, initial: true },
+		{ id: 'q1', x: 220, y: 100 },
+		{ id: 'q2', x: 360, y: 100 },
+		{ id: 'q3', x: 500, y: 100, final: true },
+	]}
+	transitions={[
+		{ from: 'q0', to: 'q0', label: 'a, b' },
+		{ from: 'q0', to: 'q1', label: 'a' },
+		{ from: 'q1', to: 'q2', label: 'b' },
+		{ from: 'q2', to: 'q3', label: 'b' },
+		{ from: 'q3', to: 'q3', label: 'a, b' },
+	]}
+	simula="aabba"
+/>
+
+**Perché servono entrambi gli anelli.**
+
+- Senza l'anello su q₀ la sequenza dovrebbe trovarsi proprio all'inizio: `babb` verrebbe rifiutata.
+- Senza l'anello su q₃ la stringa dovrebbe finire subito dopo `abb`: `abba` verrebbe rifiutata, perché la copia in q₃ morirebbe leggendo l'ultima `a`.
+
+**Perché q₁ e q₂ non hanno altre frecce.** Il DFA per lo stesso linguaggio deve dire dove tornare dopo ogni errore. Nell'NFA non serve: se il tentativo fallisce la copia muore, e la copia rimasta in q₀ fa partire un nuovo tentativo alla prossima `a`.
+
+**Collaudo con gli stati attivi.**
+
+| Stringa | Stati attivi dopo ogni simbolo | Esito |
+| :-- | :-- | :-: |
+| `aabba` | &#123;q₀, q₁&#125; · &#123;q₀, q₁&#125; · &#123;q₀, q₂&#125; · &#123;q₀, q₃&#125; · &#123;q₀, q₁, q₃&#125; | accettata |
+| `abab` | &#123;q₀, q₁&#125; · &#123;q₀, q₂&#125; · &#123;q₀, q₁&#125; · &#123;q₀, q₂&#125; | rifiutata |
+
+</details>
+
+---
+
+### Esercizio 5 ⭐⭐ · Il penultimo simbolo è `1`
+
+Σ = &#123;0, 1&#125;. Costruire un NFA per le stringhe il cui penultimo simbolo è `1`.
+
+Da accettare: `10`, `11`, `0110`. Da rifiutare: ε, `1`, `01`, `101`.
+
+<details>
+<summary>Soluzione</summary>
+
+**Idea.** L'automa scommette che un certo `1` sia il penultimo simbolo. Dopo quell'`1` deve esserci **esattamente un** altro simbolo, qualunque esso sia.
+
+<Automa
+	states={[
+		{ id: 'q0', x: 80, y: 100, initial: true },
+		{ id: 'q1', x: 230, y: 100 },
+		{ id: 'q2', x: 380, y: 100, final: true },
+	]}
+	transitions={[
+		{ from: 'q0', to: 'q0', label: '0, 1' },
+		{ from: 'q0', to: 'q1', label: '1' },
+		{ from: 'q1', to: 'q2', label: '0, 1' },
+	]}
+	simula="0110"
+/>
+
+- **L'anello su q₀** legge tutto ciò che viene prima del penultimo simbolo.
+- **q₀ → q₁ con `1`** è la scommessa: "questo `1` è il penultimo".
+- **q₁ → q₂ con `0, 1`** legge l'ultimo simbolo: qui non importa quale sia.
+- **q₂ non ha frecce uscenti.** Se arrivano altri simboli la copia muore: la scommessa era sbagliata, quell'`1` non era il penultimo.
+
+**Collaudo con gli stati attivi.**
+
+| Stringa | Stati attivi dopo ogni simbolo | Esito |
+| :-- | :-- | :-: |
+| `0110` | &#123;q₀&#125; · &#123;q₀, q₁&#125; · &#123;q₀, q₁, q₂&#125; · &#123;q₀, q₂&#125; | accettata |
+| `101` | &#123;q₀, q₁&#125; · &#123;q₀, q₂&#125; · &#123;q₀, q₁&#125; | rifiutata |
+
+**Le stringhe corte.** ε e `1` non hanno un penultimo simbolo. L'automa le rifiuta da solo, perché per arrivare in q₂ servono almeno due simboli.
+
+</details>
+
+---
+
+### Esercizio 6 ⭐⭐ · Contiene `ab` oppure `ba`
+
+Costruire un NFA che accetta le stringhe che contengono almeno una delle due sequenze `ab` e `ba`.
+
+<details>
+<summary>Soluzione</summary>
+
+**Idea.** Le due sequenze sono due strade alternative che partono da q₀ e arrivano allo stesso stato finale. L'automa non deve decidere quale cercare: le prova tutte e due in parallelo.
+
+<Automa
+	states={[
+		{ id: 'q0', x: 70, y: 150, initial: true },
+		{ id: 'q1', x: 230, y: 60 },
+		{ id: 'q2', x: 230, y: 240 },
+		{ id: 'q3', x: 390, y: 150, final: true },
+	]}
+	transitions={[
+		{ from: 'q0', to: 'q0', label: 'a, b' },
+		{ from: 'q0', to: 'q1', label: 'a' },
+		{ from: 'q1', to: 'q3', label: 'b' },
+		{ from: 'q0', to: 'q2', label: 'b' },
+		{ from: 'q2', to: 'q3', label: 'a' },
+		{ from: 'q3', to: 'q3', label: 'a, b', loop: 'right' },
+	]}
+	simula="aab"
+/>
+
+- **La strada in alto**, q₀ → q₁ → q₃, legge `ab`.
+- **La strada in basso**, q₀ → q₂ → q₃, legge `ba`.
+- **L'anello su q₀** legge ciò che viene prima, **l'anello su q₃** ciò che viene dopo.
+
+**Collaudo con gli stati attivi.**
+
+| Stringa | Stati attivi dopo ogni simbolo | Esito |
+| :-- | :-- | :-: |
+| `aab` | &#123;q₀, q₁&#125; · &#123;q₀, q₁&#125; · &#123;q₀, q₂, q₃&#125; | accettata |
+| `aaa` | &#123;q₀, q₁&#125; · &#123;q₀, q₁&#125; · &#123;q₀, q₁&#125; | rifiutata |
+
+**Una riflessione sul linguaggio.** Se una stringa contiene sia `a` sia `b`, da qualche parte una `a` e una `b` sono vicine. Il linguaggio è quindi lo stesso di "contiene almeno una `a` e almeno una `b`". Lo stesso linguaggio si può descrivere in modi molto diversi.
+
+</details>
+
+---
+
+### Esercizio 7 ⭐⭐ · Due `a` separate da un solo simbolo
+
+Costruire un NFA per le stringhe che contengono due `a` con **esattamente un simbolo** in mezzo, qualunque esso sia.
+
+Da accettare: `aaa`, `aba`, `babab`. Da rifiutare: `aa`, `abba`, `baab`.
+
+<details>
+<summary>Soluzione</summary>
+
+**Idea.** È ancora lo schema "contiene", ma il simbolo centrale della sequenza può essere `a` oppure `b`: la freccia centrale ha quindi l'etichetta `a, b`.
+
+<Automa
+	states={[
+		{ id: 'q0', x: 80, y: 100, initial: true },
+		{ id: 'q1', x: 220, y: 100 },
+		{ id: 'q2', x: 360, y: 100 },
+		{ id: 'q3', x: 500, y: 100, final: true },
+	]}
+	transitions={[
+		{ from: 'q0', to: 'q0', label: 'a, b' },
+		{ from: 'q0', to: 'q1', label: 'a' },
+		{ from: 'q1', to: 'q2', label: 'a, b' },
+		{ from: 'q2', to: 'q3', label: 'a' },
+		{ from: 'q3', to: 'q3', label: 'a, b' },
+	]}
+	simula="babab"
+/>
+
+- **q₀ → q₁ con `a`**: la scommessa, "questa è la prima `a`".
+- **q₁ → q₂ con `a, b`**: il simbolo in mezzo.
+- **q₂ → q₃ con `a`**: la seconda `a`.
+
+**Collaudo con gli stati attivi.**
+
+| Stringa | Stati attivi dopo ogni simbolo | Esito |
+| :-- | :-- | :-: |
+| `babab` | &#123;q₀&#125; · &#123;q₀, q₁&#125; · &#123;q₀, q₂&#125; · &#123;q₀, q₁, q₃&#125; · &#123;q₀, q₂, q₃&#125; | accettata |
+| `abba` | &#123;q₀, q₁&#125; · &#123;q₀, q₂&#125; · &#123;q₀&#125; · &#123;q₀, q₁&#125; | rifiutata |
+
+In `abba` le due `a` hanno due simboli in mezzo: al terzo simbolo la copia in q₂ legge `b` e muore.
+
+</details>
+
+---
+
+### Esercizio 8 ⭐⭐ · Prima le `a`, poi le `b`, poi le `c`
+
+Σ = &#123;a, b, c&#125;. Costruire un ε-NFA per le stringhe formate da un po' di `a`, seguite da un po' di `b`, seguite da un po' di `c`. Ogni gruppo può anche mancare.
+
+Da accettare: ε, `abc`, `aac`, `bbc`, `c`. Da rifiutare: `ba`, `cb`, `abca`.
+
+<details>
+<summary>Soluzione</summary>
+
+**Idea.** Si progetta un pezzo per ogni gruppo: uno stato con un anello che legge quel simbolo. Le ε-transizioni fanno passare da un gruppo al successivo senza leggere nulla.
+
+<Automa
+	states={[
+		{ id: 'q0', x: 80, y: 100, initial: true },
+		{ id: 'q1', x: 240, y: 100 },
+		{ id: 'q2', x: 400, y: 100, final: true },
+	]}
+	transitions={[
+		{ from: 'q0', to: 'q0', label: 'a' },
+		{ from: 'q0', to: 'q1', label: 'ε' },
+		{ from: 'q1', to: 'q1', label: 'b' },
+		{ from: 'q1', to: 'q2', label: 'ε' },
+		{ from: 'q2', to: 'q2', label: 'c' },
+	]}
+	simula="aac"
+/>
+
+- **Gli anelli** leggono ciascun gruppo, quante volte si vuole.
+- **Le ε-transizioni** vanno solo in avanti: una volta passati alle `b` non si torna più alle `a`. È questo che impone l'ordine.
+- **I gruppi possono mancare** perché le ε-transizioni si attraversano senza leggere: `c` si legge con il percorso q₀ →ε→ q₁ →ε→ q₂ →`c`→ q₂.
+- **ε è accettata** perché q₂ è raggiungibile da q₀ con sole ε-transizioni: ECLOSE(q₀) = &#123;q₀, q₁, q₂&#125;.
+
+**Collaudo con gli stati attivi.** Si parte da ECLOSE(q₀), e dopo ogni simbolo si applica la ε-chiusura.
+
+| Stringa | Stati attivi dopo ogni simbolo | Esito |
+| :-- | :-- | :-: |
+| `aac` | &#123;q₀, q₁, q₂&#125; · &#123;q₀, q₁, q₂&#125; · &#123;q₂&#125; | accettata |
+| `ba` | &#123;q₁, q₂&#125; · ∅ | rifiutata |
+
+**Una semplificazione.** Non serve rendere finali anche q₀ e q₁ per far fermare la stringa lì: quando sono attivi loro, la ε-chiusura rende attivo anche q₂.
+
+</details>
+
+---
+
+### Esercizio 9 ⭐⭐ · Inizia con `a` oppure finisce con `b`
+
+Costruire un ε-NFA per le stringhe che iniziano con `a` **oppure** finiscono con `b`. Progettare prima un automa per ciascuna condizione, poi unirli.
+
+Da accettare: `a`, `ab`, `bb`, `bab`. Da rifiutare: ε, `ba`, `baa`.
+
+<details>
+<summary>Soluzione</summary>
+
+**Passo 1 · "Inizia con `a`".** Da p₀ si legge `a` e si va in p₁, finale, dove si accetta qualunque continuazione.
+
+**Passo 2 · "Finisce con `b`".** In r₀ si legge tutto ciò che viene prima dell'ultimo simbolo; con `b` si scommette che sia l'ultimo e si va in r₁, finale.
+
+**Passo 3 · Unione.** Si aggiunge un nuovo stato iniziale **s**, non finale, con due ε-transizioni verso gli stati iniziali dei due automi.
+
+<Automa
+	states={[
+		{ id: 's', x: 70, y: 170, initial: true },
+		{ id: 'p0', x: 210, y: 70 },
+		{ id: 'p1', x: 370, y: 70, final: true },
+		{ id: 'r0', x: 210, y: 270 },
+		{ id: 'r1', x: 370, y: 270, final: true },
+	]}
+	transitions={[
+		{ from: 's', to: 'p0', label: 'ε' },
+		{ from: 's', to: 'r0', label: 'ε' },
+		{ from: 'p0', to: 'p1', label: 'a' },
+		{ from: 'p1', to: 'p1', label: 'a, b', loop: 'right' },
+		{ from: 'r0', to: 'r0', label: 'a, b', loop: 'bottom' },
+		{ from: 'r0', to: 'r1', label: 'b' },
+	]}
+	simula="bab"
+	caption="In alto: «inizia con a». In basso: «finisce con b»."
+/>
+
+**Collaudo con gli stati attivi.** All'inizio gli stati attivi sono ECLOSE(s) = &#123;s, p₀, r₀&#125;.
+
+| Stringa | Stati attivi dopo ogni simbolo | Esito |
+| :-- | :-- | :-: |
+| `ab` | &#123;p₁, r₀&#125; · &#123;p₁, r₀, r₁&#125; | accettata |
+| `bab` | &#123;r₀, r₁&#125; · &#123;r₀&#125; · &#123;r₀, r₁&#125; | accettata |
+| `ba` | &#123;r₀, r₁&#125; · &#123;r₀&#125; | rifiutata |
+
+**Perché serve uno stato nuovo.** Viene spontaneo fondere p₀ e r₀ in un unico stato iniziale *m*. Ma *m* avrebbe l'anello `a, b` di r₀ e anche la freccia `a` verso p₁. Con `ba` l'automa farebbe *m* →`b`→ *m* →`a`→ p₁ e **accetterebbe**, anche se `ba` non sta nel linguaggio. Lo stato s, invece, non ha anelli: la scelta tra i due automi si fa una sola volta, all'inizio.
+
+</details>
+
+---
+
+### Esercizio 10 ⭐⭐⭐ · Blocchi `ab` e `aba`
+
+Costruire un NFA con **tre stati** per le stringhe ottenute mettendo in fila, in qualunque ordine e numero (anche zero), i blocchi `ab` e `aba`.
+
+Da accettare: ε, `ab`, `aba`, `abab`, `abaab`. Da rifiutare: `a`, `ba`, `abb`, `aab`.
+
+<details>
+<summary>Soluzione</summary>
+
+**Idea.** Lo stato q₀ significa "ho appena finito un blocco": è iniziale, perché all'inizio non ho blocchi in sospeso, ed è finale, perché la stringa può finire lì. Ogni blocco inizia con `ab`. Il dubbio arriva proprio dopo `ab`: il blocco è finito o manca ancora una `a`?
+
+L'NFA non decide: dopo `ab` prova **entrambe** le possibilità.
+
+<Automa
+	states={[
+		{ id: 'q0', x: 80, y: 100, initial: true, final: true },
+		{ id: 'q1', x: 310, y: 100 },
+		{ id: 'q2', x: 195, y: 260 },
+	]}
+	transitions={[
+		{ from: 'q0', to: 'q1', label: 'a' },
+		{ from: 'q1', to: 'q0', label: 'b' },
+		{ from: 'q1', to: 'q2', label: 'b' },
+		{ from: 'q2', to: 'q0', label: 'a' },
+	]}
+	simula="abaab"
+/>
+
+- **q₀ → q₁ con `a`**: inizia un blocco.
+- **q₁ → q₀ con `b`**: scommessa "il blocco era `ab`, ho finito".
+- **q₁ → q₂ con `b`**: scommessa "il blocco è `aba`, manca una `a`".
+- **q₂ → q₀ con `a`**: il blocco `aba` è finito.
+
+**Collaudo con gli stati attivi.**
+
+| Stringa | Stati attivi dopo ogni simbolo | Esito |
+| :-- | :-- | :-: |
+| `abaab` | &#123;q₁&#125; · &#123;q₀, q₂&#125; · &#123;q₀, q₁&#125; · &#123;q₁&#125; · &#123;q₀, q₂&#125; | accettata |
+| `abb` | &#123;q₁&#125; · &#123;q₀, q₂&#125; · ∅ | rifiutata |
+| `aab` | &#123;q₁&#125; · ∅ · ∅ | rifiutata |
+
+Nella stringa `abaab`, al terzo simbolo c'è una situazione interessante. La `a` può chiudere il blocco `aba` (q₂ → q₀) oppure iniziare un nuovo blocco (q₀ → q₁): l'automa segue entrambe le strade.
+
+</details>
+
+---
+
+### Esercizio 11 ⭐⭐⭐ · `ab` e poi, più avanti, `ba`
+
+Costruire un NFA per le stringhe che contengono `ab` e, **dopo la sua fine**, contengono anche `ba`. Le due sequenze non possono sovrapporsi.
+
+Da accettare: `abba`, `abaaba`, `aabbbaa`. Da rifiutare: `aba`, `abab`, `baab`.
+
+<details>
+<summary>Soluzione</summary>
+
+**Idea.** Le due sequenze si cercano in ordine. La stringa ha cinque parti: qualunque, `ab`, qualunque, `ba`, qualunque. Sono tre anelli separati da due sequenze di frecce.
+
+<Automa
+	r={20}
+	states={[
+		{ id: 'q0', x: 70, y: 100, initial: true },
+		{ id: 'q1', x: 190, y: 100 },
+		{ id: 'q2', x: 310, y: 100 },
+		{ id: 'q3', x: 430, y: 100 },
+		{ id: 'q4', x: 550, y: 100, final: true },
+	]}
+	transitions={[
+		{ from: 'q0', to: 'q0', label: 'a, b' },
+		{ from: 'q0', to: 'q1', label: 'a' },
+		{ from: 'q1', to: 'q2', label: 'b' },
+		{ from: 'q2', to: 'q2', label: 'a, b' },
+		{ from: 'q2', to: 'q3', label: 'b' },
+		{ from: 'q3', to: 'q4', label: 'a' },
+		{ from: 'q4', to: 'q4', label: 'a, b' },
+	]}
+	simula="abba"
+/>
+
+- **q₀ → q₁ → q₂** legge `ab`.
+- **L'anello su q₂** legge ciò che sta tra le due sequenze. Può non leggere nulla, e allora le due sequenze sono attaccate, come in `abba`.
+- **q₂ → q₃ → q₄** legge `ba`.
+- **L'anello su q₄** legge ciò che viene dopo.
+
+**Perché `aba` è rifiutata.** In `aba` le sequenze `ab` e `ba` esistono, ma condividono la `b` centrale. Nell'automa ogni simbolo fa fare un solo passo a una copia: la `b` che porta da q₁ a q₂ è già consumata, e non può portare anche da q₂ a q₃. Così la sovrapposizione è esclusa senza dover aggiungere niente.
+
+**Collaudo con gli stati attivi.**
+
+| Stringa | Stati attivi dopo ogni simbolo | Esito |
+| :-- | :-- | :-: |
+| `abba` | &#123;q₀, q₁&#125; · &#123;q₀, q₂&#125; · &#123;q₀, q₂, q₃&#125; · &#123;q₀, q₁, q₂, q₄&#125; | accettata |
+| `aba` | &#123;q₀, q₁&#125; · &#123;q₀, q₂&#125; · &#123;q₀, q₁, q₂&#125; | rifiutata |
+
+</details>
+
+---
+
+### Esercizio 12 ⭐⭐⭐ · Numero pari di `a` oppure numero di `b` multiplo di 3
+
+Costruire un ε-NFA per le stringhe con un numero **pari** di `a` **oppure** con un numero di `b` **multiplo di 3**.
+
+Da accettare: ε, `a`, `aa`, `abbb`. Da rifiutare: `ab`, `abb`, `bab`.
+
+<details>
+<summary>Soluzione</summary>
+
+**Idea.** Le due condizioni sono indipendenti, quindi si progetta un automa per ciascuna, senza pensare all'altra, e si uniscono con un nuovo stato iniziale.
+
+**Automa 1 · Numero pari di `a`.** Due stati, P (pari) e D (dispari): ogni `a` passa da uno all'altro, ogni `b` non cambia nulla, quindi è un anello. P è finale.
+
+**Automa 2 · Numero di `b` multiplo di 3.** Tre stati, R0, R1, R2, uno per ogni resto della divisione per 3: ogni `b` fa avanzare il resto, ogni `a` è un anello. R0 è finale.
+
+**Unione.** Il nuovo stato iniziale **s** ha due ε-transizioni, verso P e verso R0.
+
+<Automa
+	r={22}
+	states={[
+		{ id: 's', x: 70, y: 200, initial: true },
+		{ id: 'P', x: 220, y: 80, final: true },
+		{ id: 'D', x: 410, y: 80 },
+		{ id: 'R0', x: 220, y: 320, final: true },
+		{ id: 'R1', x: 410, y: 250 },
+		{ id: 'R2', x: 410, y: 390 },
+	]}
+	transitions={[
+		{ from: 's', to: 'P', label: 'ε' },
+		{ from: 's', to: 'R0', label: 'ε' },
+		{ from: 'P', to: 'D', label: 'a' },
+		{ from: 'D', to: 'P', label: 'a' },
+		{ from: 'P', to: 'P', label: 'b' },
+		{ from: 'D', to: 'D', label: 'b' },
+		{ from: 'R0', to: 'R1', label: 'b' },
+		{ from: 'R1', to: 'R2', label: 'b' },
+		{ from: 'R2', to: 'R0', label: 'b' },
+		{ from: 'R0', to: 'R0', label: 'a', loop: 'bottom' },
+		{ from: 'R1', to: 'R1', label: 'a', loop: 'right' },
+		{ from: 'R2', to: 'R2', label: 'a', loop: 'right' },
+	]}
+	simula="abbb"
+	caption="In alto si contano le a (modulo 2), in basso le b (modulo 3)."
+/>
+
+**Come funziona.** In ogni momento è attivo **uno stato in alto e uno in basso**: le due parti lavorano in parallelo, senza disturbarsi. Alla fine la stringa è accettata se almeno una delle due si trova in uno stato finale. È esattamente il significato di "oppure".
+
+**Collaudo con gli stati attivi.** All'inizio gli stati attivi sono ECLOSE(s) = &#123;s, P, R0&#125;.
+
+| Stringa | Stati attivi dopo ogni simbolo | Esito |
+| :-- | :-- | :-: |
+| `abbb` | &#123;D, R0&#125; · &#123;D, R1&#125; · &#123;D, R2&#125; · &#123;D, R0&#125; | accettata |
+| `ab` | &#123;D, R0&#125; · &#123;D, R1&#125; | rifiutata |
+
+In `abbb` le `a` sono dispari, quindi D non è finale, ma le `b` sono 3: R0 è finale e basta quello. In `ab` nessuna delle due condizioni è vera. Attenzione alla stringa `a`: ha zero `b`, e zero è un multiplo di 3, quindi è accettata.
+
+**Il vantaggio dell'NFA.** Un DFA per questo linguaggio dovrebbe tenere insieme le due informazioni in un solo stato, con 2 × 3 = 6 combinazioni. Con l'NFA ogni condizione si progetta da sola, e la ε-transizione fa il resto.
+
+</details>

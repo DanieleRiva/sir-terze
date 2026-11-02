@@ -1,0 +1,772 @@
+---
+title: Conversione e minimizzazione
+description: Esercizi sulla costruzione per sottoinsiemi (da NFA a DFA) e sulla minimizzazione dei DFA, con ogni passaggio svolto e spiegato.
+sidebar:
+  order: 4
+---
+
+import Automa from '~/components/Automa.astro';
+import { Aside } from '@astrojs/starlight/components';
+
+Esercizi sulle lezioni [Da NFA a DFA](/appunti-sir-terza/lezioni/03-nfa/03-da-nfa-a-dfa/) e [Minimizzare un DFA](/appunti-sir-terza/lezioni/04-minimizzazione/01-minimizzare-un-dfa/). Alcuni esercizi sono collegati: l'esercizio 5 usa il risultato dell'esercizio 1, e l'esercizio 6 quello dell'esercizio 4. Conviene farli in ordine.
+
+Le soluzioni sono svolte per intero. Il risultato si può controllare anche in JFLAP con **Convert → Convert to DFA** e **Convert → Minimize DFA**.
+
+---
+
+## Da NFA a DFA
+
+<Aside type="tip" title="Come impostare la soluzione">
+1. Lo stato iniziale del DFA è la **ε-chiusura** dello stato iniziale dell'NFA.
+2. Si espande **uno stato alla volta**: per ogni simbolo si uniscono le transizioni di tutti gli elementi dell'insieme, poi si applica la ε-chiusura.
+3. Ogni insieme mai visto prima diventa un nuovo stato da espandere.
+4. Ci si ferma quando tutti gli stati sono stati espansi.
+5. Sono finali gli insiemi che contengono **almeno uno** stato finale dell'NFA.
+</Aside>
+
+### Esercizio 1 · Contiene `abb`
+
+Trasformare in DFA questo NFA, che accetta le stringhe che contengono `abb`. Quanti stati ha il DFA? Quali sono finali?
+
+<Automa
+	states={[
+		{ id: 'q0', x: 80, y: 100, initial: true },
+		{ id: 'q1', x: 220, y: 100 },
+		{ id: 'q2', x: 360, y: 100 },
+		{ id: 'q3', x: 500, y: 100, final: true },
+	]}
+	transitions={[
+		{ from: 'q0', to: 'q0', label: 'a, b' },
+		{ from: 'q0', to: 'q1', label: 'a' },
+		{ from: 'q1', to: 'q2', label: 'b' },
+		{ from: 'q2', to: 'q3', label: 'b' },
+		{ from: 'q3', to: 'q3', label: 'a, b' },
+	]}
+/>
+
+| δ | a | b |
+| :-- | :-: | :-: |
+| → q₀ | &#123;q₀, q₁&#125; | &#123;q₀&#125; |
+| q₁ | ∅ | &#123;q₂&#125; |
+| q₂ | ∅ | &#123;q₃&#125; |
+| \* q₃ | &#123;q₃&#125; | &#123;q₃&#125; |
+
+<details>
+<summary>Soluzione</summary>
+
+**Stato iniziale.** Non ci sono ε-transizioni, quindi lo stato iniziale del DFA è semplicemente **A = &#123;q₀&#125;**.
+
+**Espansione di A = &#123;q₀&#125;.**
+
+- Con `a`: δ(q₀, a) = &#123;q₀, q₁&#125;. È un insieme nuovo: lo chiamiamo **B**.
+- Con `b`: δ(q₀, b) = &#123;q₀&#125;, cioè A stesso.
+
+**Espansione di B = &#123;q₀, q₁&#125;.**
+
+- Con `a`: δ(q₀, a) ∪ δ(q₁, a) = &#123;q₀, q₁&#125; ∪ ∅ = &#123;q₀, q₁&#125;, cioè B stesso.
+- Con `b`: δ(q₀, b) ∪ δ(q₁, b) = &#123;q₀&#125; ∪ &#123;q₂&#125; = &#123;q₀, q₂&#125;. Nuovo: **C**.
+
+**Espansione di C = &#123;q₀, q₂&#125;.**
+
+- Con `a`: δ(q₀, a) ∪ δ(q₂, a) = &#123;q₀, q₁&#125; ∪ ∅ = &#123;q₀, q₁&#125;, cioè B.
+- Con `b`: δ(q₀, b) ∪ δ(q₂, b) = &#123;q₀&#125; ∪ &#123;q₃&#125; = &#123;q₀, q₃&#125;. Nuovo: **D**.
+
+**Espansione di D = &#123;q₀, q₃&#125;.**
+
+- Con `a`: δ(q₀, a) ∪ δ(q₃, a) = &#123;q₀, q₁&#125; ∪ &#123;q₃&#125; = &#123;q₀, q₁, q₃&#125;. Nuovo: **E**.
+- Con `b`: δ(q₀, b) ∪ δ(q₃, b) = &#123;q₀&#125; ∪ &#123;q₃&#125; = &#123;q₀, q₃&#125;, cioè D stesso.
+
+**Espansione di E = &#123;q₀, q₁, q₃&#125;.**
+
+- Con `a`: δ(q₀, a) ∪ δ(q₁, a) ∪ δ(q₃, a) = &#123;q₀, q₁&#125; ∪ ∅ ∪ &#123;q₃&#125; = &#123;q₀, q₁, q₃&#125;, cioè E stesso.
+- Con `b`: δ(q₀, b) ∪ δ(q₁, b) ∪ δ(q₃, b) = &#123;q₀&#125; ∪ &#123;q₂&#125; ∪ &#123;q₃&#125; = &#123;q₀, q₂, q₃&#125;. Nuovo: **G**.
+
+**Espansione di G = &#123;q₀, q₂, q₃&#125;.**
+
+- Con `a`: δ(q₀, a) ∪ δ(q₂, a) ∪ δ(q₃, a) = &#123;q₀, q₁&#125; ∪ ∅ ∪ &#123;q₃&#125; = &#123;q₀, q₁, q₃&#125;, cioè E.
+- Con `b`: δ(q₀, b) ∪ δ(q₂, b) ∪ δ(q₃, b) = &#123;q₀&#125; ∪ &#123;q₃&#125; ∪ &#123;q₃&#125; = &#123;q₀, q₃&#125;, cioè D.
+
+Non è comparso nessun insieme nuovo: la costruzione è finita.
+
+**Stati finali.** q₃ è l'unico stato finale dell'NFA, quindi sono finali gli insiemi che contengono q₃: **D, E e G**.
+
+| Stato | Insieme | con `a` | con `b` | Finale? |
+| :-: | :-- | :-: | :-: | :-: |
+| → A | &#123;q₀&#125; | B | A | no |
+| B | &#123;q₀, q₁&#125; | B | C | no |
+| C | &#123;q₀, q₂&#125; | B | D | no |
+| D | &#123;q₀, q₃&#125; | E | D | sì |
+| E | &#123;q₀, q₁, q₃&#125; | E | G | sì |
+| G | &#123;q₀, q₂, q₃&#125; | E | D | sì |
+
+Il DFA ha **6 stati**, di cui **3 finali**.
+
+<Automa
+	r={24}
+	states={[
+		{ id: 'A', x: 70, y: 110, initial: true },
+		{ id: 'B', x: 210, y: 110 },
+		{ id: 'C', x: 350, y: 110 },
+		{ id: 'D', x: 500, y: 110, final: true },
+		{ id: 'E', x: 500, y: 280, final: true },
+		{ id: 'G', x: 330, y: 280, final: true },
+	]}
+	transitions={[
+		{ from: 'A', to: 'A', label: 'b' },
+		{ from: 'A', to: 'B', label: 'a' },
+		{ from: 'B', to: 'B', label: 'a' },
+		{ from: 'B', to: 'C', label: 'b' },
+		{ from: 'C', to: 'B', label: 'a' },
+		{ from: 'C', to: 'D', label: 'b' },
+		{ from: 'D', to: 'D', label: 'b' },
+		{ from: 'D', to: 'E', label: 'a' },
+		{ from: 'E', to: 'E', label: 'a', loop: 'right' },
+		{ from: 'E', to: 'G', label: 'b' },
+		{ from: 'G', to: 'E', label: 'a' },
+		{ from: 'G', to: 'D', label: 'b' },
+	]}
+	simula="babba"
+	caption="Il DFA ottenuto. Una volta entrati in D, E o G non si torna più negli stati non finali."
+/>
+
+**Cosa significano gli stati.** A, B e C ricordano quanta parte di `abb` si è appena letta: niente, `a`, `ab`. D, E e G contengono tutti q₃: `abb` è già stata trovata, e l'automa continua inutilmente a seguire i nuovi tentativi. Si intuisce che questi tre stati sono ridondanti: lo verificheremo nell'esercizio 5.
+
+</details>
+
+---
+
+### Esercizio 2 · Il penultimo simbolo è `1`
+
+Trasformare in DFA questo NFA su &#123;0, 1&#125;. Cosa ricorda ciascuno stato del DFA?
+
+<Automa
+	states={[
+		{ id: 'q0', x: 80, y: 100, initial: true },
+		{ id: 'q1', x: 230, y: 100 },
+		{ id: 'q2', x: 380, y: 100, final: true },
+	]}
+	transitions={[
+		{ from: 'q0', to: 'q0', label: '0, 1' },
+		{ from: 'q0', to: 'q1', label: '1' },
+		{ from: 'q1', to: 'q2', label: '0, 1' },
+	]}
+/>
+
+<details>
+<summary>Soluzione</summary>
+
+Tabella dell'NFA, da cui leggere i calcoli:
+
+| δ | 0 | 1 |
+| :-- | :-: | :-: |
+| → q₀ | &#123;q₀&#125; | &#123;q₀, q₁&#125; |
+| q₁ | &#123;q₂&#125; | &#123;q₂&#125; |
+| \* q₂ | ∅ | ∅ |
+
+**Espansione di A = &#123;q₀&#125;** (stato iniziale).
+
+- Con `0`: δ(q₀, 0) = &#123;q₀&#125;, cioè A.
+- Con `1`: δ(q₀, 1) = &#123;q₀, q₁&#125;. Nuovo: **B**.
+
+**Espansione di B = &#123;q₀, q₁&#125;.**
+
+- Con `0`: &#123;q₀&#125; ∪ &#123;q₂&#125; = &#123;q₀, q₂&#125;. Nuovo: **C**.
+- Con `1`: &#123;q₀, q₁&#125; ∪ &#123;q₂&#125; = &#123;q₀, q₁, q₂&#125;. Nuovo: **D**.
+
+**Espansione di C = &#123;q₀, q₂&#125;.**
+
+- Con `0`: &#123;q₀&#125; ∪ ∅ = &#123;q₀&#125;, cioè A.
+- Con `1`: &#123;q₀, q₁&#125; ∪ ∅ = &#123;q₀, q₁&#125;, cioè B.
+
+**Espansione di D = &#123;q₀, q₁, q₂&#125;.**
+
+- Con `0`: &#123;q₀&#125; ∪ &#123;q₂&#125; ∪ ∅ = &#123;q₀, q₂&#125;, cioè C.
+- Con `1`: &#123;q₀, q₁&#125; ∪ &#123;q₂&#125; ∪ ∅ = &#123;q₀, q₁, q₂&#125;, cioè D.
+
+**Stati finali.** Sono gli insiemi che contengono q₂: **C e D**.
+
+| Stato | Insieme | con `0` | con `1` | Finale? | Ultimi due simboli |
+| :-: | :-- | :-: | :-: | :-: | :-: |
+| → A | &#123;q₀&#125; | A | B | no | `00`, o meno di due simboli senza `1` |
+| B | &#123;q₀, q₁&#125; | C | D | no | `01`, oppure la sola stringa `1` |
+| C | &#123;q₀, q₂&#125; | A | B | sì | `10` |
+| D | &#123;q₀, q₁, q₂&#125; | C | D | sì | `11` |
+
+<Automa
+	r={24}
+	states={[
+		{ id: 'A', x: 90, y: 90, initial: true },
+		{ id: 'B', x: 340, y: 90 },
+		{ id: 'C', x: 90, y: 290, final: true },
+		{ id: 'D', x: 340, y: 290, final: true },
+	]}
+	transitions={[
+		{ from: 'A', to: 'A', label: '0' },
+		{ from: 'A', to: 'B', label: '1' },
+		{ from: 'B', to: 'C', label: '0' },
+		{ from: 'B', to: 'D', label: '1' },
+		{ from: 'C', to: 'A', label: '0' },
+		{ from: 'C', to: 'B', label: '1' },
+		{ from: 'D', to: 'C', label: '0' },
+		{ from: 'D', to: 'D', label: '1', loop: 'right' },
+	]}
+	simula="0110"
+/>
+
+**Cosa ricordano gli stati.** La presenza di q₁ nell'insieme significa "l'ultimo simbolo è `1`"; la presenza di q₂ significa "il penultimo simbolo è `1`". I quattro stati corrispondono quindi alle quattro combinazioni degli **ultimi due simboli**. Per questo il DFA ha 4 stati e non si può fare con meno: deve davvero ricordare due simboli.
+
+</details>
+
+---
+
+### Esercizio 3 · Con la ε-transizione e l'insieme vuoto
+
+Trasformare in DFA questo ε-NFA, che riconosce `a*b*`. Il DFA ottenuto deve essere **completo**.
+
+<Automa
+	states={[
+		{ id: 'q0', x: 80, y: 100, initial: true },
+		{ id: 'q1', x: 260, y: 100, final: true },
+	]}
+	transitions={[
+		{ from: 'q0', to: 'q0', label: 'a' },
+		{ from: 'q0', to: 'q1', label: 'ε' },
+		{ from: 'q1', to: 'q1', label: 'b' },
+	]}
+/>
+
+<details>
+<summary>Soluzione</summary>
+
+**Stato iniziale.** Qui c'è una ε-transizione, quindi si parte dalla ε-chiusura: ECLOSE(q₀) = &#123;q₀, q₁&#125;. Lo chiamiamo **A**.
+
+Scrivere solo &#123;q₀&#125; sarebbe un errore: l'automa perderebbe tutti i percorsi che iniziano passando subito in q₁.
+
+**Espansione di A = &#123;q₀, q₁&#125;.**
+
+- Con `a`: da q₀ si va in q₀, da q₁ non si va da nessuna parte. Si ottiene &#123;q₀&#125;; la sua chiusura è &#123;q₀, q₁&#125;, cioè A stesso.
+- Con `b`: da q₀ non si va da nessuna parte, da q₁ si va in q₁. Si ottiene &#123;q₁&#125;; la chiusura non aggiunge nulla. Nuovo: **B**.
+
+**Espansione di B = &#123;q₁&#125;.**
+
+- Con `a`: da q₁ non c'è nessuna transizione. Si ottiene l'insieme vuoto ∅. Nuovo: **C**.
+- Con `b`: da q₁ si va in q₁, cioè B stesso.
+
+**Espansione di C = ∅.** Dall'insieme vuoto non si raggiunge nulla: con `a` e con `b` si resta in ∅. C è lo **stato pozzo**.
+
+**Stati finali.** Sono finali A e B, perché contengono q₁. C non contiene nulla, quindi non è finale.
+
+| Stato | Insieme | con `a` | con `b` | Finale? |
+| :-: | :-- | :-: | :-: | :-: |
+| → A | &#123;q₀, q₁&#125; | A | B | sì |
+| B | &#123;q₁&#125; | C | B | sì |
+| C | ∅ | C | C | no |
+
+<Automa
+	states={[
+		{ id: 'A', x: 80, y: 100, initial: true, final: true },
+		{ id: 'B', x: 250, y: 100, final: true },
+		{ id: 'C', label: '∅', x: 420, y: 100 },
+	]}
+	transitions={[
+		{ from: 'A', to: 'A', label: 'a' },
+		{ from: 'A', to: 'B', label: 'b' },
+		{ from: 'B', to: 'B', label: 'b' },
+		{ from: 'B', to: 'C', label: 'a' },
+		{ from: 'C', to: 'C', label: 'a, b' },
+	]}
+	simula="aabb"
+/>
+
+**Lettura del risultato.** A significa "sto ancora leggendo le `a`", B significa "sono passato alle `b`", C significa "è arrivata una `a` dopo una `b`: errore". A è finale perché ε e le stringhe di sole `a` stanno nel linguaggio.
+
+</details>
+
+---
+
+### Esercizio 4 · Un'unione con ε-transizioni
+
+Trasformare in DFA questo ε-NFA, che accetta le stringhe che iniziano con `a` oppure finiscono con `b`.
+
+<Automa
+	states={[
+		{ id: 's', x: 70, y: 170, initial: true },
+		{ id: 'p0', x: 210, y: 70 },
+		{ id: 'p1', x: 370, y: 70, final: true },
+		{ id: 'r0', x: 210, y: 270 },
+		{ id: 'r1', x: 370, y: 270, final: true },
+	]}
+	transitions={[
+		{ from: 's', to: 'p0', label: 'ε' },
+		{ from: 's', to: 'r0', label: 'ε' },
+		{ from: 'p0', to: 'p1', label: 'a' },
+		{ from: 'p1', to: 'p1', label: 'a, b', loop: 'right' },
+		{ from: 'r0', to: 'r0', label: 'a, b', loop: 'bottom' },
+		{ from: 'r0', to: 'r1', label: 'b' },
+	]}
+/>
+
+<details>
+<summary>Soluzione</summary>
+
+**Stato iniziale.** ECLOSE(s) = &#123;s, p₀, r₀&#125;. Lo chiamiamo **A**.
+
+Le uniche ε-transizioni escono da s, e s non si raggiunge mai leggendo un simbolo. Quindi, dopo il primo passo, la chiusura non aggiunge più niente.
+
+**Espansione di A = &#123;s, p₀, r₀&#125;.** s non ha transizioni con simboli.
+
+- Con `a`: p₀ va in p₁, r₀ va in r₀. Si ottiene &#123;p₁, r₀&#125;. Nuovo: **B**.
+- Con `b`: p₀ non ha transizioni con `b`, r₀ va in r₀ e in r₁. Si ottiene &#123;r₀, r₁&#125;. Nuovo: **C**.
+
+**Espansione di B = &#123;p₁, r₀&#125;.**
+
+- Con `a`: p₁ va in p₁, r₀ va in r₀. Si ottiene &#123;p₁, r₀&#125;, cioè B stesso.
+- Con `b`: p₁ va in p₁, r₀ va in r₀ e r₁. Si ottiene &#123;p₁, r₀, r₁&#125;. Nuovo: **D**.
+
+**Espansione di C = &#123;r₀, r₁&#125;.** r₁ non ha transizioni uscenti.
+
+- Con `a`: r₀ va in r₀. Si ottiene &#123;r₀&#125;. Nuovo: **E**.
+- Con `b`: r₀ va in r₀ e r₁. Si ottiene &#123;r₀, r₁&#125;, cioè C stesso.
+
+**Espansione di D = &#123;p₁, r₀, r₁&#125;.**
+
+- Con `a`: p₁ va in p₁, r₀ va in r₀. Si ottiene &#123;p₁, r₀&#125;, cioè B.
+- Con `b`: p₁ va in p₁, r₀ va in r₀ e r₁. Si ottiene &#123;p₁, r₀, r₁&#125;, cioè D stesso.
+
+**Espansione di E = &#123;r₀&#125;.**
+
+- Con `a`: si ottiene &#123;r₀&#125;, cioè E stesso.
+- Con `b`: si ottiene &#123;r₀, r₁&#125;, cioè C.
+
+**Stati finali.** Sono finali gli insiemi che contengono p₁ oppure r₁: **B, C e D**.
+
+| Stato | Insieme | con `a` | con `b` | Finale? |
+| :-: | :-- | :-: | :-: | :-: |
+| → A | &#123;s, p₀, r₀&#125; | B | C | no |
+| B | &#123;p₁, r₀&#125; | B | D | sì |
+| C | &#123;r₀, r₁&#125; | E | C | sì |
+| D | &#123;p₁, r₀, r₁&#125; | B | D | sì |
+| E | &#123;r₀&#125; | E | C | no |
+
+<Automa
+	r={24}
+	states={[
+		{ id: 'A', x: 70, y: 170, initial: true },
+		{ id: 'B', x: 230, y: 70, final: true },
+		{ id: 'D', x: 420, y: 70, final: true },
+		{ id: 'C', x: 230, y: 270, final: true },
+		{ id: 'E', x: 420, y: 270 },
+	]}
+	transitions={[
+		{ from: 'A', to: 'B', label: 'a' },
+		{ from: 'A', to: 'C', label: 'b' },
+		{ from: 'B', to: 'B', label: 'a' },
+		{ from: 'B', to: 'D', label: 'b' },
+		{ from: 'D', to: 'B', label: 'a' },
+		{ from: 'D', to: 'D', label: 'b' },
+		{ from: 'C', to: 'C', label: 'b', loop: 'bottom' },
+		{ from: 'C', to: 'E', label: 'a' },
+		{ from: 'E', to: 'C', label: 'b' },
+		{ from: 'E', to: 'E', label: 'a', loop: 'bottom' },
+	]}
+	simula="bab"
+	caption="Il DFA ottenuto. In alto le stringhe che iniziano con a, in basso quelle che iniziano con b."
+/>
+
+**Lettura del risultato.** Il primo simbolo decide il ramo. Se è `a`, la stringa è accettata comunque e si resta tra B e D, entrambi finali. Se è `b`, conta solo l'ultimo simbolo: C se è `b` (finale), E se è `a` (non finale).
+
+</details>
+
+---
+
+## Minimizzazione
+
+<Aside type="tip" title="Come impostare la soluzione">
+1. Si eliminano gli stati **irraggiungibili** e, se il DFA non è completo, si aggiunge lo **stato pozzo**.
+2. Si parte da due gruppi: **non finali** e **finali**.
+3. Per ogni stato si scrive **in quale gruppo** porta ciascun simbolo. Quello che conta è il gruppo, non lo stato di arrivo.
+4. Due stati dello stesso gruppo con righe diverse vanno **separati**.
+5. Si ripete con i nuovi gruppi finché un giro completo non divide più nulla.
+6. Ogni gruppo finale diventa un solo stato del DFA minimo.
+</Aside>
+
+### Esercizio 5 · Minimizzare il DFA di `abb`
+
+Minimizzare il DFA a 6 stati ottenuto nell'esercizio 1:
+
+| δ | a | b |
+| :-- | :-: | :-: |
+| → A | B | A |
+| B | B | C |
+| C | B | D |
+| \* D | E | D |
+| \* E | E | G |
+| \* G | E | D |
+
+<details>
+<summary>Soluzione</summary>
+
+**Fase 1 · Stati irraggiungibili.** Il DFA viene dalla costruzione per sottoinsiemi, che crea solo stati raggiungibili: da A si arriva a B, poi a C, D, E e G. Non c'è niente da eliminare. Il DFA è anche completo.
+
+**Fase 2 · Partizione iniziale.** G1 = &#123;A, B, C&#125; (non finali), G2 = &#123;D, E, G&#125; (finali).
+
+**Giro 1.** Per ogni stato scriviamo il gruppo di arrivo:
+
+| Stato | con `a` | con `b` |
+| :-: | :-: | :-: |
+| A | B → G1 | A → G1 |
+| B | B → G1 | C → G1 |
+| C | B → G1 | D → **G2** |
+| D | E → G2 | D → G2 |
+| E | E → G2 | G → G2 |
+| G | E → G2 | D → G2 |
+
+In G1, gli stati A e B hanno la riga (G1, G1), mentre C ha (G1, G2): C va separato. Il motivo è concreto: con la stringa `b`, da C si arriva in uno stato finale, da A e da B no.
+
+In G2, tutte le righe sono (G2, G2): il gruppo non si divide.
+
+Nuova partizione: G1 = &#123;A, B&#125;, G2 = &#123;C&#125;, G3 = &#123;D, E, G&#125;.
+
+**Giro 2.** Si ricontrolla con i gruppi nuovi. Il gruppo &#123;C&#125; ha un solo stato: non si può dividere.
+
+| Stato | con `a` | con `b` |
+| :-: | :-: | :-: |
+| A | B → G1 | A → G1 |
+| B | B → G1 | C → **G2** |
+| D | E → G3 | D → G3 |
+| E | E → G3 | G → G3 |
+| G | E → G3 | D → G3 |
+
+A e B hanno righe diverse: si separano. Con la stringa `bb`, infatti, da B si arriva in uno stato finale (B → C → D), da A no. Il gruppo G3 resta unito.
+
+Nuova partizione: &#123;A&#125;, &#123;B&#125;, &#123;C&#125;, &#123;D, E, G&#125;.
+
+**Giro 3.** L'unico gruppo con più stati è &#123;D, E, G&#125;. Da tutti e tre, con `a` e con `b`, si resta nel gruppo: non si divide. Nessuna divisione in questo giro: **l'algoritmo è finito**.
+
+**Costruzione del DFA minimo.** D, E e G si fondono nello stato **DEG**. Le transizioni si ricavano da un rappresentante qualsiasi del gruppo: per esempio D con `a` va in E e con `b` va in D, entrambi dentro DEG. Tutte le frecce che entravano in D ora entrano in DEG.
+
+| δ | a | b |
+| :-- | :-: | :-: |
+| → A | B | A |
+| B | B | C |
+| C | B | DEG |
+| \* DEG | DEG | DEG |
+
+<Automa
+	r={24}
+	states={[
+		{ id: 'A', x: 80, y: 100, initial: true },
+		{ id: 'B', x: 220, y: 100 },
+		{ id: 'C', x: 360, y: 100 },
+		{ id: 'DEG', x: 500, y: 100, final: true },
+	]}
+	transitions={[
+		{ from: 'A', to: 'A', label: 'b' },
+		{ from: 'A', to: 'B', label: 'a' },
+		{ from: 'B', to: 'B', label: 'a' },
+		{ from: 'B', to: 'C', label: 'b' },
+		{ from: 'C', to: 'B', label: 'a' },
+		{ from: 'C', to: 'DEG', label: 'b' },
+		{ from: 'DEG', to: 'DEG', label: 'a, b' },
+	]}
+	simula="babba"
+/>
+
+Il DFA minimo ha **4 stati**. Conferma quanto intuito nell'esercizio 1: dopo aver trovato `abb` non c'è più nulla da ricordare, quindi basta un solo stato finale.
+
+</details>
+
+---
+
+### Esercizio 6 · Minimizzare il DFA dell'unione
+
+Minimizzare il DFA a 5 stati ottenuto nell'esercizio 4:
+
+| δ | a | b |
+| :-- | :-: | :-: |
+| → A | B | C |
+| \* B | B | D |
+| \* C | E | C |
+| \* D | B | D |
+| E | E | C |
+
+<details>
+<summary>Soluzione</summary>
+
+**Fase 1.** Tutti gli stati sono raggiungibili e il DFA è completo.
+
+**Fase 2 · Partizione iniziale.** G1 = &#123;A, E&#125; (non finali), G2 = &#123;B, C, D&#125; (finali).
+
+**Giro 1.**
+
+| Stato | con `a` | con `b` |
+| :-: | :-: | :-: |
+| A | B → G2 | C → G2 |
+| E | E → **G1** | C → G2 |
+| B | B → G2 | D → G2 |
+| C | E → **G1** | C → G2 |
+| D | B → G2 | D → G2 |
+
+- A ha la riga (G2, G2), E ha (G1, G2): si separano. Con la stringa `a`, da A si arriva in uno stato finale, da E no.
+- B e D hanno la riga (G2, G2), C ha (G1, G2): C si separa da B e D.
+
+Nuova partizione: G1 = &#123;A&#125;, G2 = &#123;E&#125;, G3 = &#123;B, D&#125;, G4 = &#123;C&#125;.
+
+**Giro 2.** L'unico gruppo con più stati è &#123;B, D&#125;:
+
+| Stato | con `a` | con `b` |
+| :-: | :-: | :-: |
+| B | B → G3 | D → G3 |
+| D | B → G3 | D → G3 |
+
+Le righe sono uguali: nessuna divisione. **L'algoritmo è finito.**
+
+**Costruzione del DFA minimo.** B e D si fondono nello stato **BD**. Gli altri stati restano da soli. Il DFA minimo ha **4 stati**.
+
+| δ | a | b |
+| :-- | :-: | :-: |
+| → A | BD | C |
+| \* BD | BD | BD |
+| \* C | E | C |
+| E | E | C |
+
+<Automa
+	r={24}
+	states={[
+		{ id: 'A', x: 70, y: 170, initial: true },
+		{ id: 'BD', x: 240, y: 70, final: true },
+		{ id: 'C', x: 240, y: 270, final: true },
+		{ id: 'E', x: 430, y: 270 },
+	]}
+	transitions={[
+		{ from: 'A', to: 'BD', label: 'a' },
+		{ from: 'A', to: 'C', label: 'b' },
+		{ from: 'BD', to: 'BD', label: 'a, b' },
+		{ from: 'C', to: 'C', label: 'b', loop: 'bottom' },
+		{ from: 'C', to: 'E', label: 'a' },
+		{ from: 'E', to: 'C', label: 'b' },
+		{ from: 'E', to: 'E', label: 'a', loop: 'bottom' },
+	]}
+	simula="bab"
+/>
+
+**Perché B e D erano equivalenti.** Entrambi significano "la stringa è iniziata con `a`". Da quel momento la stringa è accettata qualunque cosa venga dopo, quindi non serve distinguere altro. Nel DFA di partenza B e D erano separati solo perché l'NFA teneva traccia anche del ramo "finisce con `b`", ormai inutile.
+
+</details>
+
+---
+
+### Esercizio 7 · Un DFA da preparare
+
+Questo DFA su &#123;0, 1&#125; è **parziale** e contiene uno stato inutile. Minimizzarlo e descrivere a parole il linguaggio.
+
+| δ | 0 | 1 |
+| :-- | :-: | :-: |
+| → A | B | C |
+| B | — | D |
+| C | — | D |
+| \* D | D | D |
+| E | D | D |
+
+<details>
+<summary>Soluzione</summary>
+
+**Fase 1 · Stati irraggiungibili.** Partendo da A si raggiungono B e C, e da questi D. Nessuna transizione entra in E: **E è irraggiungibile** e va cancellato.
+
+**Fase 2 · Stato pozzo.** La minimizzazione richiede un DFA completo. Da B e da C manca la transizione con `0`: aggiungiamo lo stato pozzo **P**, non finale, con un anello per ogni simbolo.
+
+| δ | 0 | 1 |
+| :-- | :-: | :-: |
+| → A | B | C |
+| B | P | D |
+| C | P | D |
+| \* D | D | D |
+| P | P | P |
+
+**Fase 3 · Partizione iniziale.** G1 = &#123;A, B, C, P&#125; (non finali), G2 = &#123;D&#125; (finali).
+
+**Giro 1.**
+
+| Stato | con `0` | con `1` |
+| :-: | :-: | :-: |
+| A | B → G1 | C → G1 |
+| B | P → G1 | D → **G2** |
+| C | P → G1 | D → **G2** |
+| P | P → G1 | P → G1 |
+
+A e P hanno la riga (G1, G1), B e C hanno (G1, G2). Nuova partizione: G1 = &#123;A, P&#125;, G2 = &#123;B, C&#125;, G3 = &#123;D&#125;.
+
+**Giro 2.**
+
+| Stato | con `0` | con `1` |
+| :-: | :-: | :-: |
+| A | B → **G2** | C → **G2** |
+| P | P → G1 | P → G1 |
+| B | P → G1 | D → G3 |
+| C | P → G1 | D → G3 |
+
+A e P si separano: al giro prima sembravano uguali, ma ora che i gruppi sono più precisi si vede la differenza. La stringa `01` lo conferma: da A porta in D (finale), da P resta in P. B e C hanno righe uguali e restano insieme.
+
+Nuova partizione: &#123;A&#125;, &#123;P&#125;, &#123;B, C&#125;, &#123;D&#125;.
+
+**Giro 3.** L'unico gruppo con più stati è &#123;B, C&#125;: con `0` vanno entrambi in P, con `1` vanno entrambi in D. Nessuna divisione: **l'algoritmo è finito**.
+
+**DFA minimo.** Il DFA minimo ha **4 stati**, compreso il pozzo.
+
+<Automa
+	r={24}
+	states={[
+		{ id: 'A', x: 80, y: 90, initial: true },
+		{ id: 'BC', x: 250, y: 90 },
+		{ id: 'D', x: 420, y: 90, final: true },
+		{ id: 'P', label: 'pozzo', x: 250, y: 240 },
+	]}
+	transitions={[
+		{ from: 'A', to: 'BC', label: '0, 1' },
+		{ from: 'BC', to: 'D', label: '1' },
+		{ from: 'BC', to: 'P', label: '0' },
+		{ from: 'D', to: 'D', label: '0, 1' },
+		{ from: 'P', to: 'P', label: '0, 1', loop: 'right' },
+	]}
+	simula="0110"
+/>
+
+**Il linguaggio.** Il primo simbolo può essere qualunque (A → BC con `0` o `1`). Il secondo deve essere `1`: altrimenti si cade nel pozzo. Dopo si accetta tutto. Sono quindi le stringhe il cui **secondo simbolo è `1`**.
+
+</details>
+
+---
+
+### Esercizio 8 · Un DFA già minimo
+
+Nel DFA della tabella, quali stati sono equivalenti? Disegnare il DFA minimo e descrivere a parole il linguaggio.
+
+| δ | 0 | 1 |
+| :-- | :-: | :-: |
+| → A | B | C |
+| B | A | D |
+| C | D | A |
+| \* D | D | D |
+
+<details>
+<summary>Soluzione</summary>
+
+Tutti gli stati sono raggiungibili e il DFA è completo.
+
+**Partizione iniziale.** G1 = &#123;A, B, C&#125;, G2 = &#123;D&#125;.
+
+**Giro 1.**
+
+| Stato | con `0` | con `1` |
+| :-: | :-: | :-: |
+| A | B → G1 | C → G1 |
+| B | A → G1 | D → **G2** |
+| C | D → **G2** | A → G1 |
+
+Le tre righe sono tutte diverse, quindi il gruppo si divide in tre: &#123;A&#125;, &#123;B&#125;, &#123;C&#125;. Restano solo gruppi di uno stato e non c'è più niente da dividere.
+
+**Nessuno stato è equivalente a un altro**: il DFA è già minimo, e il DFA minimo è il DFA di partenza. Si può anche verificarlo trovando, per ogni coppia, una stringa che la distingue:
+
+| Coppia | Stringa | Perché |
+| :-: | :-: | :-- |
+| A, B | `1` | da A si va in C (non finale), da B si va in D (finale) |
+| A, C | `0` | da A si va in B (non finale), da C si va in D (finale) |
+| B, C | `0` | da B si va in A (non finale), da C si va in D (finale) |
+
+Anche la coppia con D è distinta, perché D è finale e gli altri no: li distingue la stringa vuota ε.
+
+<Automa
+	r={22}
+	states={[
+		{ id: 'A', x: 80, y: 130, initial: true },
+		{ id: 'B', x: 260, y: 20 },
+		{ id: 'C', x: 260, y: 240 },
+		{ id: 'D', x: 440, y: 130, final: true },
+	]}
+	transitions={[
+		{ from: 'A', to: 'B', label: '0' },
+		{ from: 'B', to: 'A', label: '0' },
+		{ from: 'A', to: 'C', label: '1' },
+		{ from: 'C', to: 'A', label: '1' },
+		{ from: 'B', to: 'D', label: '1' },
+		{ from: 'C', to: 'D', label: '0' },
+		{ from: 'D', to: 'D', label: '0, 1', loop: 'right' },
+	]}
+	simula="1100"
+/>
+
+**Il linguaggio.** Si legge la stringa a coppie, partendo da A. Le coppie `00` e `11` riportano in A; le coppie `01` e `10` portano in D, da cui non si esce più. Una stringa è quindi accettata se, **dividendola in coppie a partire dall'inizio, almeno una coppia è formata da due simboli diversi**.
+
+Esempi: `0010` è accettata (coppie `00`, `10`); `010` è accettata (la prima coppia è `01`); `1100` è rifiutata (coppie `11`, `00`).
+
+</details>
+
+---
+
+### Esercizio 9 · Due automi sono equivalenti?
+
+Usando la minimizzazione, stabilire se questi due DFA su &#123;a, b&#125; riconoscono lo stesso linguaggio.
+
+**Automa M₁**
+
+| δ | a | b |
+| :-- | :-: | :-: |
+| → \* P | Q | P |
+| Q | P | Q |
+
+**Automa M₂**
+
+| δ | a | b |
+| :-- | :-: | :-: |
+| → \* A | B | C |
+| B | C | D |
+| \* C | D | A |
+| D | A | B |
+
+<details>
+<summary>Soluzione</summary>
+
+**Il metodo.** Il DFA minimo di un linguaggio è unico, a meno dei nomi degli stati. Quindi due DFA sono equivalenti se e solo se, minimizzati, diventano lo stesso automa.
+
+**M₁ è già minimo.** Ha due stati, uno finale e uno no: la stringa vuota li distingue, quindi non si possono fondere.
+
+**Minimizzazione di M₂.** Tutti gli stati sono raggiungibili: da A si va in B, C e D. Partizione iniziale: G1 = &#123;A, C&#125; (finali), G2 = &#123;B, D&#125; (non finali).
+
+| Stato | con `a` | con `b` |
+| :-: | :-: | :-: |
+| A | B → G2 | C → G1 |
+| C | D → G2 | A → G1 |
+| B | C → G1 | D → G2 |
+| D | A → G1 | B → G2 |
+
+A e C hanno la stessa riga (G2, G1), B e D hanno la stessa riga (G1, G2): nessuna divisione. L'algoritmo finisce subito.
+
+Fondendo gli stati si ottiene un DFA a due stati:
+
+| δ | a | b |
+| :-- | :-: | :-: |
+| → \* AC | BD | AC |
+| BD | AC | BD |
+
+**Confronto.** Rinominando AC in P e BD in Q si ottiene esattamente la tabella di M₁. Coincidono anche lo stato iniziale e lo stato finale. Quindi **M₁ e M₂ sono equivalenti**.
+
+**Che linguaggio riconoscono?** Le stringhe con un **numero pari di `a`**: ogni `a` cambia gruppo, ogni `b` lo lascia invariato.
+
+**Verifica con JFLAP.** Si costruiscono i due automi e si usa **Test → Compare Equivalence**: JFLAP confronta i due automi in un colpo solo.
+
+<Automa
+	r={24}
+	states={[
+		{ id: 'AC', x: 80, y: 100, initial: true, final: true },
+		{ id: 'BD', x: 280, y: 100 },
+	]}
+	transitions={[
+		{ from: 'AC', to: 'BD', label: 'a' },
+		{ from: 'BD', to: 'AC', label: 'a' },
+		{ from: 'AC', to: 'AC', label: 'b' },
+		{ from: 'BD', to: 'BD', label: 'b' },
+	]}
+	simula="abba"
+/>
+
+</details>
