@@ -1,205 +1,489 @@
 ---
 title: Macchine di Mealy e Moore
-description: Esercizi di progettazione e conversione di automi con uscita, con soluzioni simulabili.
+description: Esercizi pratici in JFLAP su macchine di Mealy e di Moore, con soluzione come schema JFLAP, file .jff e risultati di Multiple Run.
 sidebar:
   order: 5
 ---
 
 import Automa from '~/components/Automa.astro';
+import JflapFinestra from '~/components/JflapFinestra.astro';
+import JflapMultipleRun from '~/components/JflapMultipleRun.astro';
+import { Aside } from '@astrojs/starlight/components';
 
-Esercizi sul capitolo [Automi con uscita](/sir-terze/lezioni/05-mealy-moore/01-automi-con-uscita/). Alfabeto di input e di uscita &#123;0, 1&#125; dove non indicato diversamente.
+Esercizi sul capitolo [Automi con uscita](/sir-terze/lezioni/05-mealy-moore/01-automi-con-uscita/). Sono tutti **esercizi di disegno in JFLAP**: per ognuno si crea la macchina, la si salva e la si collauda con **Multiple Run**. Per i comandi vedere [Mealy e Moore in JFLAP](/sir-terze/jflap/08-mealy-e-moore/).
+
+<Aside type="tip" title="Come si lavora">
+- La riga in grassetto sotto il titolo indica che cosa scegliere dalla finestra principale di JFLAP: **Mealy Machine** o **Moore Machine**.
+- **Mealy**: le transizioni hanno due caselle, input e uscita; l'etichetta diventa `input;uscita`.
+- **Moore**: l'uscita si scrive alla creazione dello stato e compare nel riquadro in alto a destra; le transizioni hanno solo l'input.
+- Salvare ogni macchina come `esNN.jff` e collaudarla con **Input → Multiple Run** sulle stringhe indicate. Ricordarsi che Moore produce **un simbolo in più** (l'uscita dello stato iniziale).
+- La soluzione contiene lo schema JFLAP, il file `.jff` da scaricare e la tabella di Multiple Run con gli output attesi. Sotto lo schema c'è un simulatore per seguire la macchina passo passo.
+</Aside>
+
+Alfabeto di input e di uscita &#123;0, 1&#125; dove non indicato diversamente.
+
+**Legenda della difficoltà:** ⭐ facile · ⭐⭐ media · ⭐⭐⭐ impegnativa
 
 ---
 
-### Esercizio 1 · Il complementatore (Mealy)
+### Esercizio 1 ⭐ · Il complementatore
 
-Una macchina di Mealy che, per ogni bit letto, produce il bit **opposto** (`0` → `1`, `1` → `0`). Quanti stati servono?
+**JFLAP → Mealy Machine**
+
+Costruire una macchina di Mealy che, per ogni bit letto, produce il bit **opposto**: `0` → `1`, `1` → `0`. Usare il minor numero di stati possibile.
+
+Esempio: con l'input `0110` l'output deve essere `1001`.
+
+Collaudo con **Multiple Run**: `0110`, `000`, `1`, `101100`.
 
 <details>
 <summary>Soluzione</summary>
 
-**Uno solo**: l'uscita dipende solo dall'input corrente, non c'è niente da ricordare.
+<JflapFinestra titolo="JFLAP : es01-complementatore.jff" strumento="transizione" caption="1 stato · <a href='/sir-terze/jflap/esercizi-mealy-moore/es01-complementatore.jff' download>scarica es01-complementatore.jff</a>">
+	<Automa
+		jflap
+		r={20}
+		states={[
+			{ id: 'q0', x: 100, y: 90, initial: true },
+		]}
+		transitions={[
+			{ from: 'q0', to: 'q0', label: '0;1  1;0', loop: 'right' },
+		]}
+		simula="0110"
+	/>
+</JflapFinestra>
 
-<Automa
-	states={[{ id: 'q0', x: 80, y: 80, initial: true }]}
-	transitions={[{ from: 'q0', to: 'q0', label: '0/1, 1/0', loop: 'right' }]}
-	simula="0110"
-/>
+<JflapFinestra toolbar={false} titolo="JFLAP : es01-complementatore.jff" schede={['Editor', 'Multiple Run']} schedaAttiva={1}>
+	<JflapMultipleRun
+		righe={[
+			{ input: '0110', result: '1001' },
+			{ input: '000', result: '111' },
+			{ input: '1', result: '0' },
+			{ input: '101100', result: '010011' },
+		]}
+	/>
+</JflapFinestra>
 
-Una macchina di Mealy con un solo stato è una semplice **rete combinatoria** (qui, una porta NOT).
+Basta **uno stato**: l'uscita dipende solo dal bit appena letto, non c'è niente da ricordare. Le due transizioni sono entrambe anelli su q0: in JFLAP si crea il primo anello, poi si clicca di nuovo sullo stato per aggiungere il secondo.
 
 </details>
 
 ---
 
-### Esercizio 2 · Numero di `1` multiplo di 3 (Moore)
+### Esercizio 2 ⭐ · Il tornello
 
-Dopo ogni bit, l'uscita deve essere `1` se il numero di `1` letti fino a quel momento è un multiplo di 3 (zero compreso), altrimenti `0`.
+**JFLAP → Moore Machine**
+
+Un tornello della metropolitana è **bloccato** (uscita `0`) finché non si inserisce una moneta; allora si **sblocca** (uscita `1`) e resta sbloccato finché qualcuno non passa spingendolo, poi si blocca di nuovo. Input: `m` (moneta inserita) e `s` (spinta). Una spinta sul tornello bloccato non fa nulla; una moneta in più sul tornello sbloccato va persa.
+
+Costruire la macchina di Moore. All'accensione il tornello è bloccato.
+
+Esempio: con l'input `msms` l'output deve essere `01010`.
+
+Collaudo con **Multiple Run**: stringa vuota (**Enter Lambda**), `msms`, `ssm`, `mms`.
 
 <details>
 <summary>Soluzione</summary>
 
-<Automa
-	r={26}
-	states={[
-		{ id: 'M0', x: 80, y: 80, initial: true, output: '1' },
-		{ id: 'M1', x: 280, y: 80, output: '0' },
-		{ id: 'M2', x: 180, y: 230, output: '0' },
-	]}
-	transitions={[
-		{ from: 'M0', to: 'M0', label: '0' },
-		{ from: 'M1', to: 'M1', label: '0' },
-		{ from: 'M2', to: 'M2', label: '0', loop: 'bottom' },
-		{ from: 'M0', to: 'M1', label: '1' },
-		{ from: 'M1', to: 'M2', label: '1' },
-		{ from: 'M2', to: 'M0', label: '1' },
-	]}
-	simula="1101011"
-/>
+<JflapFinestra titolo="JFLAP : es02-tornello.jff" strumento="attributi" caption="2 stati · <a href='/sir-terze/jflap/esercizi-mealy-moore/es02-tornello.jff' download>scarica es02-tornello.jff</a>">
+	<Automa
+		jflap
+		r={30}
+		states={[
+			{ id: 'B', label: 'Bloccato', x: 90, y: 110, initial: true, output: '0' },
+			{ id: 'L', label: 'Libero', x: 320, y: 110, output: '1' },
+		]}
+		transitions={[
+			{ from: 'B', to: 'B', label: 's' },
+			{ from: 'B', to: 'L', label: 'm' },
+			{ from: 'L', to: 'L', label: 'm' },
+			{ from: 'L', to: 'B', label: 's' },
+		]}
+		simula="msms"
+	/>
+</JflapFinestra>
 
-Con `1101011`: uscita `1 0 0 0 1 1 0 0` (la prima è quella dello stato iniziale).
+<JflapFinestra toolbar={false} titolo="JFLAP : es02-tornello.jff" schede={['Editor', 'Multiple Run']} schedaAttiva={1}>
+	<JflapMultipleRun
+		righe={[
+			{ input: '', result: '0' },
+			{ input: 'msms', result: '01010' },
+			{ input: 'ssm', result: '0001' },
+			{ input: 'mms', result: '0110' },
+		]}
+	/>
+</JflapFinestra>
+
+L'uscita è una **condizione che dura** (il blocco del tornello), quindi Moore è il modello naturale. Gli anelli completano la macchina: `s` su Bloccato e `m` su Libero non cambiano nulla. Nella riga con la stringa vuota (**Enter Lambda**) l'output è `0`: l'uscita dello stato iniziale.
 
 </details>
 
 ---
 
-### Esercizio 3 · Rilevatore di `101` (Mealy)
+### Esercizio 3 ⭐ · Il fronte di salita
 
-Uscita `1` quando gli ultimi tre bit letti sono `101` (le sequenze possono sovrapporsi: con `10101` l'uscita deve valere `1` due volte).
+**JFLAP → Mealy Machine**
+
+In elettronica si chiama **fronte di salita** il passaggio di un segnale da `0` a `1`. Costruire una macchina di Mealy che produce `1` quando legge un `1` subito dopo uno `0`, e `0` in tutti gli altri casi. All'inizio si considera che il segnale valga `0` (quindi un `1` come primo bit è un fronte di salita).
+
+Esempio: con l'input `0110` l'output deve essere `0100`.
+
+Collaudo con **Multiple Run**: `0110`, `1101`, `0101`, `111000111`.
 
 <details>
 <summary>Soluzione</summary>
 
-Stati: S = "nessun progresso", A = "ho appena letto `1`", B = "ho appena letto `10`".
+<JflapFinestra titolo="JFLAP : es03-fronte-di-salita.jff" strumento="transizione" caption="2 stati · <a href='/sir-terze/jflap/esercizi-mealy-moore/es03-fronte-di-salita.jff' download>scarica es03-fronte-di-salita.jff</a>">
+	<Automa
+		jflap
+		r={20}
+		states={[
+			{ id: 'q0', x: 90, y: 100, initial: true, nota: 'ultimo 0' },
+			{ id: 'q1', x: 300, y: 100, nota: 'ultimo 1' },
+		]}
+		transitions={[
+			{ from: 'q0', to: 'q0', label: '0;0' },
+			{ from: 'q0', to: 'q1', label: '1;1' },
+			{ from: 'q1', to: 'q1', label: '1;0' },
+			{ from: 'q1', to: 'q0', label: '0;0' },
+		]}
+		simula="0110"
+	/>
+</JflapFinestra>
 
-<Automa
-	states={[
-		{ id: 'S', x: 80, y: 100, initial: true },
-		{ id: 'A', x: 250, y: 100 },
-		{ id: 'B', x: 420, y: 100 },
-	]}
-	transitions={[
-		{ from: 'S', to: 'S', label: '0/0' },
-		{ from: 'S', to: 'A', label: '1/0' },
-		{ from: 'A', to: 'A', label: '1/0' },
-		{ from: 'A', to: 'B', label: '0/0' },
-		{ from: 'B', to: 'S', label: '0/0', bend: 50 },
-		{ from: 'B', to: 'A', label: '1/1' },
-	]}
-	simula="10101"
-/>
+<JflapFinestra toolbar={false} titolo="JFLAP : es03-fronte-di-salita.jff" schede={['Editor', 'Multiple Run']} schedaAttiva={1}>
+	<JflapMultipleRun
+		righe={[
+			{ input: '0110', result: '0100' },
+			{ input: '1101', result: '1001' },
+			{ input: '0101', result: '0101' },
+			{ input: '111000111', result: '100000100' },
+		]}
+	/>
+</JflapFinestra>
 
-Il punto delicato è **B con `1`**: si produce `1` e si va in A (non in S), perché quell'`1` può essere l'inizio di un nuovo `101`. Con `10101` l'uscita è `0 0 1 0 1`.
+Lo stato ricorda l'**ultimo bit letto**. L'unica transizione con uscita `1` è q0 → q1: è proprio il passaggio da `0` a `1`. Le note sotto gli stati si aggiungono in JFLAP con clic destro → **Change Label**.
 
 </details>
 
 ---
 
-### Esercizio 4 · Da Mealy a Moore
+### Esercizio 4 ⭐⭐ · Numero di `1` multiplo di 3
 
-Trasformare la macchina di Mealy dell'esercizio 3 in una macchina di Moore equivalente.
+**JFLAP → Moore Machine**
+
+Costruire una macchina di Moore la cui uscita, dopo ogni bit, è `1` se il numero di `1` letti fino a quel momento è un **multiplo di 3** (zero compreso), altrimenti `0`.
+
+Esempio: con l'input `1101011` l'output deve essere `10001100`.
+
+Collaudo con **Multiple Run**: stringa vuota (**Enter Lambda**), `111`, `1101011`, `0000`, `111111`.
 
 <details>
 <summary>Soluzione</summary>
 
-Uscite delle transizioni **entranti** in ogni stato:
+<JflapFinestra titolo="JFLAP : es04-uni-multipli-di-3.jff" strumento="attributi" caption="3 stati · <a href='/sir-terze/jflap/esercizi-mealy-moore/es04-uni-multipli-di-3.jff' download>scarica es04-uni-multipli-di-3.jff</a>">
+	<Automa
+		jflap
+		r={22}
+		states={[
+			{ id: 'q0', x: 90, y: 90, initial: true, output: '1' },
+			{ id: 'q1', x: 300, y: 90, output: '0' },
+			{ id: 'q2', x: 195, y: 250, output: '0' },
+		]}
+		transitions={[
+			{ from: 'q0', to: 'q0', label: '0', loop: 'top' },
+			{ from: 'q1', to: 'q1', label: '0', loop: 'top' },
+			{ from: 'q2', to: 'q2', label: '0', loop: 'right' },
+			{ from: 'q0', to: 'q1', label: '1' },
+			{ from: 'q1', to: 'q2', label: '1' },
+			{ from: 'q2', to: 'q0', label: '1' },
+		]}
+		simula="1101011"
+	/>
+</JflapFinestra>
 
-- in S entrano `0/0` (da S) e `0/0` (da B): solo `0` → **S/0**
-- in A entrano `1/0` (da S), `1/0` (da A) e `1/1` (da B): `0` e `1` → **A/0** e **A′/1**
-- in B entra `0/0` (da A): solo `0` → **B/0**
+<JflapFinestra toolbar={false} titolo="JFLAP : es04-uni-multipli-di-3.jff" schede={['Editor', 'Multiple Run']} schedaAttiva={1}>
+	<JflapMultipleRun
+		righe={[
+			{ input: '', result: '1' },
+			{ input: '111', result: '1001' },
+			{ input: '1101011', result: '10001100' },
+			{ input: '0000', result: '11111' },
+			{ input: '111111', result: '1001001' },
+		]}
+	/>
+</JflapFinestra>
 
-| Stato Moore | Uscita | con `0` | con `1` |
-| :-- | :-: | :-: | :-: |
-| → S | 0 | S | A |
-| A | 0 | B | A |
-| A′ | 1 | B | A |
-| B | 0 | S | A′ |
-
-<Automa
-	r={24}
-	states={[
-		{ id: 'S', x: 80, y: 90, initial: true, output: '0' },
-		{ id: 'A', x: 250, y: 90, output: '0' },
-		{ id: 'B', x: 420, y: 90, output: '0' },
-		{ id: 'A1', label: 'A′', x: 420, y: 260, output: '1' },
-	]}
-	transitions={[
-		{ from: 'S', to: 'S', label: '0' },
-		{ from: 'S', to: 'A', label: '1' },
-		{ from: 'A', to: 'A', label: '1' },
-		{ from: 'A', to: 'B', label: '0' },
-		{ from: 'B', to: 'S', label: '0', bend: 60 },
-		{ from: 'B', to: 'A1', label: '1' },
-		{ from: 'A1', to: 'A', label: '1' },
-		{ from: 'A1', to: 'B', label: '0' },
-	]}
-	simula="10101"
-/>
-
-Con `10101` l'uscita è `0 0 0 1 0 1`: la stessa di Mealy con lo `0` iniziale in più. Da 3 stati si è passati a 4.
+Uno stato per ogni **resto della divisione per 3** (q0, q1, q2) del numero di `1`: ogni `1` fa avanzare il resto, ogni `0` lo lascia com'è. Solo q0 (resto 0) ha uscita `1`, ed è anche lo stato iniziale: per questo la stringa vuota produce `1`.
 
 </details>
 
 ---
 
-### Esercizio 5 · Il distributore in versione Moore
+### Esercizio 5 ⭐⭐ · Rilevatore di `101` (Mealy)
 
-Progettare la macchina di **Moore** equivalente al [distributore a 2 €](/sir-terze/lezioni/05-mealy-moore/03-macchine-di-mealy/#esempio-3--il-distributore-automatico) (input: monete `1` e `2`; uscite: `–`, `B`, `BR`).
+**JFLAP → Mealy Machine**
+
+Costruire una macchina di Mealy che produce `1` quando gli ultimi tre bit letti sono `101`, altrimenti `0`. Le sequenze possono sovrapporsi: con `10101` l'uscita deve valere `1` due volte.
+
+Esempio: con l'input `10101` l'output deve essere `00101`.
+
+Collaudo con **Multiple Run**: `10101`, `1001`, `101101`, `0101010`.
 
 <details>
 <summary>Soluzione</summary>
 
-L'uscita deve dipendere solo dallo stato, quindi servono stati "di erogazione":
+<JflapFinestra titolo="JFLAP : es05-rilevatore-101-mealy.jff" strumento="transizione" caption="3 stati · <a href='/sir-terze/jflap/esercizi-mealy-moore/es05-rilevatore-101-mealy.jff' download>scarica es05-rilevatore-101-mealy.jff</a>">
+	<Automa
+		jflap
+		r={20}
+		states={[
+			{ id: 'q0', x: 80, y: 100, initial: true },
+			{ id: 'q1', x: 260, y: 100 },
+			{ id: 'q2', x: 440, y: 100 },
+		]}
+		transitions={[
+			{ from: 'q0', to: 'q0', label: '0;0' },
+			{ from: 'q0', to: 'q1', label: '1;0' },
+			{ from: 'q1', to: 'q1', label: '1;0' },
+			{ from: 'q1', to: 'q2', label: '0;0' },
+			{ from: 'q2', to: 'q0', label: '0;0', bend: 55 },
+			{ from: 'q2', to: 'q1', label: '1;1' },
+		]}
+		simula="10101"
+	/>
+</JflapFinestra>
 
-| Stato | Uscita | moneta `1` | moneta `2` |
-| :-- | :-: | :-: | :-: |
-| → C0 (credito 0) | – | C1 | E |
-| C1 (credito 1) | – | E | ER |
-| E (erogata bibita) | B | C1 | E |
-| ER (bibita e resto) | BR | C1 | E |
+<JflapFinestra toolbar={false} titolo="JFLAP : es05-rilevatore-101-mealy.jff" schede={['Editor', 'Multiple Run']} schedaAttiva={1}>
+	<JflapMultipleRun
+		righe={[
+			{ input: '10101', result: '00101' },
+			{ input: '1001', result: '0000' },
+			{ input: '101101', result: '001001' },
+			{ input: '0101010', result: '0001010' },
+		]}
+	/>
+</JflapFinestra>
 
-Dagli stati E ed ER la macchina si comporta come da C0 (il credito è tornato a zero).
-
-<Automa
-	r={26}
-	states={[
-		{ id: 'C0', x: 80, y: 90, initial: true, output: '–' },
-		{ id: 'C1', x: 300, y: 90, output: '–' },
-		{ id: 'E', x: 80, y: 280, output: 'B' },
-		{ id: 'ER', x: 300, y: 280, output: 'BR' },
-	]}
-	transitions={[
-		{ from: 'C0', to: 'C1', label: '1' },
-		{ from: 'C0', to: 'E', label: '2' },
-		{ from: 'C1', to: 'E', label: '1', bend: 15 },
-		{ from: 'C1', to: 'ER', label: '2' },
-		{ from: 'E', to: 'C1', label: '1', bend: 15 },
-		{ from: 'E', to: 'E', label: '2', loop: 'bottom' },
-		{ from: 'ER', to: 'C1', label: '1', bend: 25 },
-		{ from: 'ER', to: 'E', label: '2' },
-	]}
-	simula="1212"
-/>
-
-Mealy usava 2 stati, Moore ne usa 4.
+q0 = nessun progresso, q1 = ho appena letto `1`, q2 = ho appena letto `10`. Il punto delicato è **q2 con `1`**: si produce `1` e si torna in q1, non in q0, perché quell'`1` può essere l'inizio di un nuovo `101`.
 
 </details>
 
 ---
 
-### Esercizio 6 · Domande di teoria
+### Esercizio 6 ⭐⭐ · Rilevatore di `101` (Moore)
 
-1. Perché una macchina di Moore produce un simbolo di uscita in più rispetto a una di Mealy?
-2. In un circuito, quale dei due modelli ha un'uscita che può cambiare tra due colpi di clock? Perché?
-3. Un semaforo deve mostrare un colore appena viene acceso, prima di qualsiasi evento. Quale modello è più naturale?
-4. Perché alle macchine di Mealy e Moore non servono gli stati finali?
+**JFLAP → Moore Machine**
+
+Stesso problema dell'esercizio 5, ma come **macchina di Moore**: l'uscita di uno stato è `1` se, entrando in quello stato, gli ultimi tre bit letti sono `101`.
+
+Suggerimento: partire dalla soluzione dell'esercizio 5 e guardare le uscite delle transizioni che **entrano** in ogni stato. Dove entrano uscite diverse, lo stato va sdoppiato.
+
+Esempio: con l'input `10101` l'output deve essere `000101`.
+
+Collaudo con **Multiple Run**: `10101`, `1001`, `101101`, `0101010`.
 
 <details>
 <summary>Soluzione</summary>
 
-1. Perché produce anche l'uscita dello **stato iniziale**, prima di leggere qualsiasi input.
-2. **Mealy**: la sua uscita dipende direttamente dall'ingresso, quindi cambia appena cambia l'ingresso, senza aspettare il clock.
-3. **Moore**: l'uscita è legata allo stato, e c'è già nello stato iniziale.
-4. Perché il loro compito non è dire sì/no su una stringa, ma **trasformare** una sequenza di input in una sequenza di output.
+<JflapFinestra titolo="JFLAP : es06-rilevatore-101-moore.jff" strumento="attributi" caption="4 stati · <a href='/sir-terze/jflap/esercizi-mealy-moore/es06-rilevatore-101-moore.jff' download>scarica es06-rilevatore-101-moore.jff</a>">
+	<Automa
+		jflap
+		r={22}
+		states={[
+			{ id: 'q0', x: 80, y: 100, initial: true, output: '0' },
+			{ id: 'q1', x: 260, y: 100, output: '0' },
+			{ id: 'q2', x: 440, y: 100, output: '0' },
+			{ id: 'q3', x: 440, y: 280, output: '1' },
+		]}
+		transitions={[
+			{ from: 'q0', to: 'q0', label: '0' },
+			{ from: 'q0', to: 'q1', label: '1' },
+			{ from: 'q1', to: 'q1', label: '1' },
+			{ from: 'q1', to: 'q2', label: '0' },
+			{ from: 'q2', to: 'q0', label: '0', bend: 60 },
+			{ from: 'q2', to: 'q3', label: '1' },
+			{ from: 'q3', to: 'q1', label: '1' },
+			{ from: 'q3', to: 'q2', label: '0' },
+		]}
+		simula="10101"
+	/>
+</JflapFinestra>
+
+<JflapFinestra toolbar={false} titolo="JFLAP : es06-rilevatore-101-moore.jff" schede={['Editor', 'Multiple Run']} schedaAttiva={1}>
+	<JflapMultipleRun
+		righe={[
+			{ input: '10101', result: '000101' },
+			{ input: '1001', result: '00000' },
+			{ input: '101101', result: '0001001' },
+			{ input: '0101010', result: '00001010' },
+		]}
+	/>
+</JflapFinestra>
+
+Nello stato "ho appena letto `1`" della versione Mealy si entra sia con uscita `0` sia con uscita `1`, quindi qui diventa **due stati**: q1 (uscita `0`) e q3 (uscita `1`, "ho appena completato `101`"). Da q3 si comporta come da q1. Gli output di Multiple Run sono quelli dell'esercizio 5 con uno `0` in più all'inizio.
+
+</details>
+
+---
+
+### Esercizio 7 ⭐⭐ · Il distributore a 2 € (Moore)
+
+**JFLAP → Moore Machine**
+
+Un distributore vende una bibita a **2 €** e accetta monete da 1 € e da 2 €. Input: `1` e `2` (la moneta inserita). Uscite: `-` (nessuna azione), `B` (eroga la bibita), `BR` (eroga bibita e resto di 1 €).
+
+La [versione Mealy](/sir-terze/lezioni/05-mealy-moore/03-macchine-di-mealy/#esempio-3--il-distributore-automatico) ha 2 stati. Costruire in JFLAP la **macchina di Moore** equivalente.
+
+Esempio: con l'input `1212` l'output deve essere `--BR-BR`.
+
+Collaudo con **Multiple Run**: `11`, `2`, `12`, `1212`, `111`.
+
+<details>
+<summary>Soluzione</summary>
+
+<JflapFinestra titolo="JFLAP : es07-distributore-moore.jff" strumento="attributi" caption="4 stati · <a href='/sir-terze/jflap/esercizi-mealy-moore/es07-distributore-moore.jff' download>scarica es07-distributore-moore.jff</a>">
+	<Automa
+		jflap
+		r={22}
+		states={[
+			{ id: 'C0', x: 90, y: 100, initial: true, output: '-' },
+			{ id: 'C1', x: 330, y: 100, output: '-' },
+			{ id: 'E', x: 90, y: 300, output: 'B' },
+			{ id: 'ER', x: 330, y: 300, output: 'BR' },
+		]}
+		transitions={[
+			{ from: 'C0', to: 'C1', label: '1' },
+			{ from: 'C0', to: 'E', label: '2' },
+			{ from: 'C1', to: 'E', label: '1', bend: 15 },
+			{ from: 'C1', to: 'ER', label: '2' },
+			{ from: 'E', to: 'C1', label: '1', bend: 15 },
+			{ from: 'E', to: 'E', label: '2', loop: 'left' },
+			{ from: 'ER', to: 'C1', label: '1', bend: 30 },
+			{ from: 'ER', to: 'E', label: '2' },
+		]}
+		simula="1212"
+	/>
+</JflapFinestra>
+
+<JflapFinestra toolbar={false} titolo="JFLAP : es07-distributore-moore.jff" schede={['Editor', 'Multiple Run']} schedaAttiva={1}>
+	<JflapMultipleRun
+		righe={[
+			{ input: '11', result: '--B' },
+			{ input: '2', result: '-B' },
+			{ input: '12', result: '--BR' },
+			{ input: '1212', result: '--BR-BR' },
+			{ input: '111', result: '--B-' },
+		]}
+	/>
+</JflapFinestra>
+
+L'uscita deve dipendere solo dallo stato, quindi servono due stati "di erogazione", E ed ER. Dopo l'erogazione il credito è tornato a zero: da E ed ER le monete si comportano come da C0 (`1` porta in C1, `2` porta in E).
+
+</details>
+
+---
+
+### Esercizio 8 ⭐⭐⭐ · Il distributore a 3 € (Mealy)
+
+**JFLAP → Mealy Machine**
+
+Modificare il distributore perché la bibita costi **3 €**, sempre con monete da 1 € e da 2 €. Input `1`, `2`; uscite `-`, `B`, `BR` (il resto è sempre di 1 €). Costruire la **macchina di Mealy**.
+
+Esempio: con l'input `2212` l'output deve essere `-BR-B`.
+
+Collaudo con **Multiple Run**: `111`, `12`, `21`, `22`, `2212`, `1111`.
+
+<details>
+<summary>Soluzione</summary>
+
+<JflapFinestra titolo="JFLAP : es08-distributore-3-euro.jff" strumento="transizione" caption="3 stati · <a href='/sir-terze/jflap/esercizi-mealy-moore/es08-distributore-3-euro.jff' download>scarica es08-distributore-3-euro.jff</a>">
+	<Automa
+		jflap
+		r={22}
+		states={[
+			{ id: 'C0', x: 90, y: 100, initial: true },
+			{ id: 'C1', x: 360, y: 100 },
+			{ id: 'C2', x: 225, y: 300 },
+		]}
+		transitions={[
+			{ from: 'C0', to: 'C1', label: '1;-' },
+			{ from: 'C0', to: 'C2', label: '2;-' },
+			{ from: 'C1', to: 'C2', label: '1;-' },
+			{ from: 'C1', to: 'C0', label: '2;B' },
+			{ from: 'C2', to: 'C0', label: '1;B  2;BR' },
+		]}
+		simula="2212"
+	/>
+</JflapFinestra>
+
+<JflapFinestra toolbar={false} titolo="JFLAP : es08-distributore-3-euro.jff" schede={['Editor', 'Multiple Run']} schedaAttiva={1}>
+	<JflapMultipleRun
+		righe={[
+			{ input: '111', result: '--B' },
+			{ input: '12', result: '-B' },
+			{ input: '21', result: '-B' },
+			{ input: '22', result: '-BR' },
+			{ input: '2212', result: '-BR-B' },
+			{ input: '1111', result: '--B-' },
+		]}
+	/>
+</JflapFinestra>
+
+Gli stati sono i crediti possibili prima di arrivare a 3 €: C0, C1 e C2 (0, 1 e 2 €). Da C2 entrambe le monete portano a C0: in JFLAP sono **due transizioni distinte** sulla stessa freccia, `1;B` e `2;BR`.
+
+</details>
+
+---
+
+### Esercizio 9 ⭐⭐⭐ · Ritardo di due passi (Mealy)
+
+**JFLAP → Mealy Machine**
+
+Costruire una macchina di Mealy che, a ogni passo, produce in uscita **il bit letto due passi prima**. Ai primi due passi, quando quel bit non esiste ancora, l'uscita è `0`. È come mettere in fila due flip-flop D.
+
+Esempio: con l'input `1101` l'output deve essere `0011`.
+
+Collaudo con **Multiple Run**: `1101`, `1011`, `111000`, `10`.
+
+<details>
+<summary>Soluzione</summary>
+
+<JflapFinestra titolo="JFLAP : es09-ritardo-due-passi.jff" strumento="transizione" caption="4 stati · <a href='/sir-terze/jflap/esercizi-mealy-moore/es09-ritardo-due-passi.jff' download>scarica es09-ritardo-due-passi.jff</a>">
+	<Automa
+		jflap
+		r={22}
+		states={[
+			{ id: 'q00', x: 90, y: 100, initial: true },
+			{ id: 'q01', x: 330, y: 100 },
+			{ id: 'q10', x: 90, y: 320 },
+			{ id: 'q11', x: 330, y: 320 },
+		]}
+		transitions={[
+			{ from: 'q00', to: 'q00', label: '0;0' },
+			{ from: 'q00', to: 'q01', label: '1;0' },
+			{ from: 'q01', to: 'q10', label: '0;0' },
+			{ from: 'q01', to: 'q11', label: '1;0' },
+			{ from: 'q10', to: 'q00', label: '0;1' },
+			{ from: 'q10', to: 'q01', label: '1;1' },
+			{ from: 'q11', to: 'q10', label: '0;1' },
+			{ from: 'q11', to: 'q11', label: '1;1', loop: 'right' },
+		]}
+		simula="1101"
+	/>
+</JflapFinestra>
+
+<JflapFinestra toolbar={false} titolo="JFLAP : es09-ritardo-due-passi.jff" schede={['Editor', 'Multiple Run']} schedaAttiva={1}>
+	<JflapMultipleRun
+		righe={[
+			{ input: '1101', result: '0011' },
+			{ input: '1011', result: '0010' },
+			{ input: '111000', result: '001110' },
+			{ input: '10', result: '00' },
+		]}
+	/>
+</JflapFinestra>
+
+Lo stato q*ab* ricorda gli **ultimi due bit**: *a* il penultimo, *b* l'ultimo. Leggendo *x* la macchina produce *a* (il bit di due passi prima) e va in q*bx*. Si parte da q00, come se prima dell'inizio ci fossero due `0`. Con 4 stati si ricordano 2 bit: 2² combinazioni.
 
 </details>

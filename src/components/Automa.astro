@@ -7,6 +7,7 @@
  * si scrive una stringa e si segue l'automa passo per passo.
  * Etichette delle transizioni: simboli separati da virgola ("a, b"),
  * "ε" per le ε-transizioni, "a/1" per le macchine di Mealy.
+ * Nello stile JFLAP si usano "1;0" e più etichette separate da due spazi ("0;1  1;0").
  */
 export interface Stato {
 	id: string;
@@ -223,7 +224,7 @@ const model = simula
 		})
 	: null;
 const inputIniziale = typeof simula === 'string' ? simula : '';
-const isTransducer = states.some((s) => s.output !== undefined) || transitions.some((t) => t.label.includes('/'));
+const isTransducer = states.some((s) => s.output !== undefined) || transitions.some((t) => /[/;]/.test(t.label));
 ---
 
 <figure class:list={['automa not-content', { 'automa--jflap': jflap }]}>
@@ -348,8 +349,8 @@ const isTransducer = states.some((s) => s.output !== undefined) || transitions.s
 
 		const archi: Arco[] = [];
 		model.transitions.forEach((tr, t) => {
-			for (const tok of tr.label.split(',').map((s) => s.trim()).filter(Boolean)) {
-				const [inp, out] = tok.split('/').map((s) => s.trim());
+			for (const tok of tr.label.split(/,|\s{2,}/).map((s) => s.trim()).filter(Boolean)) {
+				const [inp, out] = tok.split(/[/;]/).map((s) => s.trim());
 				archi.push({ t, from: tr.from, to: tr.to, sym: EPS.has(inp) ? '' : inp, out: out ?? null });
 			}
 		});
