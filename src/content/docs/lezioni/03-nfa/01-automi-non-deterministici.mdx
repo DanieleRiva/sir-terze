@@ -111,6 +111,54 @@ Notiamo che gli insiemi che compaiono sono pochi e si ripetono: &#123;q₀&#125;
 
 ---
 
+## Lo stesso linguaggio con un DFA
+
+Mettiamo a confronto l'NFA con il DFA delle stringhe che finiscono con `01`, già risolto nella lezione [Progettare un DFA](/sir-terze/lezioni/02-dfa/03-progettare-un-dfa/):
+
+<Automa
+	states={[
+		{ id: 'q0', x: 80, y: 100, initial: true, nota: '{q₀}' },
+		{ id: 'q1', x: 240, y: 100, nota: '{q₀, q₁}' },
+		{ id: 'q2', x: 400, y: 100, final: true, nota: '{q₀, q₂}' },
+	]}
+	transitions={[
+		{ from: 'q0', to: 'q0', label: '1' },
+		{ from: 'q0', to: 'q1', label: '0' },
+		{ from: 'q1', to: 'q1', label: '0' },
+		{ from: 'q1', to: 'q2', label: '1' },
+		{ from: 'q2', to: 'q1', label: '0' },
+		{ from: 'q2', to: 'q0', label: '1', bend: 80 },
+	]}
+	simula="1101"
+	caption="DFA delle stringhe che finiscono con <code>01</code>. Sotto ogni stato, l'insieme di stati attivi dell'NFA a cui corrisponde."
+/>
+
+| δ | 0 | 1 | Significato dello stato |
+| :-- | :-: | :-: | :-- |
+| → q₀ | q₁ | q₀ | non ho in mano nessun pezzo utile di `01` |
+| q₁ | q₁ | q₂ | l'ultimo simbolo letto è `0` |
+| \* q₂ | q₁ | q₀ | gli ultimi due simboli sono `01` |
+
+Prova a simulare `0101` su entrambi gli automi:
+
+- **DFA**: q₀ →0 q₁ →1 q₂ →0 q₁ →1 q₂ ✓. Un solo percorso, uno stato attivo per volta.
+- **NFA**: &#123;q₀&#125; →0 &#123;q₀, q₁&#125; →1 &#123;q₀, q₂&#125; →0 &#123;q₀, q₁&#125; →1 &#123;q₀, q₂&#125; ✓. Più copie attive insieme.
+
+Le due sequenze vanno **di pari passo**: ogni stato del DFA corrisponde esattamente a uno degli insiemi di stati attivi dell'NFA (le note sotto gli stati). Il DFA, in pratica, è l'NFA "già simulato".
+
+Cosa cambia tra i due?
+
+| | NFA | DFA |
+| :-- | :-- | :-- |
+| Stati | 3 | 3 |
+| Transizioni | 4 (con `0, 1` contata due volte) | 6, una per ogni coppia stato-simbolo |
+| Cosa bisogna pensare | solo "come è fatta la fine della stringa" | anche "cosa succede se la sequenza si interrompe", ad esempio q₂ con `0` → q₁ e q₂ con `1` → q₀ |
+| Errori tipici | pochi: il disegno ricalca la definizione | frecce di "ripartenza" sbagliate (ad esempio q₂ →0 q₀) |
+
+In questo caso il numero di stati è lo stesso: il vantaggio dell'NFA sta tutto nella **semplicità del ragionamento**. Nell'esempio di fine pagina vedremo un caso in cui il DFA ha bisogno di molti più stati.
+
+---
+
 ## La definizione formale
 
 Un NFA è ancora una quintupla **A = (Q, Σ, δ, q₀, F)**. L'unica differenza rispetto al DFA è la funzione di transizione, che ora restituisce un **insieme** di stati (eventualmente vuoto):
@@ -171,7 +219,76 @@ Con un NFA basta "indovinare" quando si è arrivati al terzultimo simbolo:
 	caption="NFA: il terzultimo simbolo è <code>a</code>. Quattro stati."
 />
 
-Il DFA equivalente deve ricordare **gli ultimi tre simboli letti** (2³ = 8 combinazioni) e ha quindi **8 stati**. Con il "quartultimo simbolo" diventerebbero 16, con il "decimultimo" 1024. L'NFA, invece, cresce di un solo stato alla volta.
+### Il DFA equivalente
+
+Un DFA non può "indovinare": deve ricordare **gli ultimi tre simboli letti**, perché ognuno di essi potrebbe diventare il terzultimo. Le combinazioni sono 2³ = 8, quindi servono **8 stati**, ognuno con il nome dei tre simboli che ricorda.
+
+- **Transizioni.** Dallo stato *xyz*, leggendo il simbolo *c*, si va in *yzc*: il simbolo più vecchio esce, quello nuovo entra a destra. Ad esempio da `bab` con `a` si va in `aba`.
+- **Stati finali.** Sono quelli in cui il primo dei tre simboli, cioè il terzultimo, è `a`: `aaa`, `aab`, `aba`, `abb`.
+- **Stato iniziale.** All'inizio non abbiamo letto nulla, e una stringa con meno di tre simboli non ha un terzultimo simbolo: va rifiutata. Partiamo quindi da `bbb`, come se prima della stringa ci fossero tre `b`, che non rendono mai finale lo stato.
+
+<Automa
+	r={24}
+	states={[
+		{ id: 'bbb', x: 60, y: 200, initial: true },
+		{ id: 'bba', x: 190, y: 80 },
+		{ id: 'abb', x: 190, y: 320, final: true },
+		{ id: 'bab', x: 265, y: 200 },
+		{ id: 'aba', x: 375, y: 200, final: true },
+		{ id: 'baa', x: 450, y: 80 },
+		{ id: 'aab', x: 450, y: 320, final: true },
+		{ id: 'aaa', x: 580, y: 200, final: true },
+	]}
+	transitions={[
+		{ from: 'bbb', to: 'bbb', label: 'b', loop: 'bottom' },
+		{ from: 'bbb', to: 'bba', label: 'a' },
+		{ from: 'bba', to: 'baa', label: 'a' },
+		{ from: 'bba', to: 'bab', label: 'b' },
+		{ from: 'baa', to: 'aaa', label: 'a' },
+		{ from: 'baa', to: 'aab', label: 'b' },
+		{ from: 'bab', to: 'aba', label: 'a', bend: 30 },
+		{ from: 'bab', to: 'abb', label: 'b' },
+		{ from: 'aaa', to: 'aaa', label: 'a', loop: 'right' },
+		{ from: 'aaa', to: 'aab', label: 'b' },
+		{ from: 'aab', to: 'aba', label: 'a' },
+		{ from: 'aab', to: 'abb', label: 'b' },
+		{ from: 'aba', to: 'baa', label: 'a' },
+		{ from: 'aba', to: 'bab', label: 'b', bend: 30 },
+		{ from: 'abb', to: 'bba', label: 'a' },
+		{ from: 'abb', to: 'bbb', label: 'b' },
+	]}
+	simula="babb"
+	caption="DFA: il terzultimo simbolo è <code>a</code>. Otto stati e sedici transizioni, contro i quattro stati dell'NFA."
+/>
+
+Collaudo con la stessa stringa dell'NFA:
+
+- `babb`: bbb →b bbb →a bba →b bab →b abb ✓ (il terzultimo simbolo è `a`)
+- `abab`: bbb →a bba →b bab →a aba →b bab ✗ (il terzultimo simbolo è `b`)
+- `ab`: bbb →a bba →b bab ✗ (troppo corta)
+
+Come nell'esempio di `01`, ogni stato del DFA corrisponde a un insieme di stati attivi dell'NFA. Nell'NFA, q₁ è attivo se l'ultimo simbolo è `a`, q₂ se lo è il penultimo, q₃ se lo è il terzultimo:
+
+| δ | a | b | Insieme di stati dell'NFA |
+| :-- | :-: | :-: | :-- |
+| → bbb | bba | bbb | &#123;q₀&#125; |
+| bba | baa | bab | &#123;q₀, q₁&#125; |
+| bab | aba | abb | &#123;q₀, q₂&#125; |
+| baa | aaa | aab | &#123;q₀, q₁, q₂&#125; |
+| \* abb | bba | bbb | &#123;q₀, q₃&#125; |
+| \* aba | baa | bab | &#123;q₀, q₁, q₃&#125; |
+| \* aab | aba | abb | &#123;q₀, q₂, q₃&#125; |
+| \* aaa | aaa | aab | &#123;q₀, q₁, q₂, q₃&#125; |
+
+Il confronto è netto:
+
+| | NFA | DFA |
+| :-- | :-: | :-: |
+| Stati | 4 | 8 |
+| Transizioni | 7 | 16 |
+| Terzultimo → *n*-esimo dalla fine | *n* + 1 stati | 2ⁿ stati |
+
+Con il "quartultimo simbolo" il DFA avrebbe 16 stati, con il "decimultimo" 1024. L'NFA, invece, cresce di un solo stato alla volta.
 
 ---
 
