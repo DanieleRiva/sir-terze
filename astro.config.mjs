@@ -79,10 +79,7 @@ export default defineConfig({
 						{ label: '1 · Le basi', autogenerate: { directory: 'lezioni/01-basi' }, collapsed: true },
 						{ label: '2 · Automi deterministici (DFA)', autogenerate: { directory: 'lezioni/02-dfa' }, collapsed: true },
 						{ label: '3 · Non determinismo (NFA)', autogenerate: { directory: 'lezioni/03-nfa' }, collapsed: true },
-						{ label: '4 · Minimizzazione', autogenerate: { directory: 'lezioni/04-minimizzazione' }, collapsed: true },
-						{ label: '5 · Automi con uscita', autogenerate: { directory: 'lezioni/05-mealy-moore' }, collapsed: true },
-						{ label: '6 · Espressioni regolari', autogenerate: { directory: 'lezioni/06-espressioni-regolari' }, collapsed: true },
-						{ label: "7 · Dall'automa al codice", autogenerate: { directory: 'lezioni/07-applicazioni' }, collapsed: true },
+						{ label: '5 · Automi con uscita', autogenerate: { directory: 'lezioni/04-mealy-moore' }, collapsed: true },
 					],
 				},
 				{
@@ -98,11 +95,6 @@ export default defineConfig({
 				{
 					label: '🛠️ Progetti',
 					autogenerate: { directory: 'progetti' },
-					collapsed: true,
-				},
-				{
-					label: '📎 Riferimenti',
-					autogenerate: { directory: 'riferimenti' },
 					collapsed: true,
 				},
 			],

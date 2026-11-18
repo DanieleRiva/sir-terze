@@ -1,0 +1,56 @@
+---
+title: Construire NFA
+description: Costruire automi non deterministici in JFLAP
+sidebar:
+  order: 5
+---
+
+import JflapFinestra from '~/components/JflapFinestra.astro';
+import Automa from '~/components/Automa.astro';
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+In JFLAP non c'è un tipo separato per gli NFA: si usa sempre **Finite Automaton**. Un automa è deterministico o no **a seconda di come lo disegniamo**. JFLAP accetta tranquillamente:
+
+- **più transizioni con lo stesso simbolo** che escono dallo stesso stato;
+- **transizioni mancanti**;
+- **λ-transizioni** (si creano lasciando vuota la casella dell'etichetta e premendo Invio).
+
+---
+
+## Costruire e riconoscere un NFA
+
+Costruiamo l'NFA delle stringhe che **finiscono con `01`** visto nel [capitolo 3](/sir-terze/lezioni/03-nfa/01-automi-non-deterministici/):
+
+<Steps>
+
+1. Nuovo **Finite Automaton**, tre stati q0 (iniziale), q1, q2 (finale).
+2. Su q0 due anelli: uno con `0` e uno con `1` (due transizioni separate!).
+3. Da q0 a q1 una transizione con `0`.
+4. Da q1 a q2 una transizione con `1`.
+
+</Steps>
+
+Ora scegliamo **Test → Highlight Nondeterminism**: JFLAP colora lo stato **q0**, perché da lì escono due transizioni con lo stesso simbolo `0` (l'anello e la freccia verso q1).
+
+<JflapFinestra strumento="attributi" altezza={170} menuAperto={{ nome: 'Test', voci: ['Compare Equivalence', 'Highlight Nondeterminism', 'Highlight λ-Transitions'], evidenzia: 'Highlight Nondeterminism' }} caption="Con <strong>Highlight Nondeterminism</strong> lo stato q0 viene evidenziato.">
+	<Automa
+		jflap
+		r={20}
+		states={[
+			{ id: 'q0', x: 260, y: 100, initial: true, hl: true },
+			{ id: 'q1', x: 410, y: 100 },
+			{ id: 'q2', x: 560, y: 100, final: true },
+		]}
+		transitions={[
+			{ from: 'q0', to: 'q0', label: '0  1' },
+			{ from: 'q0', to: 'q1', label: '0' },
+			{ from: 'q1', to: 'q2', label: '1' },
+		]}
+	/>
+</JflapFinestra>
+
+<Aside type="tip" title="Un controllo utile anche per i DFA">
+Quando l'esercizio chiede un **DFA**, **Highlight Nondeterminism** è il modo più veloce per accorgersi di aver messo per sbaglio due frecce con lo stesso simbolo (o una λ-transizione). Se non si colora niente, l'automa è deterministico (eventualmente parziale).
+</Aside>
+
+Simulando l'NFA con **Input → Step with Closure…** e la stringa `0101`, il pannello in basso mostra **più configurazioni contemporaneamente**: una per ogni "copia" dell'automa. È il modo migliore per far vedere agli alunni il non determinismo in azione.
