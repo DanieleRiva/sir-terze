@@ -16,7 +16,7 @@ Dove non è indicato diversamente, l'alfabeto è Σ = &#123;a, b&#125;. Rispetto
 - si descrive solo il **percorso fortunato**, quello che porta ad accettare; le copie che sbagliano strada muoiono senza fare danni;
 - le parti "qualunque" della stringa si leggono con un **anello** `a, b`;
 - dove serve, l'automa **scommette**: "questo simbolo è quello giusto";
-- le **ε-transizioni** servono a collegare pezzi di automa già pronti.
+- per unire due automi già pronti ("oppure") si aggiunge un **nuovo stato iniziale** che fa la prima mossa di entrambi.
 </Aside>
 
 **Legenda della difficoltà:** ⭐ facile · ⭐⭐ media · ⭐⭐⭐ impegnativa
@@ -325,44 +325,52 @@ In `abba` le due `a` hanno due simboli in mezzo: al terzo simbolo la copia in q�
 
 ### Esercizio 8 ⭐⭐ · Prima le `a`, poi le `b`, poi le `c`
 
-Σ = &#123;a, b, c&#125;. Costruire un ε-NFA per le stringhe formate da un po' di `a`, seguite da un po' di `b`, seguite da un po' di `c`. Ogni gruppo può anche mancare.
+Σ = &#123;a, b, c&#125;. Costruire un NFA per le stringhe formate da un po' di `a`, seguite da un po' di `b`, seguite da un po' di `c`. Ogni gruppo può anche mancare.
 
 Da accettare: ε, `abc`, `aac`, `bbc`, `c`. Da rifiutare: `ba`, `cb`, `abca`.
 
 <details>
 <summary>Soluzione</summary>
 
-**Idea.** Si progetta un pezzo per ogni gruppo: uno stato con un anello che legge quel simbolo. Le ε-transizioni fanno passare da un gruppo al successivo senza leggere nulla.
+**Idea.** Si progetta un pezzo per ogni gruppo: uno stato con un anello che legge quel simbolo. Per passare da un gruppo al successivo non serve una freccia "vuota": la freccia legge direttamente **il primo simbolo del gruppo nuovo**.
 
 <Automa
 	states={[
-		{ id: 'q0', x: 80, y: 100, initial: true },
-		{ id: 'q1', x: 240, y: 100 },
+		{ id: 'q0', x: 80, y: 100, initial: true, final: true },
+		{ id: 'q1', x: 240, y: 100, final: true },
 		{ id: 'q2', x: 400, y: 100, final: true },
 	]}
 	transitions={[
 		{ from: 'q0', to: 'q0', label: 'a' },
-		{ from: 'q0', to: 'q1', label: 'ε' },
+		{ from: 'q0', to: 'q1', label: 'b' },
 		{ from: 'q1', to: 'q1', label: 'b' },
-		{ from: 'q1', to: 'q2', label: 'ε' },
+		{ from: 'q1', to: 'q2', label: 'c' },
+		{ from: 'q0', to: 'q2', label: 'c', bend: -45 },
 		{ from: 'q2', to: 'q2', label: 'c' },
 	]}
 	simula="aac"
 />
 
 - **Gli anelli** leggono ciascun gruppo, quante volte si vuole.
-- **Le ε-transizioni** vanno solo in avanti: una volta passati alle `b` non si torna più alle `a`. È questo che impone l'ordine.
-- **I gruppi possono mancare** perché le ε-transizioni si attraversano senza leggere: `c` si legge con il percorso q₀ →ε→ q₁ →ε→ q₂ →`c`→ q₂.
-- **ε è accettata** perché q₂ è raggiungibile da q₀ con sole ε-transizioni: ECLOSE(q₀) = &#123;q₀, q₁, q₂&#125;.
+- **Le frecce vanno solo in avanti**: una volta passati alle `b` non si torna più alle `a`. È questo che impone l'ordine.
+- **Il gruppo delle `b` può mancare**: per questo c'è la freccia q₀ → q₂ con `c`, che salta direttamente dalle `a` alle `c`. Così `c` e `aac` sono accettate.
+- **Tutti gli stati sono finali**, perché la stringa può finire in qualunque gruppo: `ab` finisce in q₁, `aa` in q₀. In particolare ε è accettata perché q₀ è finale.
 
-**Collaudo con gli stati attivi.** Si parte da ECLOSE(q₀), e dopo ogni simbolo si applica la ε-chiusura.
+**Collaudo con gli stati attivi.**
 
 | Stringa | Stati attivi dopo ogni simbolo | Esito |
 | :-- | :-- | :-: |
-| `aac` | &#123;q₀, q₁, q₂&#125; · &#123;q₀, q₁, q₂&#125; · &#123;q₂&#125; | accettata |
-| `ba` | &#123;q₁, q₂&#125; · ∅ | rifiutata |
+| `aac` | &#123;q₀&#125; · &#123;q₀&#125; · &#123;q₂&#125; | accettata |
+| `bbc` | &#123;q₁&#125; · &#123;q₁&#125; · &#123;q₂&#125; | accettata |
+| `ba` | &#123;q₁&#125; · ∅ | rifiutata |
+| `abca` | &#123;q₀&#125; · &#123;q₁&#125; · &#123;q₂&#125; · ∅ | rifiutata |
 
-**Una semplificazione.** Non serve rendere finali anche q₀ e q₁ per far fermare la stringa lì: quando sono attivi loro, la ε-chiusura rende attivo anche q₂.
+**Errori tipici.**
+
+- Dimenticare la freccia q₀ → q₂: `c` e `ac` verrebbero rifiutate, perché non si potrebbe saltare il gruppo delle `b`.
+- Rendere finale solo q₂: `ab` e `aa` verrebbero rifiutate, come se il gruppo delle `c` fosse obbligatorio.
+
+**Un'osservazione.** Da ogni stato, con ogni simbolo, esce al massimo una freccia: questo NFA è anche un DFA (incompleto). Non sempre il non determinismo serve: qui basta mettere le frecce giuste.
 
 </details>
 
@@ -370,7 +378,7 @@ Da accettare: ε, `abc`, `aac`, `bbc`, `c`. Da rifiutare: `ba`, `cb`, `abca`.
 
 ### Esercizio 9 ⭐⭐ · Inizia con `a` oppure finisce con `b`
 
-Costruire un ε-NFA per le stringhe che iniziano con `a` **oppure** finiscono con `b`. Progettare prima un automa per ciascuna condizione, poi unirli.
+Costruire un NFA per le stringhe che iniziano con `a` **oppure** finiscono con `b`. Progettare prima un automa per ciascuna condizione, poi unirli.
 
 Da accettare: `a`, `ab`, `bb`, `bab`. Da rifiutare: ε, `ba`, `baa`.
 
@@ -381,29 +389,34 @@ Da accettare: `a`, `ab`, `bb`, `bab`. Da rifiutare: ε, `ba`, `baa`.
 
 **Passo 2 · "Finisce con `b`".** In r₀ si legge tutto ciò che viene prima dell'ultimo simbolo; con `b` si scommette che sia l'ultimo e si va in r₁, finale.
 
-**Passo 3 · Unione.** Si aggiunge un nuovo stato iniziale **s**, non finale, con due ε-transizioni verso gli stati iniziali dei due automi.
+**Passo 3 · Unione.** Si aggiunge un nuovo stato iniziale **s** che fa **la prima mossa di entrambi gli automi**: per ogni freccia che esce da p₀ o da r₀, si disegna una freccia uguale che esce da s.
+
+- da p₀ esce `a` verso p₁ → si aggiunge **s →`a`→ p₁**;
+- da r₀ esce l'anello `a, b` → si aggiunge **s →`a, b`→ r₀**;
+- da r₀ esce `b` verso r₁ → si aggiunge **s →`b`→ r₁**.
+
+s **non è finale**, perché non lo sono né p₀ né r₀. Ora p₀ non ha più frecce entranti: nessuno ci arriva, e si può cancellare.
 
 <Automa
 	states={[
 		{ id: 's', x: 70, y: 170, initial: true },
-		{ id: 'p0', x: 210, y: 70 },
-		{ id: 'p1', x: 370, y: 70, final: true },
-		{ id: 'r0', x: 210, y: 270 },
-		{ id: 'r1', x: 370, y: 270, final: true },
+		{ id: 'p1', x: 330, y: 60, final: true },
+		{ id: 'r0', x: 220, y: 290 },
+		{ id: 'r1', x: 400, y: 290, final: true },
 	]}
 	transitions={[
-		{ from: 's', to: 'p0', label: 'ε' },
-		{ from: 's', to: 'r0', label: 'ε' },
-		{ from: 'p0', to: 'p1', label: 'a' },
+		{ from: 's', to: 'p1', label: 'a' },
 		{ from: 'p1', to: 'p1', label: 'a, b', loop: 'right' },
+		{ from: 's', to: 'r0', label: 'a, b' },
+		{ from: 's', to: 'r1', label: 'b' },
 		{ from: 'r0', to: 'r0', label: 'a, b', loop: 'bottom' },
 		{ from: 'r0', to: 'r1', label: 'b' },
 	]}
 	simula="bab"
-	caption="In alto: «inizia con a». In basso: «finisce con b»."
+	caption="In alto: «inizia con a». In basso: «finisce con b». Lo stato s fa il primo passo di entrambi."
 />
 
-**Collaudo con gli stati attivi.** All'inizio gli stati attivi sono ECLOSE(s) = &#123;s, p₀, r₀&#125;.
+**Collaudo con gli stati attivi.** All'inizio è attivo solo s.
 
 | Stringa | Stati attivi dopo ogni simbolo | Esito |
 | :-- | :-- | :-: |
@@ -411,7 +424,9 @@ Da accettare: `a`, `ab`, `bb`, `bab`. Da rifiutare: ε, `ba`, `baa`.
 | `bab` | &#123;r₀, r₁&#125; · &#123;r₀&#125; · &#123;r₀, r₁&#125; | accettata |
 | `ba` | &#123;r₀, r₁&#125; · &#123;r₀&#125; | rifiutata |
 
-**Perché serve uno stato nuovo.** Viene spontaneo fondere p₀ e r₀ in un unico stato iniziale *m*. Ma *m* avrebbe l'anello `a, b` di r₀ e anche la freccia `a` verso p₁. Con `ba` l'automa farebbe *m* →`b`→ *m* →`a`→ p₁ e **accetterebbe**, anche se `ba` non sta nel linguaggio. Lo stato s, invece, non ha anelli: la scelta tra i due automi si fa una sola volta, all'inizio.
+Dopo il primo simbolo s non è più attivo: da lì in poi i due automi lavorano ognuno per conto suo, come se fossero partiti insieme.
+
+**Perché serve uno stato nuovo.** Viene spontaneo usare r₀ come stato iniziale e aggiungere la freccia r₀ →`a`→ p₁. Ma r₀ ha un anello `a, b`: con `ba` l'automa farebbe r₀ →`b`→ r₀ →`a`→ p₁ e **accetterebbe**, anche se `ba` non sta nel linguaggio. Lo stato s, invece, non ha anelli e nessuna freccia ci rientra: la scelta tra i due automi si fa una sola volta, sul primo simbolo.
 
 </details>
 
@@ -516,7 +531,7 @@ Da accettare: `abba`, `abaaba`, `aabbbaa`. Da rifiutare: `aba`, `abab`, `baab`.
 
 ### Esercizio 12 ⭐⭐⭐ · Numero pari di `a` oppure numero di `b` multiplo di 3
 
-Costruire un ε-NFA per le stringhe con un numero **pari** di `a` **oppure** con un numero di `b` **multiplo di 3**.
+Costruire un NFA per le stringhe con un numero **pari** di `a` **oppure** con un numero di `b` **multiplo di 3**.
 
 Da accettare: ε, `a`, `aa`, `abbb`. Da rifiutare: `ab`, `abb`, `bab`.
 
@@ -529,12 +544,17 @@ Da accettare: ε, `a`, `aa`, `abbb`. Da rifiutare: `ab`, `abb`, `bab`.
 
 **Automa 2 · Numero di `b` multiplo di 3.** Tre stati, R0, R1, R2, uno per ogni resto della divisione per 3: ogni `b` fa avanzare il resto, ogni `a` è un anello. R0 è finale.
 
-**Unione.** Il nuovo stato iniziale **s** ha due ε-transizioni, verso P e verso R0.
+**Unione.** Come nell'esercizio 9, il nuovo stato iniziale **s** fa la prima mossa di entrambi gli automi: copia le frecce che escono da P e da R0.
+
+- da P: `a` verso D e `b` verso P;
+- da R0: `b` verso R1 e `a` verso R0.
+
+Questa volta s **è finale**, perché P e R0 sono finali: la stringa vuota ha zero `a` (pari) e zero `b` (multiplo di 3), quindi va accettata.
 
 <Automa
 	r={22}
 	states={[
-		{ id: 's', x: 70, y: 200, initial: true },
+		{ id: 's', x: 70, y: 200, initial: true, final: true },
 		{ id: 'P', x: 220, y: 80, final: true },
 		{ id: 'D', x: 410, y: 80 },
 		{ id: 'R0', x: 220, y: 320, final: true },
@@ -542,8 +562,10 @@ Da accettare: ε, `a`, `aa`, `abbb`. Da rifiutare: `ab`, `abb`, `bab`.
 		{ id: 'R2', x: 410, y: 390 },
 	]}
 	transitions={[
-		{ from: 's', to: 'P', label: 'ε' },
-		{ from: 's', to: 'R0', label: 'ε' },
+		{ from: 's', to: 'D', label: 'a' },
+		{ from: 's', to: 'P', label: 'b' },
+		{ from: 's', to: 'R1', label: 'b' },
+		{ from: 's', to: 'R0', label: 'a' },
 		{ from: 'P', to: 'D', label: 'a' },
 		{ from: 'D', to: 'P', label: 'a' },
 		{ from: 'P', to: 'P', label: 'b' },
@@ -559,9 +581,9 @@ Da accettare: ε, `a`, `aa`, `abbb`. Da rifiutare: `ab`, `abb`, `bab`.
 	caption="In alto si contano le a (modulo 2), in basso le b (modulo 3)."
 />
 
-**Come funziona.** In ogni momento è attivo **uno stato in alto e uno in basso**: le due parti lavorano in parallelo, senza disturbarsi. Alla fine la stringa è accettata se almeno una delle due si trova in uno stato finale. È esattamente il significato di "oppure".
+**Come funziona.** Dopo il primo simbolo è attivo **uno stato in alto e uno in basso**: le due parti lavorano in parallelo, senza disturbarsi. Alla fine la stringa è accettata se almeno una delle due si trova in uno stato finale. È esattamente il significato di "oppure".
 
-**Collaudo con gli stati attivi.** All'inizio gli stati attivi sono ECLOSE(s) = &#123;s, P, R0&#125;.
+**Collaudo con gli stati attivi.** All'inizio è attivo solo s.
 
 | Stringa | Stati attivi dopo ogni simbolo | Esito |
 | :-- | :-- | :-: |
@@ -570,6 +592,6 @@ Da accettare: ε, `a`, `aa`, `abbb`. Da rifiutare: `ab`, `abb`, `bab`.
 
 In `abbb` le `a` sono dispari, quindi D non è finale, ma le `b` sono 3: R0 è finale e basta quello. In `ab` nessuna delle due condizioni è vera. Attenzione alla stringa `a`: ha zero `b`, e zero è un multiplo di 3, quindi è accettata.
 
-**Il vantaggio dell'NFA.** Un DFA per questo linguaggio dovrebbe tenere insieme le due informazioni in un solo stato, con 2 × 3 = 6 combinazioni. Con l'NFA ogni condizione si progetta da sola, e la ε-transizione fa il resto.
+**Il vantaggio dell'NFA.** Un DFA per questo linguaggio dovrebbe tenere insieme le due informazioni in un solo stato, con 2 × 3 = 6 combinazioni. Con l'NFA ogni condizione si progetta da sola, e lo stato s fa il resto.
 
 </details>
